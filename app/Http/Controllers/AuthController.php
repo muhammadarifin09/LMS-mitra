@@ -17,14 +17,16 @@ class AuthController extends Controller
         $credentials = $request->only('username', 'password');
 
         if (Auth::attempt($credentials)) {
+            $request->session()->regenerate(); // tambahkan ini
+        
             $user = Auth::user();
-
+        
             if ($user->role === 'admin') {
-                return redirect('/admin/dashboard');
+                return redirect()->intended('/admin/dashboard');
             } else {
-                return redirect('/dashboard');
+                return redirect()->intended('/dashboard');
             }
-        }
+        }        
 
         return back()->withErrors(['login' => 'Username atau password salah!']);
     }
