@@ -13,10 +13,9 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
+            $table->string('username')->unique(); // username_sobat = email dari biodata
+            $table->string('password'); // id_sobat dari biodata
+            $table->enum('role', ['admin', 'mitra'])->default('mitra');
             $table->rememberToken();
             $table->timestamps();
         });
