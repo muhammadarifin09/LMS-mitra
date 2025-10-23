@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
+use Illuminate\Support\Facades\Mail; 
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Admin\BiodataController;
 

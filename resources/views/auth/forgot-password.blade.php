@@ -37,10 +37,10 @@
     <div class="col-12 col-md-6 d-flex flex-column justify-content-center bg-white p-4 p-md-5">
         <div class="container" style="max-width: 400px;">
             <h2 class="fw-semibold text-dark mb-4 text-center text-md-start fs-3">Lupa Password</h2>
-
             @if (session('status'))
-                <div class="alert alert-success">
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
                     {{ session('status') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
 
