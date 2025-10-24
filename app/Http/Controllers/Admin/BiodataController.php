@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\M_Biodata;
 
@@ -15,7 +16,7 @@ class BiodataController extends Controller
 
     public function create()
     {
-        return view('biodata.create');
+        return view('admin.biodata.create');
     }
 
     public function store(Request $request)

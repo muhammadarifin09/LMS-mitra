@@ -3,23 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | LMS MOCC Mitra</title>
-    <!-- Bootstrap CSS -->
+    <title>Reset Password | LMS MOCC Mitra</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
     <style>
         body {
-            background-color: #f8f9fa; /* agar shadow terlihat */
+            background-color: #f8f9fa;
             overflow-x: hidden;
         }
-
         .left-panel {
-            background-color:rgb(1, 76, 187);
+            background-color: rgb(1, 76, 187);
             color: white;
             box-shadow: 8px 0 25px rgba(0, 0, 0, 0.2);
             z-index: 2;
         }
-
         @media (max-width: 767.98px) {
             .left-panel {
                 box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
@@ -40,33 +36,47 @@
     <!-- Kolom Kanan -->
     <div class="col-12 col-md-6 d-flex flex-column justify-content-center bg-white p-4 p-md-5">
         <div class="container" style="max-width: 400px;">
-            <h2 class="fw-semibold text-dark mb-4 text-center text-md-start fs-3">Login ke Akun Anda</h2>
+            <h2 class="fw-semibold text-dark mb-4 text-center text-md-start fs-3">Reset Password</h2>
 
-            <form action="{{ route('login') }}" method="POST">
+            <form action="{{ route('password.update') }}" method="POST">
                 @csrf
+                <input type="hidden" name="token" value="{{ $token }}">
+                <input type="hidden" name="username" value="{{ $username }}">
 
                 <div class="mb-3">
                     <label for="username" class="form-label">Username</label>
-                    <input type="text" name="username" id="username" 
-                           class="form-control" placeholder="Masukkan username Anda" required>
+                    <input type="text" id="username" class="form-control" value="{{ $username }}" disabled>
+                    <small class="text-muted">Username tidak dapat diubah</small>
                 </div>
 
                 <div class="mb-3">
-                    <label for="password" class="form-label">Password</label>
+                    <label for="password" class="form-label">Password Baru</label>
                     <input type="password" name="password" id="password" 
-                           class="form-control" placeholder="Masukkan password" required>
+                           class="form-control @error('password') is-invalid @enderror" 
+                           placeholder="Masukkan password baru" required>
+                    @error('password')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
 
-                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-3">
-                    <a href="{{ route('password.request') }}" class="text-primary small text-decoration-none">Lupa kata sandi?</a>
+                <div class="mb-3">
+                    <label for="password_confirmation" class="form-label">Konfirmasi Password Baru</label>
+                    <input type="password" name="password_confirmation" id="password_confirmation" 
+                           class="form-control" 
+                           placeholder="Masukkan ulang password baru" required>
                 </div>
 
-                <button type="submit" class="btn btn-primary w-100 py-2">Masuk</button>
+                <button type="submit" class="btn btn-primary w-100 py-2">Reset Password</button>
+                
+                <div class="text-center mt-3">
+                    <a href="{{ route('login.page') }}" class="text-primary small text-decoration-none">
+                        Kembali ke Login
+                    </a>
+                </div>
             </form>
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
