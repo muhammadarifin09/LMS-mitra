@@ -22,6 +22,6 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
 // Mitra
 Route::middleware(['auth', 'role:mitra'])->group(function () {
-    Route::get('/dashboard', fn() => view('mitra.dashboard'))->name('mitra.dashboard');
+    Route::get('/beranda', fn() => view('mitra.beranda'))->name('mitra.beranda');
 });
 
