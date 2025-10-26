@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MOCC BPS - Dashboard</title>
+    <title>MOCC BPS - Kursus Saya</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -131,82 +131,23 @@
             transform: translateY(-2px);
         }
         
-        /* User Profile & Avatar Styles - PERBAIKAN */
         .user-profile {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 8px 15px;
-            border-radius: 25px;
-            background: rgba(30, 60, 114, 0.05);
-            transition: all 0.3s ease;
-            margin-left: 20px;
+            gap: 15px;
+            margin-left: 30px;
         }
-
-        .user-profile:hover {
-            background: rgba(30, 60, 114, 0.1);
-        }
-
+        
         .user-avatar {
             width: 45px;
             height: 45px;
-            border-radius: 50%;
             background: linear-gradient(135deg, #1e3c72, #2a5298);
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            position: relative;
-            overflow: hidden;
-            flex-shrink: 0;
-            border: 2px solid white;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        }
-
-        .avatar-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 50%;
-        }
-
-        .avatar-initials {
             color: white;
-            font-weight: 700;
-            font-size: 16px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .user-info {
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-        }
-
-        .user-name {
-            font-weight: 700;
-            color: #1e3c72;
-            font-size: 0.95rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 150px;
-        }
-
-        .user-status {
-            font-size: 0.75rem;
-            color: #5a6c7d;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .status-dot {
-            width: 6px;
-            height: 6px;
-            background: #28a745;
-            border-radius: 50%;
-            display: inline-block;
+            font-weight: bold;
         }
 
         /* Dashboard Layout */
@@ -276,112 +217,185 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
         }
 
-        .welcome-section {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 40px;
-            border-radius: 15px;
+        /* Kursus Header */
+        .kursus-header {
             margin-bottom: 30px;
-            text-align: center;
         }
 
-        .welcome-title {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-        }
-
-        .welcome-subtitle {
-            font-size: 1.2rem;
-            line-height: 1.6;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        /* Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-            border: 1px solid #e9ecef;
-        }
-
-        .stat-number {
-            font-size: 2.5rem;
+        .kursus-title {
+            font-size: 2.2rem;
             font-weight: 700;
             color: #1e3c72;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
 
-        .stat-label {
+        .kursus-subtitle {
+            font-size: 1.1rem;
             color: #5a6c7d;
-            font-size: 0.9rem;
-            font-weight: 500;
         }
 
-        /* Features Section */
-        .features-section {
-            margin-bottom: 40px;
-        }
-
-        .section-title {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #1e3c72;
-            margin-bottom: 25px;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
-        }
-
-        .feature-card {
-            background: white;
+        /* Messages Section */
+        .messages-section {
+            background: #f8f9fa;
             padding: 25px;
             border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-            border: 1px solid #e9ecef;
-            transition: transform 0.3s ease;
+            margin-bottom: 30px;
+            border-left: 4px solid #1e3c72;
         }
 
-        .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        .messages-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #1e3c72;
+            margin-bottom: 15px;
         }
 
-        .feature-icon {
-            width: 60px;
-            height: 60px;
+        .profile-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .profile-icon {
+            width: 40px;
+            height: 40px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 12px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 1.5rem;
+            margin-right: 15px;
+        }
+
+        .profile-text {
+            font-weight: 500;
+            color: #1e3c72;
+        }
+
+        /* Performance Section */
+        .performance-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border-left: 4px solid #28a745;
+        }
+
+        .performance-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #1e3c72;
             margin-bottom: 15px;
         }
 
-        .feature-card h5 {
+        .performance-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .progress-container {
+            margin-top: 10px;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: between;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            color: #5a6c7d;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px;
+        }
+
+        /* Course Card */
+        .course-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border: 1px solid #e9ecef;
+        }
+
+        .course-header {
+            display: flex;
+            justify-content: between;
+            align-items: start;
+            margin-bottom: 20px;
+        }
+
+        .course-title {
+            font-size: 1.5rem;
+            font-weight: 700;
             color: #1e3c72;
+            margin-bottom: 5px;
+        }
+
+        .course-badge {
+            background: #28a745;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
             font-weight: 600;
+        }
+
+        .course-description {
+            color: #5a6c7d;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .course-requirements {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .requirements-title {
+            font-weight: 600;
+            color: #1e3c72;
             margin-bottom: 10px;
         }
 
-        .feature-card p {
+        .requirements-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .requirements-list li {
+            padding: 5px 0;
             color: #5a6c7d;
-            line-height: 1.6;
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .requirements-list li:before {
+            content: "•";
+            color: #1e3c72;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
         }
 
         /* Footer */
@@ -532,17 +546,6 @@
             text-decoration: underline;
         }
 
-        /* CSS untuk Fallback Image */
-        .avatar-image[src=""],
-        .avatar-image:not([src]) {
-            opacity: 0;
-        }
-
-        .avatar-image:not([src]) + .avatar-initials,
-        .avatar-image[src=""] + .avatar-initials {
-            display: flex !important;
-        }
-
         /* Responsif */
         @media (max-width: 1200px) {
             .footer-content {
@@ -584,16 +587,13 @@
                 padding: 20px;
             }
             
-            .welcome-title {
-                font-size: 2rem;
+            .kursus-title {
+                font-size: 1.8rem;
             }
             
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .features-grid {
-                grid-template-columns: 1fr;
+            .course-header {
+                flex-direction: column;
+                gap: 10px;
             }
             
             .footer-content {
@@ -607,50 +607,6 @@
             
             .berakhlak-image {
                 max-width: 150px;
-            }
-
-            /* Responsif untuk User Profile */
-            .user-profile {
-                margin-left: 10px;
-                padding: 6px 12px;
-            }
-            
-            .user-avatar {
-                width: 40px;
-                height: 40px;
-            }
-            
-            .avatar-initials {
-                font-size: 14px;
-            }
-            
-            .user-name {
-                font-size: 0.85rem;
-                max-width: 120px;
-            }
-            
-            .user-status {
-                font-size: 0.7rem;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .user-info {
-                display: none;
-            }
-            
-            .user-profile {
-                padding: 8px;
-                background: transparent;
-            }
-            
-            .user-profile:hover {
-                background: rgba(30, 60, 114, 0.1);
-            }
-
-            .nav-menu {
-                flex-wrap: wrap;
-                justify-content: center;
             }
         }
     </style>
@@ -666,8 +622,8 @@
                 </a>
                 <div class="nav-menu ms-5">
                     <a href="/beranda" class="nav-item">Beranda</a>
-                    <a href="/dashboard" class="nav-item active">Dashboard</a>
-                    <a href="/kursus" class="nav-item">Kursus</a>
+                    <a href="/dashboard" class="nav-item">Dashboard</a>
+                    <a href="/kursus" class="nav-item active">Kursus</a>
                     <a href="#" class="nav-item">Kursus Saya</a>
                 </div>
             </div>
@@ -685,35 +641,12 @@
                     <span class="notification-badge">3</span>
                 </div>
                 
-                <!-- User Profile dengan Foto - VERSI DIPERBAIKI -->
+                <!-- User Profile -->
                 <div class="user-profile">
-                    <div class="user-avatar">
-                        @auth
-                            @php
-                                $user = Auth::user();
-                                $biodata = $user->biodata ?? null;
-                                $initials = strtoupper(substr($user->name, 0, 2));
-                            @endphp
-                            
-                            @if($biodata && $biodata->foto_profil)
-                                <img src="{{ asset('storage/' . $biodata->foto_profil) }}" 
-                                     alt="Foto Profil" 
-                                     class="avatar-image"
-                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                <div class="avatar-initials" style="display: none;">{{ $initials }}</div>
-                            @else
-                                <div class="avatar-initials">{{ $initials }}</div>
-                            @endif
-                        @endauth
-                    </div>
-                    <div class="user-info">
-                        <div class="user-name">
-                            {{ Auth::user()->biodata->nama_lengkap ?? Auth::user()->name }}
-                        </div>
-                        <div class="user-status">
-                            <span class="status-dot"></span>
-                            Online
-                        </div>
+                    <div class="user-avatar">MP</div>
+                    <div>
+                        <div style="font-weight: 600; color: #1e3c72;">Mitra BPS</div>
+                        <div style="font-size: 0.8rem; color: #5a6c7d;">Online</div>
                     </div>
                 </div>
             </div>
@@ -727,7 +660,7 @@
             <!-- Data Section -->
             <div class="sidebar-section">
                 <div class="sidebar-title">Data</div>
-                <a href="{{ route('profil.index') }}" class="sidebar-item {{ request()->routeIs('profil.*') ? 'active' : '' }}">
+                <a href="#" class="sidebar-item active">
                     <i class="fas fa-user"></i>
                     <span>Profil</span>
                 </a>
@@ -787,57 +720,74 @@
             </div>
         </div>
 
-        <!-- Main Content -->
+        <!-- Main Content - Kursus -->
         <div class="main-content">
-            <!-- Welcome Section -->
-            <div class="welcome-section">
-                <h1 class="welcome-title">Selamat Datang di MOCC BPS!</h1>
-                <p class="welcome-subtitle">
-                    Dengan Memadukan Media Digital Dan Teknologi Daring, Keterbatasan Mitra BPS 
-                    Dalam Mengembangkan Kompetensi Statistik Karena Jarak Dan Waktu Dapat Diminimalkan.
+            <!-- Kursus Header -->
+            <div class="kursus-header">
+                <h1 class="kursus-title">Kursusku</h1>
+                <p class="kursus-subtitle">Kelola dan pantau progress kursus Anda</p>
+            </div>
+
+            <!-- Messages Section -->
+            <div class="messages-section">
+                <h3 class="messages-title">Kommunizate Messages</h3>
+                <div class="profile-item">
+                    <div class="profile-icon">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="profile-text">Your Profile Profile</div>
+                </div>
+            </div>
+
+            <!-- Performance Section -->
+            <div class="performance-section">
+                <h3 class="performance-title">Performance Settings</h3>
+                <div class="performance-item">
+                    <div class="profile-text">Performance Grades</div>
+                    <div class="progress-container">
+                        <div class="progress-label">
+                            <span>Serum → Unif. bestämatikai kursu kursua</span>
+                            <span>78%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 78%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Course Card -->
+            <div class="course-card">
+                <div class="course-header">
+                    <div>
+                        <h2 class="course-title">Associate Data Scientist</h2>
+                        <div class="course-badge">Sertifikasi</div>
+                    </div>
+                </div>
+                
+                <p class="course-description">
+                    <strong>Associate Data Scientist</strong> merupakan salah satu jenis pelatihan Program Vocational School Graduate Academy Digital Talent Scholarship 2023 yang berstandar Standard Kompetensi Kerja Nasional Indonesia (SKKNI) dengan Sertifikasi Associate Data Scientist. Pelatihan Associate Data Scientist ini merupakan program agar kompeten dalam melaksanakan pekerjaan Associate Data Scientist yang membantu pekerjaan seorang data scientist untuk mengumpulkan, menganalisis, mengevaluasi, memelihara objek data hingga memberikan, mengevaluasi hasil data dan meningkatkan model dan algoritma yang sesuai kebutuhan. Pada akhir pelatihan peserta akan mengikuti uji kompetensi dan sertifikasi Associate Data Scientist. Peserta yang dinyatakan kompeten akan mendapatkan Sertifikasi Kompetensi Associate Data Scientist dari BPS.
                 </p>
-            </div>
 
-            <!-- Stats Grid -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-number">2,847</div>
-                    <div class="stat-label">Peserta Aktif</div>
+                <div class="course-requirements">
+                    <h4 class="requirements-title">Kriteria Peserta:</h4>
+                    <ul class="requirements-list">
+                        <li>Warga Negara Indonesia</li>
+                        <li>Berusia maksimal 25 tahun pada saat mendaftar</li>
+                        <li>Status aktif SMA/Sederajat</li>
+                        <li>Memahami dasar Digital dan Sistem</li>
+                        <li>Lolos seleksi administrasi dan tes kemampuan</li>
+                        <li>Memiliki perangkat kerja mandiri digital</li>
+                    </ul>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number">15+</div>
-                    <div class="stat-label">Kursus Tersedia</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">98%</div>
-                    <div class="stat-label">Tingkat Kepuasan</div>
-                </div>
-            </div>
 
-            <!-- Features Section -->
-            <div class="features-section">
-                <h3 class="section-title">Mengapa Memilih MOCC BPS?</h3>
-                <div class="features-grid">
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-globe"></i>
-                        </div>
-                        <h5>Akses Dimana Saja</h5>
-                        <p>Belajar kapan saja dan di mana saja dengan platform online yang dapat diakses 24/7 dari berbagai perangkat.</p>
+                <div class="progress-container">
+                    <div class="progress-label">
+                        <span>Serum → Unif. bestämatikai kursu kursua</span>
+                        <span>78%</span>
                     </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <h5>Kompetensi Statistik</h5>
-                        <p>Tingkatkan kemampuan statistik dengan materi yang disusun oleh ahli BPS dan praktisi terkemuka.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <h5>Komunitas Belajar</h5>
-                        <p>Bergabung dengan komunitas praktisi statistik dari seluruh Indonesia untuk berbagi pengetahuan.</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 78%"></div>
                     </div>
                 </div>
             </div>
@@ -885,7 +835,7 @@
                 <div class="footer-section">
                     <h3>Tentang Kami</h3>
                     <ul class="footer-links">
-                        <li><a href="https://ppid.bps.go.id/app/konten/6301/Profil-BPS.html?_gl=1*15t609r*_ga*MjQxOTY0MDAzLjE3NjEyNzM4MzU.*_ga_XXTTVXWHDB*czE3NjEyNzM4MzQkbzEkZzAkdTE3NjEyNzM4MzQkajYwJGwwJGgw">Profil BPS</a></li>
+                        <li><a href="https://ppid.bps.go.id/app/konten/6301/Profil-BPS.html?_gl=1*15t609r*_ga*MjQxOTY0MDAzLjE3NjEyNzM4MzU.*_ga_XXTTVXWHDB*czE3NjEyNzM4MzQkbzEkZzAkdDE3NjEyNzM4MzQkajYwJGwwJGgw">Profil BPS</a></li>
                         <li><a href="#">PPID</a></li>
                         <li><a href="#">Kebijakan Diseminasi</a></li>
                     </ul>
@@ -944,17 +894,6 @@
             item.addEventListener('click', function() {
                 document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
                 this.classList.add('active');
-            });
-        });
-
-        // Handle image loading errors
-        document.querySelectorAll('.avatar-image').forEach(img => {
-            img.addEventListener('error', function() {
-                this.style.display = 'none';
-                const initials = this.nextElementSibling;
-                if (initials && initials.classList.contains('avatar-initials')) {
-                    initials.style.display = 'flex';
-                }
             });
         });
     </script>

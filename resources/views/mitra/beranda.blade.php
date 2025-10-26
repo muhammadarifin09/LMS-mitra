@@ -746,8 +746,8 @@
             </a>
             <div class="nav-menu ms-5">
                 <a href="#" class="nav-item active">Beranda</a>
-                <a href="#" class="nav-item">Dashboard</a>
-                <a href="#" class="nav-item">Kursus</a>
+                <a href="{{ route('mitra.dashboard') }}" class="nav-item">Dashboard</a>
+                <a href="{{ route('mitra.kursus') }}" class="nav-item">Kursus</a>
                 <a href="#" class="nav-item">Kursus Saya</a>
             </div>
         </div>

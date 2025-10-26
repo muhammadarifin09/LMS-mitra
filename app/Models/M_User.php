@@ -29,4 +29,9 @@ class M_User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function biodata()
+    {
+        return $this->hasOne(Biodata::class, 'user_id');
+    }
 }

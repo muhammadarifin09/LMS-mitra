@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\AuthController;
 use Illuminate\Support\Facades\Mail; 
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Admin\BiodataController;
+use App\Http\Controllers\ProfilController;
 
 // Login
 Route::get('/', fn() => view('login'))->name('login.page');
@@ -33,3 +34,20 @@ Route::middleware(['auth', 'role:mitra'])->group(function () {
     Route::get('/beranda', fn() => view('mitra.beranda'))->name('mitra.beranda');
 });
 
+Route::middleware(['auth', 'role:mitra'])->group(function () {
+    Route::get('/dashboard', fn() => view('mitra.dashboard'))->name('mitra.dashboard');
+});
+
+Route::middleware(['auth', 'role:mitra'])->group(function () {
+    Route::get('/kursus', fn() => view('mitra.kursus'))->name('mitra.kursus');
+});
+
+// routes/web.php
+
+// routes/web.php
+Route::prefix('profil')->group(function () {
+    Route::get('/profil', [ProfilController::class, 'index'])->name('profil.index');
+    Route::get('/edit', [ProfilController::class, 'edit'])->name('profil.edit');
+    Route::put('/update', [ProfilController::class, 'update'])->name('profil.update'); // PUT method
+    Route::delete('/hapus-foto', [ProfilController::class, 'hapusFoto'])->name('profil.hapus-foto');
+});
