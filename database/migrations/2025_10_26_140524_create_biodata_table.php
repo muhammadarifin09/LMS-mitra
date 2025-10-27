@@ -10,7 +10,7 @@ return new class extends Migration
     public function up()
     {
         Schema::create('biodata', function (Blueprint $table) {
-            $table->id();
+            $table->id_sobat();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('nama_lengkap');
             $table->string('tempat_lahir');
@@ -18,6 +18,7 @@ return new class extends Migration
             $table->enum('jenis_kelamin', ['L', 'P']);
             $table->text('alamat');
             $table->string('no_telepon');
+            $table->string('username_sobat')->unique();
             $table->string('foto_profil')->nullable();
             $table->string('pekerjaan');
             $table->string('instansi');
