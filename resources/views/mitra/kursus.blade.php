@@ -24,7 +24,7 @@
         /* Navigation - Sticky dengan teks besar */
         .main-nav {
             background: rgba(255, 255, 255, 0.98);
-            padding: 20px 60px;
+            padding: 15px 60px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             border-bottom: 3px solid #1e3c72;
             position: sticky;
@@ -78,14 +78,14 @@
         /* Style untuk ikon navigasi */
         .nav-icon {
             position: relative;
-            width: 45px;
-            height: 45px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #1e3c72;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             cursor: pointer;
             transition: all 0.3s ease;
             background: rgba(30, 60, 114, 0.1);
@@ -116,13 +116,13 @@
         
         /* Perbesar ukuran teks navigasi */
         .nav-item {
-            padding: 12px 25px;
-            border-radius: 25px;
+            padding: 10px 20px;
+            border-radius: 20px;
             font-weight: 600;
             color: #1e3c72;
             text-decoration: none;
             transition: all 0.3s ease;
-            font-size: 1.1rem;
+            font-size: 1rem;
         }
         
         .nav-item:hover, .nav-item.active {
@@ -130,24 +130,98 @@
             color: white;
             transform: translateY(-2px);
         }
-        
+
+        /* User Profile & Avatar Styles - DIPERBAIKI */
         .user-profile {
             display: flex;
             align-items: center;
-            gap: 15px;
-            margin-left: 30px;
+            gap: 10px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: rgba(30, 60, 114, 0.05);
+            transition: all 0.3s ease;
+            margin-left: 15px;
+            text-decoration: none;
+            border: 1px solid rgba(30, 60, 114, 0.1);
         }
-        
+
+        .user-profile:hover {
+            background: rgba(30, 60, 114, 0.1);
+            text-decoration: none;
+        }
+
         .user-avatar {
-            width: 45px;
-            height: 45px;
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            width: 38px;
+            height: 38px;
             border-radius: 50%;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
             display: flex;
             align-items: center;
             justify-content: center;
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+            border: 2px solid white;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .avatar-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .avatar-initials {
             color: white;
-            font-weight: bold;
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #1e3c72;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 120px;
+            line-height: 1.2;
+        }
+
+        .user-status {
+            font-size: 0.7rem;
+            color: #5a6c7d;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            line-height: 1.2;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: #28a745;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        /* CSS untuk Fallback Image */
+        .avatar-image[src=""],
+        .avatar-image:not([src]) {
+            opacity: 0;
+        }
+
+        .avatar-image:not([src]) + .avatar-initials,
+        .avatar-image[src=""] + .avatar-initials {
+            display: flex !important;
         }
 
         /* Dashboard Layout */
@@ -546,7 +620,69 @@
             text-decoration: underline;
         }
 
-        /* Responsif */
+        /* Responsif untuk User Profile */
+        @media (max-width: 768px) {
+            .main-nav {
+                padding: 12px 20px;
+            }
+            
+            .user-profile {
+                margin-left: 10px;
+                padding: 5px 10px;
+            }
+            
+            .user-avatar {
+                width: 35px;
+                height: 35px;
+            }
+            
+            .avatar-initials {
+                font-size: 0.75rem;
+            }
+            
+            .user-name {
+                font-size: 0.8rem;
+                max-width: 100px;
+            }
+            
+            .user-status {
+                font-size: 0.65rem;
+            }
+
+            .nav-item {
+                padding: 8px 15px;
+                font-size: 0.9rem;
+            }
+
+            .nav-icon {
+                width: 35px;
+                height: 35px;
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .user-info {
+                display: none;
+            }
+            
+            .user-profile {
+                padding: 6px;
+                background: transparent;
+                border: none;
+            }
+            
+            .user-profile:hover {
+                background: rgba(30, 60, 114, 0.1);
+            }
+
+            .nav-menu {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+
+        /* Responsif lainnya */
         @media (max-width: 1200px) {
             .footer-content {
                 grid-template-columns: 1fr 1fr;
@@ -555,17 +691,8 @@
         }
 
         @media (max-width: 768px) {
-            .main-nav {
-                padding: 12px 20px;
-            }
-            
             .nav-menu {
                 gap: 5px;
-            }
-            
-            .nav-item {
-                padding: 8px 15px;
-                font-size: 1rem;
             }
             
             .logo-image {
@@ -618,7 +745,7 @@
             <div class="d-flex align-items-center">
                 <!-- Logo MOCC BPS sebagai gambar -->
                 <a href="#" class="nav-brand">
-                    <img src="img/Logo_E-Learning.png" alt="MOCC BPS Logo" class="logo-image">
+                    <img src="{{ asset('img/Logo_E-Learning.png') }}" alt="MOCC BPS Logo" class="logo-image">
                 </a>
                 <div class="nav-menu ms-5">
                     <a href="/beranda" class="nav-item">Beranda</a>
@@ -636,19 +763,42 @@
                 </div>
                 
                 <!-- Ikon Notifikasi -->
-                <div class="nav-icon me-4">
+                <div class="nav-icon me-3">
                     <i class="fas fa-bell"></i>
                     <span class="notification-badge">3</span>
                 </div>
                 
-                <!-- User Profile -->
-                <div class="user-profile">
-                    <div class="user-avatar">MP</div>
-                    <div>
-                        <div style="font-weight: 600; color: #1e3c72;">Mitra BPS</div>
-                        <div style="font-size: 0.8rem; color: #5a6c7d;">Online</div>
+                <!-- User Profile dengan Foto - VERSI DIPERBAIKI -->
+                <a href="{{ route('profil.index') }}" class="user-profile">
+                    <div class="user-avatar">
+                        @auth
+                            @php
+                                $user = Auth::user();
+                                $biodata = $user->biodata ?? null;
+                                $initials = strtoupper(substr($user->name, 0, 2));
+                            @endphp
+                            
+                            @if($biodata && $biodata->foto_profil)
+                                <img src="{{ asset('storage/' . $biodata->foto_profil) }}" 
+                                     alt="Foto Profil" 
+                                     class="avatar-image"
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div class="avatar-initials" style="display: none;">{{ $initials }}</div>
+                            @else
+                                <div class="avatar-initials">{{ $initials }}</div>
+                            @endif
+                        @endauth
                     </div>
-                </div>
+                    <div class="user-info">
+                        <div class="user-name">
+                            {{ Auth::user()->biodata->nama_lengkap ?? Auth::user()->name }}
+                        </div>
+                        <div class="user-status">
+                            <span class="status-dot"></span>
+                            Online
+                        </div>
+                    </div>
+                </a>
             </div>
         </div>
     </nav>
@@ -659,8 +809,8 @@
         <div class="sidebar">
             <!-- Data Section -->
             <div class="sidebar-section">
-                <div class="sidebar-title">Data</div>
-                <a href="#" class="sidebar-item active">
+                <div class="sidebar-title">Dashboard</div>
+                <a href="{{ route('profil.index') }}" class="sidebar-item {{ request()->routeIs('profil.*') ? 'active' : '' }}">
                     <i class="fas fa-user"></i>
                     <span>Profil</span>
                 </a>
@@ -669,54 +819,16 @@
                     <span>Nilai</span>
                 </a>
                 <a href="#" class="sidebar-item">
-                    <i class="fas fa-calendar-alt"></i>
-                    <span>Kalender</span>
-                </a>
-                <a href="#" class="sidebar-item">
-                    <i class="fas fa-file"></i>
-                    <span>Berkas pribadi</span>
-                </a>
-                <a href="#" class="sidebar-item">
                     <i class="fas fa-flag"></i>
                     <span>Laporan</span>
                 </a>
-                <a href="#" class="sidebar-item">
-                    <i class="fas fa-cog"></i>
-                    <span>Preferensi</span>
-                </a>
-                <a href="#" class="sidebar-item">
+                <a href="#" class="sidebar-item text-danger" onclick="event.preventDefault(); if(confirm('Apakah Anda yakin ingin keluar?')) document.getElementById('logout-form').submit();">
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Keluar</span>
                 </a>
-            </div>
-
-            <!-- Dashboard Section -->
-            <div class="sidebar-section">
-                <div class="sidebar-title">Dasbor</div>
-                <a href="#" class="sidebar-item">
-                    <i class="fas fa-comments"></i>
-                    <span>Communicate Messages</span>
-                </a>
-                <a href="#" class="sidebar-item">
-                    <i class="fas fa-id-card"></i>
-                    <span>Your Profile Profile</span>
-                </a>
-                <a href="#" class="sidebar-item">
-                    <i class="fas fa-sliders-h"></i>
-                    <span>Preferences Settings</span>
-                </a>
-                <a href="#" class="sidebar-item">
-                    <i class="fas fa-chart-bar"></i>
-                    <span>Performance Grades</span>
-                </a>
-            </div>
-
-            <!-- Customize Section -->
-            <div class="sidebar-section">
-                <a href="#" class="sidebar-item">
-                    <i class="fas fa-palette"></i>
-                    <span>Sesuaikan halaman ini</span>
-                </a>
+                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                    @csrf
+                </form>
             </div>
         </div>
 
@@ -824,7 +936,7 @@
                     
                     <!-- Gambar BerAKHLAK dan Manual S&K Daftar Tarakan -->
                     <div class="berakhlak-container">
-                        <img src="img/cover.jpg" alt="BerAKHLAK" class="berakhlak-image">
+                        <img src="{{ asset('img/cover.jpg') }}" alt="BerAKHLAK" class="berakhlak-image">
                         <ul class="berakhlak-links">
                             <li><a href="#">Manual S&K Daftar Tarakan</a></li>
                         </ul>
@@ -835,7 +947,7 @@
                 <div class="footer-section">
                     <h3>Tentang Kami</h3>
                     <ul class="footer-links">
-                        <li><a href="https://ppid.bps.go.id/app/konten/6301/Profil-BPS.html?_gl=1*15t609r*_ga*MjQxOTY0MDAzLjE3NjEyNzM4MzU.*_ga_XXTTVXWHDB*czE3NjEyNzM4MzQkbzEkZzAkdDE3NjEyNzM4MzQkajYwJGwwJGgw">Profil BPS</a></li>
+                        <li><a href="https://ppid.bps.go.id/app/konten/6301/Profil-BPS.html?_gl=1*15t609r*_ga*MjQxOTY0MDAzLjE3NjEyNzM4MzU.*_ga_XXTTVXWHDB*czE3NjEyNzM4MzQkbzEkZzAkdTE3NjEyNzM4MzQkajYwJGwwJGgw">Profil BPS</a></li>
                         <li><a href="#">PPID</a></li>
                         <li><a href="#">Kebijakan Diseminasi</a></li>
                     </ul>
@@ -894,6 +1006,19 @@
             item.addEventListener('click', function() {
                 document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
                 this.classList.add('active');
+            });
+        });
+
+        // Handle image loading errors
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.avatar-image').forEach(img => {
+                img.addEventListener('error', function() {
+                    this.style.display = 'none';
+                    const initials = this.nextElementSibling;
+                    if (initials && initials.classList.contains('avatar-initials')) {
+                        initials.style.display = 'flex';
+                    }
+                });
             });
         });
     </script>

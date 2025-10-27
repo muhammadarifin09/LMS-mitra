@@ -24,7 +24,7 @@
         /* Navigation - Sticky dengan teks besar */
         .main-nav {
             background: rgba(255, 255, 255, 0.98);
-            padding: 20px 60px;
+            padding: 15px 60px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             border-bottom: 3px solid #1e3c72;
             position: sticky;
@@ -39,29 +39,28 @@
             color: #1e3c72;
             text-decoration: none;
             position: relative;
-    padding-right: 25px;
+            padding-right: 25px;
         }
 
         .nav-brand::after {
-    content: "";
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    height: 60px; /* Tinggi garis */
-    width: 1.5px; /* Lebar garis */
-    background: linear-gradient(to bottom,  
-        rgba(42, 82, 152, 0.7));
-    border-radius: 2px;
-}
+            content: "";
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 60px;
+            width: 1.5px;
+            background: linear-gradient(to bottom, rgba(42, 82, 152, 0.7));
+            border-radius: 2px;
+        }
         
         .nav-brand span {
             color: #2a5298;
         }
         
-        /* Logo MOCC BPS sebagai gambar - DIPERBESAR */
+        /* Logo MOCC BPS sebagai gambar */
         .logo-image {
-            height: 50px; /* Diperbesar dari 100px */
+            height: 50px;
             width: auto;
             transition: transform 0.3s ease;
         }
@@ -77,76 +76,53 @@
         }
 
         /* Style untuk ikon navigasi */
-.nav-icon {
-    position: relative;
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #1e3c72;
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    background: rgba(30, 60, 114, 0.1);
-}
+        .nav-icon {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1e3c72;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(30, 60, 114, 0.1);
+        }
 
-.nav-icon:hover {
-    background: rgba(30, 60, 114, 0.2);
-    color: #2a5298;
-    transform: scale(1.1);
-}
+        .nav-icon:hover {
+            background: rgba(30, 60, 114, 0.2);
+            color: #2a5298;
+            transform: scale(1.1);
+        }
 
-/* Badge notifikasi */
-.notification-badge {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    background: #e74c3c;
-    color: white;
-    border-radius: 50%;
-    width: 18px;
-    height: 18px;
-    font-size: 0.7rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-}
-
-/* Untuk responsif di mobile */
-@media (max-width: 768px) {
-    .nav-icon {
-        width: 45px;
-        height: 45px;
-        font-size: 1rem;
-    }
-    
-    .nav-icon.me-3 {
-        margin-right: 15px !important;
-    }
-    
-    .nav-icon.me-4 {
-        margin-right: 20px !important;
-    }
-    
-    .notification-badge {
-        width: 16px;
-        height: 16px;
-        font-size: 0.6rem;
-    }
-}
+        /* Badge notifikasi */
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
         
         /* Perbesar ukuran teks navigasi */
         .nav-item {
-            padding: 12px 25px;
-            border-radius: 25px;
+            padding: 10px 20px;
+            border-radius: 20px;
             font-weight: 600;
             color: #1e3c72;
             text-decoration: none;
             transition: all 0.3s ease;
-            font-size: 1.1rem; /* Ukuran teks lebih besar */
+            font-size: 1rem;
         }
         
         .nav-item:hover, .nav-item.active {
@@ -154,24 +130,160 @@
             color: white;
             transform: translateY(-2px);
         }
-        
+
+        /* User Profile & Avatar Styles - DIPERBAIKI */
         .user-profile {
             display: flex;
             align-items: center;
-            gap: 15px;
-            margin-left: 30px;
+            gap: 10px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: rgba(30, 60, 114, 0.05);
+            transition: all 0.3s ease;
+            margin-left: 15px;
+            text-decoration: none;
+            border: 1px solid rgba(30, 60, 114, 0.1);
         }
-        
+
+        .user-profile:hover {
+            background: rgba(30, 60, 114, 0.1);
+            text-decoration: none;
+        }
+
         .user-avatar {
-            width: 45px;
-            height: 45px;
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            width: 38px;
+            height: 38px;
             border-radius: 50%;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
             display: flex;
             align-items: center;
             justify-content: center;
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+            border: 2px solid white;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .avatar-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .avatar-initials {
             color: white;
-            font-weight: bold;
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #1e3c72;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 120px;
+            line-height: 1.2;
+        }
+
+        .user-status {
+            font-size: 0.7rem;
+            color: #5a6c7d;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            line-height: 1.2;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: #28a745;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        /* CSS untuk Fallback Image */
+        .avatar-image[src=""],
+        .avatar-image:not([src]) {
+            opacity: 0;
+        }
+
+        .avatar-image:not([src]) + .avatar-initials,
+        .avatar-image[src=""] + .avatar-initials {
+            display: flex !important;
+        }
+
+        /* Responsif untuk User Profile */
+        @media (max-width: 768px) {
+            .main-nav {
+                padding: 12px 20px;
+            }
+            
+            .user-profile {
+                margin-left: 10px;
+                padding: 5px 10px;
+            }
+            
+            .user-avatar {
+                width: 35px;
+                height: 35px;
+            }
+            
+            .avatar-initials {
+                font-size: 0.75rem;
+            }
+            
+            .user-name {
+                font-size: 0.8rem;
+                max-width: 100px;
+            }
+            
+            .user-status {
+                font-size: 0.65rem;
+            }
+
+            .nav-item {
+                padding: 8px 15px;
+                font-size: 0.9rem;
+            }
+
+            .nav-icon {
+                width: 35px;
+                height: 35px;
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .user-info {
+                display: none;
+            }
+            
+            .user-profile {
+                padding: 6px;
+                background: transparent;
+                border: none;
+            }
+            
+            .user-profile:hover {
+                background: rgba(30, 60, 114, 0.1);
+            }
+
+            .nav-menu {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
         }
         
         /* Slider Styles - Tanpa Border Kotak */
@@ -181,7 +293,7 @@
             margin: 0 auto;
             overflow: hidden;
             margin-bottom: 100px;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.2); /* Hanya pembatas bawah */
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
         }
         
         .slider {
@@ -194,7 +306,7 @@
             display: flex;
             flex-direction: column;
             padding: 60px 80px;
-            background: transparent; /* Background transparan */
+            background: transparent;
         }
         
         .slide-content {
@@ -260,12 +372,12 @@
         .profile-image-container {
             position: relative;
             display: inline-block;
-            margin-right: -50px; /* Geser lebih ke kanan */
+            margin-right: -50px;
         }
         
         .profile-image {
-            width: 500px; /* Lebih besar */
-            height: 600px; /* Lebih tinggi */
+            width: 500px;
+            height: 600px;
             border-radius: 25px;
             object-fit: cover;
             box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
@@ -284,7 +396,7 @@
             border: 3px solid rgba(255, 255, 255, 0.2);
             border-radius: 30px;
             top: 20px;
-            right: -20px; /* Sesuaikan dengan pergeseran ke kanan */
+            right: -20px;
             z-index: -1;
         }
         
@@ -317,7 +429,6 @@
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            
             width: 50px;
             height: 50px;
             border-radius: 50%;
@@ -330,7 +441,6 @@
             transition: all 0.3s ease;
             z-index: 10;
             backdrop-filter: blur(10px);
-            
         }
         
         .slider-arrow:hover {
@@ -494,288 +604,300 @@
         }
         
         /* Footer */
-        /* Footer */
-.main-footer {
-    background: #1a365d;
-    color: white;
-    padding: 50px 0 25px;
-    margin-top: 100px;
-    width: 100%;
-    font-size: 14px;
-}
+        .main-footer {
+            background: #1a365d;
+            color: white;
+            padding: 50px 0 25px;
+            margin-top: 100px;
+            width: 100%;
+            font-size: 14px;
+        }
 
-.footer-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
-}
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
 
-.footer-content {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1.5fr;
-    gap: 40px;
-    margin-bottom: 40px;
-}
+        .footer-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1.5fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
 
-.footer-section h3 {
-    font-size: 1.2rem;
-    font-weight: 700;
-    margin-bottom: 20px;
-    color: white;
-    border-bottom: 2px solid #2d74da;
-    padding-bottom: 8px;
-}
+        .footer-section h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: white;
+            border-bottom: 2px solid #2d74da;
+            padding-bottom: 8px;
+        }
 
-.footer-section h4 {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 15px;
-    color: white;
-}
+        .footer-section h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: white;
+        }
 
-.footer-address {
-    line-height: 1.7;
-    margin-bottom: 20px;
-}
+        .footer-address {
+            line-height: 1.7;
+            margin-bottom: 20px;
+        }
 
-.footer-address p {
-    margin-bottom: 8px;
-}
+        .footer-address p {
+            margin-bottom: 8px;
+        }
 
-.footer-links {
-    list-style: none;
-}
+        .footer-links {
+            list-style: none;
+        }
 
-.footer-links li {
-    margin-bottom: 10px;
-}
+        .footer-links li {
+            margin-bottom: 10px;
+        }
 
-.footer-links a {
-    color: rgba(255, 255, 255, 0.85);
-    text-decoration: none;
-    transition: color 0.3s ease;
-    font-size: 14px;
-}
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            transition: color 0.3s ease;
+            font-size: 14px;
+        }
 
-.footer-links a:hover {
-    color: white;
-    text-decoration: underline;
-}
+        .footer-links a:hover {
+            color: white;
+            text-decoration: underline;
+        }
 
-.news-item {
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
+        .news-item {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
 
-.news-date {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.7);
-    margin-bottom: 5px;
-}
+        .news-date {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 5px;
+        }
 
-.news-title {
-    font-weight: 500;
-    line-height: 1.4;
-}
+        .news-title {
+            font-weight: 500;
+            line-height: 1.4;
+        }
 
-.footer-divider {
-    height: 1px;
-    background: rgba(255, 255, 255, 0.2);
-    margin: 30px 0;
-}
+        .footer-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.2);
+            margin: 30px 0;
+        }
 
-.footer-bottom {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding-top: 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.8);
-}
+        .footer-bottom {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+        }
 
-.bps-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin-bottom: 15px;
-    color: white;
-}
+        .bps-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: white;
+        }
 
-.contact-info {
-    margin-top: 15px;
-}
+        .contact-info {
+            margin-top: 15px;
+        }
 
-.contact-info p {
-    margin-bottom: 5px;
-}
+        .contact-info p {
+            margin-bottom: 5px;
+        }
 
-/* Style untuk gambar BerAKHLAK */
-.berakhlak-container {
-    margin-top: 25px;
-    padding-top: 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-}
+        .berakhlak-container {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
 
-.berakhlak-image {
-    max-width: 200px;
-    margin-bottom: 15px;
-}
+        .berakhlak-image {
+            max-width: 200px;
+            margin-bottom: 15px;
+        }
 
-.berakhlak-links {
-    list-style: none;
-    margin-top: 10px;
-}
+        .berakhlak-links {
+            list-style: none;
+            margin-top: 10px;
+        }
 
-.berakhlak-links li {
-    margin-bottom: 8px;
-}
+        .berakhlak-links li {
+            margin-bottom: 8px;
+        }
 
-.berakhlak-links a {
-    color: rgba(255, 255, 255, 0.85);
-    text-decoration: none;
-    transition: color 0.3s ease;
-    font-size: 14px;
-}
+        .berakhlak-links a {
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            transition: color 0.3s ease;
+            font-size: 14px;
+        }
 
-.berakhlak-links a:hover {
-    color: white;
-    text-decoration: underline;
-}
+        .berakhlak-links a:hover {
+            color: white;
+            text-decoration: underline;
+        }
 
-/* Responsif */
-@media (max-width: 1200px) {
-    .slide-content {
-        grid-template-columns: 1fr;
-        gap: 50px;
-        text-align: center;
-    }
-    
-    .text-content {
-        text-align: center;
-        padding-top: 0;
-    }
-    
-    .image-content {
-        text-align: center;
-    }
-    
-    .profile-image {
-        width: 400px;
-        height: 500px;
-    }
-    
-    .stats-mini {
-        justify-content: center;
-    }
-    
-    .content-grid {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
-    
-    .footer-content {
-        grid-template-columns: 1fr 1fr;
-        gap: 30px;
-    }
-}
+        /* Responsif lainnya */
+        @media (max-width: 1200px) {
+            .slide-content {
+                grid-template-columns: 1fr;
+                gap: 50px;
+                text-align: center;
+            }
+            
+            .text-content {
+                text-align: center;
+                padding-top: 0;
+            }
+            
+            .image-content {
+                text-align: center;
+            }
+            
+            .profile-image {
+                width: 400px;
+                height: 500px;
+            }
+            
+            .stats-mini {
+                justify-content: center;
+            }
+            
+            .content-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .footer-content {
+                grid-template-columns: 1fr 1fr;
+                gap: 30px;
+            }
+        }
 
-@media (max-width: 768px) {
-    .main-nav {
-        padding: 12px 20px;
-    }
-    
-    .nav-menu {
-        gap: 5px;
-    }
-    
-    .nav-item {
-        padding: 8px 15px;
-        font-size: 1rem;
-    }
-    
-    .logo-image {
-        height: 60px;
-    }
-    
-    .slide {
-        padding: 40px 30px;
-    }
-    
-    .profile-image {
-        width: 300px;
-        height: 400px;
-    }
-    
-    .welcome-title {
-        font-size: 2.5rem;
-    }
-    
-    .stats-mini {
-        flex-direction: column;
-        align-items: center;
-    }
-    
-    .stat-mini-item {
-        width: 200px;
-    }
-    
-    .footer-content {
-        grid-template-columns: 1fr;
-        gap: 30px;
-    }
-    
-    .footer-container {
-        padding: 0 15px;
-    }
-    
-    .berakhlak-image {
-        max-width: 150px;
-    }
-}
+        @media (max-width: 768px) {
+            .nav-menu {
+                gap: 5px;
+            }
+            
+            .logo-image {
+                height: 60px;
+            }
+            
+            .slide {
+                padding: 40px 30px;
+            }
+            
+            .profile-image {
+                width: 300px;
+                height: 400px;
+            }
+            
+            .welcome-title {
+                font-size: 2.5rem;
+            }
+            
+            .stats-mini {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .stat-mini-item {
+                width: 200px;
+            }
+            
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+            
+            .footer-container {
+                padding: 0 15px;
+            }
+            
+            .berakhlak-image {
+                max-width: 150px;
+            }
+        }
     </style>
 </head>
 <body>
     <!-- Navigation - Sticky -->
     <nav class="main-nav">
-    <div class="d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center">
-            <!-- Logo MOCC BPS sebagai gambar -->
-            <a href="#" class="nav-brand">
-                <img src="img/Logo_E-Learning.png" alt="MOCC BPS Logo" class="logo-image">
-            </a>
-            <div class="nav-menu ms-5">
-                <a href="#" class="nav-item active">Beranda</a>
-                <a href="{{ route('mitra.dashboard') }}" class="nav-item">Dashboard</a>
-                <a href="{{ route('mitra.kursus') }}" class="nav-item">Kursus</a>
-                <a href="#" class="nav-item">Kursus Saya</a>
-            </div>
-        </div>
-        
-        <!-- Tambahkan bagian ikon di sini -->
-        <div class="d-flex align-items-center">
-            <!-- Ikon Bahasa -->
-            <div class="nav-icon me-3">
-                <i class="fas fa-globe"></i>
-            </div>
-            
-            <!-- Ikon Notifikasi -->
-            <div class="nav-icon me-4">
-                <i class="fas fa-bell"></i>
-                <span class="notification-badge">3</span>
-            </div>
-            
-            <!-- User Profile (yang sudah ada) -->
-            <div class="user-profile">
-                <div class="user-avatar">MP</div>
-                <div>
-                    <div style="font-weight: 600; color: #1e3c72;">Mitra BPS</div>
-                    <div style="font-size: 0.8rem; color: #5a6c7d;">Online</div>
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <!-- Logo MOCC BPS sebagai gambar -->
+                <a href="#" class="nav-brand">
+                    <img src="{{ asset('img/Logo_E-Learning.png') }}" alt="MOCC BPS Logo" class="logo-image">
+                </a>
+                <div class="nav-menu ms-5">
+                    <a href="#" class="nav-item active">Beranda</a>
+                    <a href="{{ route('mitra.dashboard') }}" class="nav-item">Dashboard</a>
+                    <a href="{{ route('mitra.kursus') }}" class="nav-item">Kursus</a>
+                    <a href="#" class="nav-item">Kursus Saya</a>
                 </div>
             </div>
+            
+            <!-- Tambahkan bagian ikon di sini -->
+            <div class="d-flex align-items-center">
+                <!-- Ikon Bahasa -->
+                <div class="nav-icon me-3">
+                    <i class="fas fa-globe"></i>
+                </div>
+                
+                <!-- Ikon Notifikasi -->
+                <div class="nav-icon me-3">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">3</span>
+                </div>
+                
+                <!-- User Profile dengan Foto - VERSI DIPERBAIKI -->
+                <a href="{{ route('profil.index') }}" class="user-profile">
+                    <div class="user-avatar">
+                        @auth
+                            @php
+                                $user = Auth::user();
+                                $biodata = $user->biodata ?? null;
+                                $initials = strtoupper(substr($user->name, 0, 2));
+                            @endphp
+                            
+                            @if($biodata && $biodata->foto_profil)
+                                <img src="{{ asset('storage/' . $biodata->foto_profil) }}" 
+                                     alt="Foto Profil" 
+                                     class="avatar-image"
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div class="avatar-initials" style="display: none;">{{ $initials }}</div>
+                            @else
+                                <div class="avatar-initials">{{ $initials }}</div>
+                            @endif
+                        @endauth
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name">
+                            {{ Auth::user()->biodata->nama_lengkap ?? Auth::user()->name }}
+                        </div>
+                        <div class="user-status">
+                            <span class="status-dot"></span>
+                            Online
+                        </div>
+                    </div>
+                </a>
+            </div>
         </div>
-    </div>
-</nav>
+    </nav>
 
     <!-- Floating Elements -->
     <div class="floating-elements">
@@ -996,81 +1118,81 @@
 
     <!-- Footer -->
     <footer class="main-footer">
-    <div class="footer-container">
-        <div class="footer-content">
-            <!-- Alamat BPS + BerAKHLAK -->
-            <div class="footer-section">
-                <div class="bps-title">BADAN PUSAT STATISTIK</div>
-                <div class="footer-address">
-                    <p>Badan Pusat Statistik Kabupaten Tanah Laut (BPS-Statistics of Tanah Laut Regency)</p>
-                    <p>Alamat: Jalan A. Syairani No. 9 Pelaihari Kab. Tanah Laut</p>
-                    <p>Prov. Kalimantan Selatan</p>
-                    <p>76914</p>
-                    <p>Indonesia</p>
+        <div class="footer-container">
+            <div class="footer-content">
+                <!-- Alamat BPS + BerAKHLAK -->
+                <div class="footer-section">
+                    <div class="bps-title">BADAN PUSAT STATISTIK</div>
+                    <div class="footer-address">
+                        <p>Badan Pusat Statistik Kabupaten Tanah Laut (BPS-Statistics of Tanah Laut Regency)</p>
+                        <p>Alamat: Jalan A. Syairani No. 9 Pelaihari Kab. Tanah Laut</p>
+                        <p>Prov. Kalimantan Selatan</p>
+                        <p>76914</p>
+                        <p>Indonesia</p>
+                    </div>
+                    <div class="contact-info">
+                        <p>Telepon: +62 512 21092</p>
+                        <p>Fax: +62 512 3113</p>
+                        <p>Email: bps6301@bps.go.id</p>
+                        <p>bps6301@gmail.com</p>
+                    </div>
+                    
+                    <!-- Gambar BerAKHLAK dan Manual S&K Daftar Tarakan -->
+                    <div class="berakhlak-container">
+                        <img src="{{ asset('img/cover.jpg') }}" alt="BerAKHLAK" class="berakhlak-image">
+                        <ul class="berakhlak-links">
+                            <li><a href="#">Manual S&K Daftar Tarakan</a></li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="contact-info">
-                    <p>Telepon: +62 512 21092</p>
-                    <p>Fax: +62 512 3113</p>
-                    <p>Email: bps6301@bps.go.id</p>
-                    <p>bps6301@gmail.com</p>
-                </div>
-                
-                <!-- Gambar BerAKHLAK dan Manual S&K Daftar Tarakan -->
-                <div class="berakhlak-container">
-                    <img src="img/cover.jpg" alt="BerAKHLAK" class="berakhlak-image">
-                    <ul class="berakhlak-links">
-                        <li><a href="#">Manual S&K Daftar Tarakan</a></li>
+
+                <!-- Tentang Kami -->
+                <div class="footer-section">
+                    <h3>Tentang Kami</h3>
+                    <ul class="footer-links">
+                        <li><a href="https://ppid.bps.go.id/app/konten/6301/Profil-BPS.html?_gl=1*15t609r*_ga*MjQxOTY0MDAzLjE3NjEyNzM4MzU.*_ga_XXTTVXWHDB*czE3NjEyNzM4MzQkbzEkZzAkdTE3NjEyNzM4MzQkajYwJGwwJGgw">Profil BPS</a></li>
+                        <li><a href="#">PPID</a></li>
+                        <li><a href="#">Kebijakan Diseminasi</a></li>
                     </ul>
                 </div>
-            </div>
 
-            <!-- Tentang Kami -->
-            <div class="footer-section">
-                <h3>Tentang Kami</h3>
-                <ul class="footer-links">
-                    <li><a href="https://ppid.bps.go.id/app/konten/6301/Profil-BPS.html?_gl=1*15t609r*_ga*MjQxOTY0MDAzLjE3NjEyNzM4MzU.*_ga_XXTTVXWHDB*czE3NjEyNzM4MzQkbzEkZzAkdDE3NjEyNzM4MzQkajYwJGwwJGgw">Profil BPS</a></li>
-                    <li><a href="#">PPID</a></li>
-                    <li><a href="#">Kebijakan Diseminasi</a></li>
-                </ul>
-            </div>
-
-            <!-- Tautan Lainnya -->
-            <div class="footer-section">
-                <h3>Tautan Lainnya</h3>
-                <ul class="footer-links">
-                    <li><a href="#">ASEAN Stats</a></li>
-                    <li><a href="#">Forum Masyarakat Statistik</a></li>
-                    <li><a href="#">Reformasi Birokrasi</a></li>
-                    <li><a href="#">Layanan Pengaduan Secara Elektronik</a></li>
-                    <li><a href="#">Politeknik Statistika STIS</a></li>
-                    <li><a href="#">Pusdiklat BPS</a></li>
-                    <li><a href="#">JDIH BPS</a></li>
-                </ul>
-            </div>
-
-            <!-- Government Public Relation -->
-            <div class="footer-section">
-                <h3>Government Public Relation</h3>
-                <div class="news-item">
-                    <div class="news-date">21 October 2025, 19:23 WEB</div>
-                    <div class="news-title">Sertifikasi Pemerintah Indonesia: Mendorong 18.805 UMKM dan Sektor Tenaga Kerja</div>
+                <!-- Tautan Lainnya -->
+                <div class="footer-section">
+                    <h3>Tautan Lainnya</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">ASEAN Stats</a></li>
+                        <li><a href="#">Forum Masyarakat Statistik</a></li>
+                        <li><a href="#">Reformasi Birokrasi</a></li>
+                        <li><a href="#">Layanan Pengaduan Secara Elektronik</a></li>
+                        <li><a href="#">Politeknik Statistika STIS</a></li>
+                        <li><a href="#">Pusdiklat BPS</a></li>
+                        <li><a href="#">JDIH BPS</a></li>
+                    </ul>
                 </div>
-                <div class="news-item">
-                    <div class="news-date">21 October 2025, 19:22 WEB</div>
-                    <div class="news-title">Sertifikasi Pemerintah Indonesia: Capai Swasembada 225 Ribu Hektar, Target 480 Ribu Hektar Tahun Depan</div>
+
+                <!-- Government Public Relation -->
+                <div class="footer-section">
+                    <h3>Government Public Relation</h3>
+                    <div class="news-item">
+                        <div class="news-date">21 October 2025, 19:23 WEB</div>
+                        <div class="news-title">Sertifikasi Pemerintah Indonesia: Mendorong 18.805 UMKM dan Sektor Tenaga Kerja</div>
+                    </div>
+                    <div class="news-item">
+                        <div class="news-date">21 October 2025, 19:22 WEB</div>
+                        <div class="news-title">Sertifikasi Pemerintah Indonesia: Capai Swasembada 225 Ribu Hektar, Target 480 Ribu Hektar Tahun Depan</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-divider"></div>
+
+            <div class="footer-bottom">
+                <div class="copyright">
+                    Hak Cipta © 2023 Badan Pusat Statistik
                 </div>
             </div>
         </div>
-
-        <div class="footer-divider"></div>
-
-        <div class="footer-bottom">
-            <div class="copyright">
-                Hak Cipta © 2023 Badan Pusat Statistik
-            </div>
-        </div>
-    </div>
-</footer>
+    </footer>
 
     <script>
         // Slider functionality
@@ -1120,6 +1242,19 @@
             
             // Auto slide (optional)
             // setInterval(nextSlide, 5000);
+        });
+
+        // Handle image loading errors
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.avatar-image').forEach(img => {
+                img.addEventListener('error', function() {
+                    this.style.display = 'none';
+                    const initials = this.nextElementSibling;
+                    if (initials && initials.classList.contains('avatar-initials')) {
+                        initials.style.display = 'flex';
+                    }
+                });
+            });
         });
     </script>
     

@@ -726,7 +726,7 @@
         <div class="sidebar">
             <!-- Data Section -->
             <div class="sidebar-section">
-                <div class="sidebar-title">Data</div>
+                <div class="sidebar-title">Dashboard</div>
                 <a href="{{ route('profil.index') }}" class="sidebar-item {{ request()->routeIs('profil.*') ? 'active' : '' }}">
                     <i class="fas fa-user"></i>
                     <span>Profil</span>
@@ -736,54 +736,16 @@
                     <span>Nilai</span>
                 </a>
                 <a href="#" class="sidebar-item">
-                    <i class="fas fa-calendar-alt"></i>
-                    <span>Kalender</span>
-                </a>
-                <a href="#" class="sidebar-item">
-                    <i class="fas fa-file"></i>
-                    <span>Berkas pribadi</span>
-                </a>
-                <a href="#" class="sidebar-item">
                     <i class="fas fa-flag"></i>
                     <span>Laporan</span>
                 </a>
-                <a href="#" class="sidebar-item">
-                    <i class="fas fa-cog"></i>
-                    <span>Preferensi</span>
-                </a>
-                <a href="#" class="sidebar-item">
+                <a href="#" class="sidebar-item text-danger" onclick="event.preventDefault(); if(confirm('Apakah Anda yakin ingin keluar?')) document.getElementById('logout-form').submit();">
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Keluar</span>
                 </a>
-            </div>
-
-            <!-- Dashboard Section -->
-            <div class="sidebar-section">
-                <div class="sidebar-title">Dasbor</div>
-                <a href="#" class="sidebar-item">
-                    <i class="fas fa-comments"></i>
-                    <span>Communicate Messages</span>
-                </a>
-                <a href="#" class="sidebar-item">
-                    <i class="fas fa-id-card"></i>
-                    <span>Your Profile Profile</span>
-                </a>
-                <a href="#" class="sidebar-item">
-                    <i class="fas fa-sliders-h"></i>
-                    <span>Preferences Settings</span>
-                </a>
-                <a href="#" class="sidebar-item">
-                    <i class="fas fa-chart-bar"></i>
-                    <span>Performance Grades</span>
-                </a>
-            </div>
-
-            <!-- Customize Section -->
-            <div class="sidebar-section">
-                <a href="#" class="sidebar-item">
-                    <i class="fas fa-palette"></i>
-                    <span>Sesuaikan halaman ini</span>
-                </a>
+                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                    @csrf
+                </form>
             </div>
         </div>
 
@@ -845,7 +807,7 @@
             <!-- Copyright -->
             <div class="text-center mt-5 pt-4 border-top">
                 <p style="color: #5a6c7d; font-size: 0.9rem;">
-                    Copyright © 2024 | Kementerian Komunikasi dan Informatika
+                    Copyright © 2025 | Kementerian Komunikasi dan Informatika
                 </p>
             </div>
         </div>
@@ -873,7 +835,7 @@
                     </div>
                     
                     <!-- Gambar BerAKHLAK dan Manual S&K Daftar Tarakan -->
-                    <div class="berakhlak-container">
+                    <div class="berakhlak-container">   
                         <img src="img/cover.jpg" alt="BerAKHLAK" class="berakhlak-image">
                         <ul class="berakhlak-links">
                             <li><a href="#">Manual S&K Daftar Tarakan</a></li>
