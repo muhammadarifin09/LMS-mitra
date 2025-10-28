@@ -938,7 +938,7 @@
                     <i class="fas fa-users"></i>
                     <span>Manajemen User</span>
                 </a>
-                <a href="/admin/users" class="sidebar-item">
+                <a href="/biodata" class="sidebar-item">
                     <i class="fas fa-id-card"></i>
                     <span>Manajemen Biodata</span>
                 </a>

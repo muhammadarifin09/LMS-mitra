@@ -13,19 +13,21 @@ class BiodataController extends Controller
     public function index()
     {
         $biodata = Biodata::with('user')->get();
-        return view('admin.biodata.index', compact('biodata')); // PERBAIKI INI
+        
+        // Return yang sangat eksplisit
+        return view('admin.biodata.index', ['biodata' => $biodata]);
     }
 
     public function create()
     {
-        return view('admin.biodata.create'); // PERBAIKI INI
+        return view('admin.biodata.create');
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'id_sobat' => 'required|unique:biodata',
-            'username_sobat' => 'required|email|unique:users,username', // TAMBAH unique:users,username
+            'username_sobat' => 'required|email|unique:users,username',
             'nama_lengkap' => 'required',
             'tempat_lahir' => 'required',
             'tanggal_lahir' => 'required|date',
@@ -45,7 +47,7 @@ class BiodataController extends Controller
             'role' => 'mitra',
         ]);
 
-        // 2. BUAT BIODATA - HAPUS username_sobat JIKA KOLOM TIDAK ADA
+        // 2. BUAT BIODATA
         $biodataData = [
             'id_sobat' => $request->id_sobat,
             'user_id' => $user->id,
@@ -66,7 +68,7 @@ class BiodataController extends Controller
             $file = $request->file('foto_profil');
             $filename = time() . '_' . $file->getClientOriginalName();
             $file->storeAs('public/foto_profil', $filename);
-            $biodataData['foto_profil'] = $filename;
+            $biodataData['foto_profil'] = 'foto_profil/' . $filename;
         }
 
         Biodata::create($biodataData);
