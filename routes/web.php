@@ -22,7 +22,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Admin
 Route::middleware(['auth', 'role:admin'])->group(function () {
-    Route::get('/admin/beranda', fn() => view('admin.beranda'))->name('admin.beranda');
+    Route::get('/admin/dashboard', fn() => view('admin.dashboard'))->name('admin.dashboard');
 
     Route::get('/biodata', [BiodataController::class, 'index'])->name('biodata.index');
     Route::get('/biodata/create', [BiodataController::class, 'create'])->name('biodata.create');
