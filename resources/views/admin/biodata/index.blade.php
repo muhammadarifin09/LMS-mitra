@@ -741,7 +741,7 @@
                     <i class="fas fa-user-cog"></i>
                     <span>Profil Admin</span>
                 </a>
-                <a href="#" class="sidebar-item text-danger">
+                <a href="#" class="sidebar-item text-danger" onclick="confirmLogout()">
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Keluar</span>
                 </a>
@@ -750,13 +750,6 @@
 
         <!-- Main Content -->
         <div class="main-content">
-            <!-- DEBUG INFO
-            <div class="alert alert-info mb-4">
-                <h5>Debug - Step 3: Sidebar Added</h5>
-                <p>Variabel $biodata: <strong>{{ isset($biodata) ? 'TERDEFINISI' : 'TIDAK TERDEFINISI' }}</strong></p>
-                <p>Count: <strong>{{ isset($biodata) ? $biodata->count() : 0 }}</strong></p>
-            </div> -->
-
             <!-- WELCOME SECTION -->
             <div class="welcome-section">
                 <h1 class="welcome-title">Manajemen Biodata Mitra</h1>
@@ -915,6 +908,28 @@
         </div>
     </footer>
 
+    <!-- Hidden Logout Form -->
+    <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+        @csrf
+    </form>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Logout Confirmation - Versi Diperbaiki
+        function confirmLogout() {
+            if (confirm('Apakah Anda yakin ingin keluar?')) {
+                // Submit form logout
+                document.getElementById('logout-form').submit();
+            }
+        }
+
+        // Alternative logout function jika route logout tidak tersedia
+        function logout() {
+            if (confirm('Apakah Anda yakin ingin keluar?')) {
+                // Redirect langsung ke route logout
+                window.location.href = "{{ route('logout') }}";
+            }
+        }
+    </script>
 </body>
 </html>
