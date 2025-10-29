@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\AuthController;
 use Illuminate\Support\Facades\Mail; 
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Admin\BiodataController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\ProfilController;
 
 // Login
@@ -27,6 +28,8 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/biodata', [BiodataController::class, 'index'])->name('biodata.index');
     Route::get('/biodata/create', [BiodataController::class, 'create'])->name('biodata.create');
     Route::post('/biodata', [BiodataController::class, 'store'])->name('biodata.store');
+
+    Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
 });
 
 // Mitra

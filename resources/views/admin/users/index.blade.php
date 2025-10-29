@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MOCC BPS - Admin Dashboard</title>
+    <title>MOCC BPS - Manajemen User</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* CSS yang sudah work dari sebelumnya */
         * {
             margin: 0;
             padding: 0;
@@ -21,7 +22,7 @@
             flex-direction: column;
         }
         
-        /* Navigation - Sticky dengan teks besar */
+        /* Navigation styles (sudah work) */
         .main-nav {
             background: rgba(255, 255, 255, 0.98);
             padding: 20px 60px;
@@ -54,11 +55,6 @@
             border-radius: 2px;
         }
         
-        .nav-brand span {
-            color: #2a5298;
-        }
-        
-        /* Logo MOCC BPS sebagai gambar */
         .logo-image {
             height: 50px;
             width: auto;
@@ -75,7 +71,6 @@
             align-items: center;
         }
 
-        /* Style untuk ikon navigasi */
         .nav-icon {
             position: relative;
             width: 45px;
@@ -97,7 +92,6 @@
             transform: scale(1.1);
         }
 
-        /* Badge notifikasi */
         .notification-badge {
             position: absolute;
             top: -5px;
@@ -114,7 +108,6 @@
             font-weight: bold;
         }
         
-        /* Perbesar ukuran teks navigasi */
         .nav-item {
             padding: 12px 25px;
             border-radius: 25px;
@@ -131,7 +124,6 @@
             transform: translateY(-2px);
         }
         
-        /* User Profile & Avatar Styles */
         .user-profile {
             display: flex;
             align-items: center;
@@ -142,7 +134,6 @@
             transition: all 0.3s ease;
             margin-left: 20px;
             cursor: pointer;
-            position: relative;
         }
 
         .user-profile:hover {
@@ -162,13 +153,6 @@
             flex-shrink: 0;
             border: 2px solid white;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        }
-
-        .avatar-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 50%;
         }
 
         .avatar-initials {
@@ -211,62 +195,11 @@
             display: inline-block;
         }
 
-        /* User Dropdown Menu */
-        .user-dropdown {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-            min-width: 200px;
-            z-index: 1000;
-            display: none;
-            margin-top: 10px;
-            border: 1px solid #e9ecef;
-        }
-
-        .user-dropdown.show {
-            display: block;
-        }
-
-        .dropdown-header {
-            padding: 15px 20px;
-            border-bottom: 1px solid #e9ecef;
-            background: #f8f9fa;
-        }
-
-        .dropdown-item {
-            padding: 12px 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: #5a6c7d;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            border-left: 3px solid transparent;
-        }
-
-        .dropdown-item:hover {
-            background: rgba(30, 60, 114, 0.05);
-            color: #1e3c72;
-            border-left-color: #1e3c72;
-        }
-
-        .dropdown-item.logout {
-            color: #e74c3c;
-            border-top: 1px solid #e9ecef;
-        }
-
-        .dropdown-item.logout:hover {
-            background: rgba(231, 76, 60, 0.05);
-            color: #e74c3c;
-        }
-
         /* Dashboard Layout */
         .dashboard-container {
             display: flex;
             min-height: calc(100vh - 100px);
+            flex: 1;
         }
 
         /* Sidebar Styles */
@@ -333,167 +266,24 @@
         .welcome-section {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 40px;
+            padding: 30px;
             border-radius: 15px;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
 
         .welcome-title {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 700;
             margin-bottom: 10px;
         }
 
         .welcome-subtitle {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             line-height: 1.6;
             opacity: 0.9;
         }
 
-        .admin-badge {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            display: inline-block;
-            margin-bottom: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-
-        /* Stats Grid - Admin */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-            border: 1px solid #e9ecef;
-            transition: transform 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-        }
-
-        .stat-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 15px;
-            font-size: 1.5rem;
-        }
-
-        .stat-number {
-            font-size: 2.2rem;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
-            color: #5a6c7d;
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-
-        .stat-trend {
-            font-size: 0.8rem;
-            margin-top: 5px;
-        }
-
-        .trend-up {
-            color: #28a745;
-        }
-
-        .trend-down {
-            color: #e74c3c;
-        }
-
-        /* Quick Actions */
-        .quick-actions {
-            margin-bottom: 40px;
-        }
-
-        .section-title {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #1e3c72;
-            margin-bottom: 25px;
-        }
-
-        .actions-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-        }
-
-        .action-card {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-            border: 1px solid #e9ecef;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            text-decoration: none;
-            color: inherit;
-        }
-
-        .action-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            color: white;
-        }
-
-        .action-card:hover .action-icon {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-        }
-
-        .action-icon {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.5rem;
-            margin: 0 auto 15px;
-            transition: all 0.3s ease;
-        }
-
-        .action-card h5 {
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-
-        .action-card p {
-            font-size: 0.9rem;
-            opacity: 0.8;
-        }
-
-        /* Recent Activity */
-        .recent-activity {
-            margin-bottom: 40px;
-        }
-
-        .activity-list {
+        .table-container {
             background: white;
             border-radius: 12px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
@@ -501,48 +291,78 @@
             overflow: hidden;
         }
 
-        .activity-item {
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             padding: 20px 25px;
             border-bottom: 1px solid #e9ecef;
-            display: flex;
+            background: #f8f9fa;
+        }
+
+        .table-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e3c72;
+            margin: 0;
+        }
+
+        .btn-tambah {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
             align-items: center;
-            gap: 15px;
+            gap: 8px;
         }
 
-        .activity-item:last-child {
-            border-bottom: none;
+        .btn-tambah:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(30, 60, 114, 0.3);
+            color: white;
         }
 
-        .activity-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-action {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .btn-edit {
+            background: rgba(52, 152, 219, 0.1);
+            color: #3498db;
+        }
+
+        .btn-edit:hover {
+            background: #3498db;
             color: white;
-            font-size: 1rem;
-            flex-shrink: 0;
+            transform: translateY(-2px);
         }
 
-        .activity-content {
-            flex: 1;
+        .btn-delete {
+            background: rgba(231, 76, 60, 0.1);
+            color: #e74c3c;
         }
 
-        .activity-title {
-            font-weight: 600;
-            color: #1e3c72;
-            margin-bottom: 5px;
-        }
-
-        .activity-desc {
-            color: #5a6c7d;
-            font-size: 0.9rem;
-        }
-
-        .activity-time {
-            color: #8a9aac;
-            font-size: 0.8rem;
+        .btn-delete:hover {
+            background: #e74c3c;
+            color: white;
+            transform: translateY(-2px);
         }
 
         /* Footer */
@@ -704,6 +524,27 @@
             display: flex !important;
         }
 
+        /* Badge untuk role */
+        .badge-admin {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .badge-mitra {
+            background: #198754;
+            color: white;
+        }
+        
+        .badge-instruktur {
+            background: #0d6efd;
+            color: white;
+        }
+        
+        .badge-moderator {
+            background: #fd7e14;
+            color: white;
+        }
+
         /* Responsif */
         @media (max-width: 1200px) {
             .footer-content {
@@ -831,93 +672,39 @@
     <nav class="main-nav">
         <div class="d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center">
-                <!-- Logo MOCC BPS sebagai gambar -->
                 <a href="#" class="nav-brand">
                     <img src="{{ asset('img/Logo_E-Learning.png') }}" alt="MOCC BPS Logo" class="logo-image">
                 </a>
                 <div class="nav-menu ms-5">
-                    <a href="/admin/dashboard" class="nav-item active">Dashboard</a>
-                    <a href="/admin/users" class="nav-item">Manajemen User</a>
+                    <a href="/admin/dashboard" class="nav-item">Dashboard</a>
+                    <a href="/admin/users" class="nav-item active">Manajemen User</a>
                     <a href="/admin/courses" class="nav-item">Manajemen Kursus</a>
                     <a href="/admin/reports" class="nav-item">Laporan</a>
                     <a href="/admin/settings" class="nav-item">Pengaturan</a>
                 </div>
             </div>
             
-            <!-- Tambahkan bagian ikon di sini -->
             <div class="d-flex align-items-center">
-                <!-- Ikon Bahasa -->
                 <div class="nav-icon me-3">
                     <i class="fas fa-globe"></i>
                 </div>
                 
-                <!-- Ikon Notifikasi -->
                 <div class="nav-icon me-4">
                     <i class="fas fa-bell"></i>
                     <span class="notification-badge">5</span>
                 </div>
                 
-                <!-- User Profile Admin dengan Data Dinamis -->
-                <div class="user-profile" id="userProfile">
+                <div class="user-profile">
                     <div class="user-avatar">
-                        @auth
-                            @php
-                                $user = Auth::user();
-                                $biodata = $user->biodata ?? null;
-                                // Generate initials from user name
-                                $nameParts = explode(' ', $user->name);
-                                $initials = '';
-                                if (count($nameParts) >= 2) {
-                                    $initials = strtoupper(substr($nameParts[0], 0, 1) . substr($nameParts[1], 0, 1));
-                                } else {
-                                    $initials = strtoupper(substr($user->name, 0, 2));
-                                }
-                            @endphp
-                            
-                            @if($biodata && $biodata->foto_profil)
-                                <img src="{{ asset('storage/' . $biodata->foto_profil) }}" 
-                                     alt="Foto Profil Admin" 
-                                     class="avatar-image"
-                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                <div class="avatar-initials" style="display: none;">{{ $initials }}</div>
-                            @else
-                                <div class="avatar-initials">{{ $initials }}</div>
-                            @endif
-                        @endauth
+                        <div class="avatar-initials">AD</div>
                     </div>
                     <div class="user-info">
-                        <div class="user-name">
-                            {{ Auth::user()->biodata->nama_lengkap ?? Auth::user()->name }}
-                        </div>
+                        <div class="user-name">Administrator</div>
                         <div class="user-status">
                             <span class="status-dot"></span>
-                            {{ ucfirst(Auth::user()->role) }}
+                            Admin
                         </div>
                     </div>
-                    <i class="fas fa-chevron-down ms-2" style="color: #5a6c7d; font-size: 0.8rem;"></i>
-                </div>
-
-                <!-- User Dropdown Menu -->
-                <div class="user-dropdown" id="userDropdown">
-                    <div class="dropdown-header">
-                        <div class="user-name">{{ Auth::user()->biodata->nama_lengkap ?? Auth::user()->name }}</div>
-                        <div class="user-status">
-                            <span class="status-dot"></span>
-                            {{ ucfirst(Auth::user()->role) }}
-                        </div>
-                    </div>
-                    <a href="/admin/profile" class="dropdown-item">
-                        <i class="fas fa-user-cog"></i>
-                        <span>Profil Saya</span>
-                    </a>
-                    <a href="/admin/settings" class="dropdown-item">
-                        <i class="fas fa-cog"></i>
-                        <span>Pengaturan</span>
-                    </a>
-                    <a href="#" class="dropdown-item logout" onclick="event.preventDefault(); confirmLogout()">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span>Keluar</span>
-                    </a>
                 </div>
             </div>
         </div>
@@ -930,11 +717,11 @@
             <!-- Admin Menu Section -->
             <div class="sidebar-section">
                 <div class="sidebar-title">Menu Admin</div>
-                <a href="/admin/dashboard" class="sidebar-item active">
+                <a href="/admin/dashboard" class="sidebar-item">
                     <i class="fas fa-tachometer-alt"></i>
                     <span>Dashboard</span>
                 </a>
-                <a href="/users" class="sidebar-item">
+                <a href="/admin/users" class="sidebar-item active">
                     <i class="fas fa-users"></i>
                     <span>Manajemen User</span>
                 </a>
@@ -975,7 +762,7 @@
                     <i class="fas fa-user-cog"></i>
                     <span>Profil Admin</span>
                 </a>
-                <a href="#" class="sidebar-item text-danger" onclick="event.preventDefault(); confirmLogout()">
+                <a href="#" class="sidebar-item text-danger" onclick="confirmLogout()">
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Keluar</span>
                 </a>
@@ -984,148 +771,88 @@
 
         <!-- Main Content -->
         <div class="main-content">
-            <!-- Welcome Section dengan Nama Admin -->
+            <!-- WELCOME SECTION -->
             <div class="welcome-section">
-                <div class="admin-badge">
-                    <i class="fas fa-shield-alt me-2"></i>{{ ucfirst(Auth::user()->role) }}
-                </div>
-                <h1 class="welcome-title">Selamat Datang, {{ Auth::user()->biodata->nama_lengkap ?? Auth::user()->name }}!</h1>
+                <h1 class="welcome-title">Manajemen User</h1>
                 <p class="welcome-subtitle">
-                    Kelola sistem MOCC BPS dengan mudah dan efisien. Pantau aktivitas, kelola pengguna, dan optimalkan pengalaman belajar.
+                    Kelola data user sistem MOCC BPS dengan mudah. Lihat, edit, atau hapus data user sesuai kebutuhan.
                 </p>
             </div>
 
-            <!-- Stats Grid - Admin -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: #3498db; color: white;">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="stat-number" style="color: #3498db;">2,847</div>
-                    <div class="stat-label">Total Pengguna</div>
-                    <div class="stat-trend trend-up">
-                        <i class="fas fa-arrow-up me-1"></i>12% dari bulan lalu
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: #2ecc71; color: white;">
-                        <i class="fas fa-book"></i>
-                    </div>
-                    <div class="stat-number" style="color: #2ecc71;">24</div>
-                    <div class="stat-label">Kursus Aktif</div>
-                    <div class="stat-trend trend-up">
-                        <i class="fas fa-arrow-up me-1"></i>3 kursus baru
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: #e74c3c; color: white;">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <div class="stat-number" style="color: #e74c3c;">94%</div>
-                    <div class="stat-label">Tingkat Penyelesaian</div>
-                    <div class="stat-trend trend-up">
-                        <i class="fas fa-arrow-up me-1"></i>5% peningkatan
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: #f39c12; color: white;">
-                        <i class="fas fa-comments"></i>
-                    </div>
-                    <div class="stat-number" style="color: #f39c12;">156</div>
-                    <div class="stat-label">Diskusi Aktif</div>
-                    <div class="stat-trend trend-up">
-                        <i class="fas fa-arrow-up me-1"></i>8 diskusi baru
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="quick-actions">
-                <h3 class="section-title">Aksi Cepat</h3>
-                <div class="actions-grid">
-                    <a href="/admin/users/create" class="action-card">
-                        <div class="action-icon">
-                            <i class="fas fa-user-plus"></i>
-                        </div>
-                        <h5>Tambah User</h5>
-                        <p>Buat akun pengguna baru</p>
-                    </a>
-                    <a href="/admin/courses/create" class="action-card">
-                        <div class="action-icon">
-                            <i class="fas fa-plus-circle"></i>
-                        </div>
-                        <h5>Buat Kursus</h5>
-                        <p>Tambahkan kursus baru</p>
-                    </a>
-                    <a href="/admin/reports" class="action-card">
-                        <div class="action-icon">
-                            <i class="fas fa-chart-pie"></i>
-                        </div>
-                        <h5>Lihat Laporan</h5>
-                        <p>Analisis data sistem</p>
-                    </a>
-                    <a href="/admin/settings" class="action-card">
-                        <div class="action-icon">
-                            <i class="fas fa-cogs"></i>
-                        </div>
-                        <h5>Pengaturan</h5>
-                        <p>Konfigurasi sistem</p>
+            <!-- TABLE SECTION -->
+            <div class="table-container">
+                <div class="table-header">
+                    <h2 class="table-title">Daftar User</h2>
+                    <a href="/admin/users/create" class="btn-tambah">
+                        <i class="fas fa-plus-circle"></i>
+                        Tambah User
                     </a>
                 </div>
-            </div>
-
-            <!-- Recent Activity -->
-            <div class="recent-activity">
-                <h3 class="section-title">Aktivitas Terbaru</h3>
-                <div class="activity-list">
-                    <div class="activity-item">
-                        <div class="activity-icon" style="background: #3498db;">
-                            <i class="fas fa-user-plus"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div class="activity-title">User Baru Terdaftar</div>
-                            <div class="activity-desc">Budi Santoso mendaftar sebagai mitra BPS</div>
-                        </div>
-                        <div class="activity-time">5 menit lalu</div>
-                    </div>
-                    <div class="activity-item">
-                        <div class="activity-icon" style="background: #2ecc71;">
-                            <i class="fas fa-book"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div class="activity-title">Kursus Diselesaikan</div>
-                            <div class="activity-desc">Siti Rahayu menyelesaikan kursus Data Analysis</div>
-                        </div>
-                        <div class="activity-time">1 jam lalu</div>
-                    </div>
-                    <div class="activity-item">
-                        <div class="activity-icon" style="background: #e74c3c;">
-                            <i class="fas fa-exclamation-triangle"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div class="activity-title">Peringatan Sistem</div>
-                            <div class="activity-desc">Backup otomatis berhasil dilakukan</div>
-                        </div>
-                        <div class="activity-time">2 jam lalu</div>
-                    </div>
-                    <div class="activity-item">
-                        <div class="activity-icon" style="background: #f39c12;">
-                            <i class="fas fa-comment"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div class="activity-title">Diskusi Baru</div>
-                            <div class="activity-desc">Pertanyaan baru di forum Statistik Dasar</div>
-                        </div>
-                        <div class="activity-time">3 jam lalu</div>
-                    </div>
+                
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Nama</th>
+                                <th>Username</th>
+                                <th>Password</th>
+                                <th>Role</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if(isset($users) && $users->count() > 0)
+                                @foreach($users as $index => $user)
+                                <tr>
+                                    <td>{{ $index + 1 }}</td>
+                                    <td>{{ $user->nama }}</td>
+                                    <td>{{ $user->username }}</td>
+                                    <td>********</td>
+                                    <td>
+                                        @if($user->role == 'admin')
+                                            <span class="badge badge-admin">Admin</span>
+                                        @elseif($user->role == 'mitra')
+                                            <span class="badge badge-mitra">Mitra</span>
+                                        @elseif($user->role == 'instruktur')
+                                            <span class="badge badge-instruktur">Instruktur</span>
+                                        @elseif($user->role == 'moderator')
+                                            <span class="badge badge-moderator">Moderator</span>
+                                        @else
+                                            <span class="badge bg-secondary">{{ $user->role }}</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="/admin/users/{{ $user->id }}/edit" class="btn-action btn-edit" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <form action="/admin/users/{{ $user->id }}" method="POST" class="d-inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn-action btn-delete" title="Hapus" onclick="return confirm('Apakah Anda yakin ingin menghapus user ini?')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            @else
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">
+                                        <i class="fas fa-database me-2"></i>
+                                        @if(!isset($users))
+                                            Variabel $users tidak terdefinisi
+                                        @else
+                                            Tidak ada data user
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endif
+                        </tbody>
+                    </table>
                 </div>
-            </div>
-
-            <!-- Copyright -->
-            <div class="text-center mt-5 pt-4 border-top">
-                <p style="color: #5a6c7d; font-size: 0.9rem;">
-                    Copyright © 2025 | MOCC BPS - Admin Dashboard
-                </p>
             </div>
         </div>
     </div>
@@ -1209,58 +936,19 @@
     </footer>
 
     <!-- Hidden Logout Form -->
-    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+    <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
         @csrf
     </form>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // User Profile Dropdown Toggle
-        document.getElementById('userProfile').addEventListener('click', function(e) {
-            e.stopPropagation();
-            document.getElementById('userDropdown').classList.toggle('show');
-        });
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!document.getElementById('userProfile').contains(e.target)) {
-                document.getElementById('userDropdown').classList.remove('show');
-            }
-        });
-
-        // Logout Confirmation
+        // Logout Confirmation - Versi Diperbaiki
         function confirmLogout() {
             if (confirm('Apakah Anda yakin ingin keluar?')) {
+                // Submit form logout
                 document.getElementById('logout-form').submit();
             }
         }
-
-        // Sidebar item active state
-        document.querySelectorAll('.sidebar-item').forEach(item => {
-            item.addEventListener('click', function() {
-                document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
-
-        // Nav item active state
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', function() {
-                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
-
-        // Handle image loading errors
-        document.querySelectorAll('.avatar-image').forEach(img => {
-            img.addEventListener('error', function() {
-                this.style.display = 'none';
-                const initials = this.nextElementSibling;
-                if (initials && initials.classList.contains('avatar-initials')) {
-                    initials.style.display = 'flex';
-                }
-            });
-        });
     </script>
 </body>
 </html>
