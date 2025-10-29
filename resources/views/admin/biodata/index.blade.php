@@ -775,8 +775,8 @@
                                 <th>No</th>
                                 <th>ID Sobat</th>
                                 <th>Nama</th>
-                                <th>Jenis Kelamin</th>
-                                <th>Alamat</th>
+                                <th>Kecamatan</th>
+                                <th>Desa/Kelurahan</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
@@ -787,13 +787,8 @@
                                     <td>{{ $index + 1 }}</td>
                                     <td>{{ $item->id_sobat }}</td>
                                     <td>{{ $item->nama_lengkap }}</td>
-                                    <td>
-                                        @if($item->jenis_kelamin == 'L')
-                                            Laki-laki
-                                        @else
-                                            Perempuan
-                                        @endif
-                                    </td>
+                                    <td>{{ $item->kecamatan }}</td>
+                                    <td>{{ $item->desa }}</td>
                                     <td>{{ \Illuminate\Support\Str::limit($item->alamat, 50) }}</td>
                                     <td>
                                         <div class="action-buttons">

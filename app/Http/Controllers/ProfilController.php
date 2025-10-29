@@ -31,14 +31,10 @@ class ProfilController extends Controller
     
     $request->validate([
         'nama_lengkap' => 'required|string|max:255',
-        'tempat_lahir' => 'required|string|max:255',
-        'tanggal_lahir' => 'required|date',
-        'jenis_kelamin' => 'required|in:L,P',
+        'kecamatan' => 'required|string|max:255',
+        'desa' => 'required|string|max:255',
         'alamat' => 'required|string',
         'no_telepon' => 'required|string|max:15',
-        'pekerjaan' => 'required|string|max:255',
-        'instansi' => 'required|string|max:255',
-        'pendidikan_terakhir' => 'required|string|max:255',
         'foto_profil' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
     ]);
 
@@ -51,14 +47,10 @@ class ProfilController extends Controller
 
     // Update data
     $biodata->nama_lengkap = $request->nama_lengkap;
-    $biodata->tempat_lahir = $request->tempat_lahir;
-    $biodata->tanggal_lahir = $request->tanggal_lahir;
-    $biodata->jenis_kelamin = $request->jenis_kelamin;
+    $biodata->kecamatan = $request->kecamatan;
+    $biodata->desa = $request->desa;
     $biodata->alamat = $request->alamat;
     $biodata->no_telepon = $request->no_telepon;
-    $biodata->pekerjaan = $request->pekerjaan;
-    $biodata->instansi = $request->instansi;
-    $biodata->pendidikan_terakhir = $request->pendidikan_terakhir;
 
     // Handle upload foto profil
     if ($request->hasFile('foto_profil')) {

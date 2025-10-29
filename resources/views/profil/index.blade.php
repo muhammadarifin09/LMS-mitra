@@ -90,12 +90,12 @@
                             <p class="fw-semibold">{{ $user->username }}</p>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label text-muted">Tempat, Tanggal Lahir</label>
-                            <p class="fw-semibold">{{ $biodata->tempat_lahir }}, {{ $biodata->tanggal_lahir->format('d F Y') }}</p>
+                            <label class="form-label text-muted">Kecamatan</label>
+                            <p class="fw-semibold">{{ $biodata->kecamatan }}</p>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label text-muted">Jenis Kelamin</label>
-                            <p class="fw-semibold">{{ $biodata->jenis_kelamin == 'L' ? 'Laki-laki' : 'Perempuan' }}</p>
+                            <label class="form-label text-muted">Desa/Kelurahan</label>
+                            <p class="fw-semibold">{{ $biodata->desa }}</p>
                         </div>
                         <div class="col-12 mb-3">
                             <label class="form-label text-muted">Alamat</label>
@@ -104,18 +104,6 @@
                         <div class="col-md-6 mb-3">
                             <label class="form-label text-muted">No. Telepon</label>
                             <p class="fw-semibold">{{ $biodata->no_telepon }}</p>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label text-muted">Pekerjaan</label>
-                            <p class="fw-semibold">{{ $biodata->pekerjaan }}</p>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label text-muted">Instansi</label>
-                            <p class="fw-semibold">{{ $biodata->instansi }}</p>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label text-muted">Pendidikan Terakhir</label>
-                            <p class="fw-semibold">{{ $biodata->pendidikan_terakhir }}</p>
                         </div>
                     </div>
                     @else

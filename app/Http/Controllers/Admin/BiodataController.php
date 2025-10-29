@@ -27,16 +27,12 @@ class BiodataController extends Controller
     {
         $request->validate([
             'id_sobat' => 'required|unique:biodata',
-            'username_sobat' => 'required|email|unique:users,username',
             'nama_lengkap' => 'required',
-            'tempat_lahir' => 'required',
-            'tanggal_lahir' => 'required|date',
-            'jenis_kelamin' => 'required|in:L,P',
+            'kecamatan' => 'required',
+            'desa' => 'required',
             'alamat' => 'required',
             'no_telepon' => 'required',
-            'pekerjaan' => 'required',
-            'instansi' => 'required',
-            'pendidikan_terakhir' => 'required|in:SD,SMP,SMA,D3,S1,S2,S3',
+            'username_sobat' => 'required|email|unique:users,username',
             'foto_profil' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
@@ -44,6 +40,7 @@ class BiodataController extends Controller
         $user = M_User::create([
             'username' => $request->username_sobat,
             'password' => Hash::make($request->id_sobat),
+            'nama' => $request->nama_lengkap,
             'role' => 'mitra',
         ]);
 
@@ -52,15 +49,11 @@ class BiodataController extends Controller
             'id_sobat' => $request->id_sobat,
             'user_id' => $user->id,
             'nama_lengkap' => $request->nama_lengkap,
-            'tempat_lahir' => $request->tempat_lahir,
-            'tanggal_lahir' => $request->tanggal_lahir,
-            'jenis_kelamin' => $request->jenis_kelamin,
+            'kecamatan' => $request->kecamatan,
+            'desa' => $request->desa,
             'alamat' => $request->alamat,
             'no_telepon' => $request->no_telepon,
             'username_sobat' => $request->username_sobat,
-            'pekerjaan' => $request->pekerjaan,
-            'instansi' => $request->instansi,
-            'pendidikan_terakhir' => $request->pendidikan_terakhir,
         ];
 
         // Handle upload foto profil

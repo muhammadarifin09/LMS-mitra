@@ -13,16 +13,12 @@ return new class extends Migration
             $table->string('id_sobat')->primary(); // Primary key sebagai string
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('nama_lengkap');
-            $table->string('tempat_lahir');
-            $table->date('tanggal_lahir');
-            $table->enum('jenis_kelamin', ['L', 'P']);
+            $table->string('kecamatan');
+            $table->string('desa');
             $table->text('alamat');
+            $table->string('username_sobat');
             $table->string('no_telepon');
-            $table->string('username_sobat')->unique();
             $table->string('foto_profil')->nullable();
-            $table->string('pekerjaan');
-            $table->string('instansi');
-            $table->string('pendidikan_terakhir');
             $table->timestamps();
         });
     }

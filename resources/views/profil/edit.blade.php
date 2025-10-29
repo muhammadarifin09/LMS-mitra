@@ -62,32 +62,21 @@
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Tempat Lahir <span class="text-danger">*</span></label>
-                                <input type="text" name="tempat_lahir" class="form-control" 
-                                       value="{{ old('tempat_lahir', $biodata->tempat_lahir ?? '') }}" 
-                                       placeholder="Masukkan tempat lahir" required>
-                                @error('tempat_lahir')
+                                <label class="form-label">Kecamatan <span class="text-danger">*</span></label>
+                                <input type="text" name="kecamatan" class="form-control" 
+                                       value="{{ old('kecamatan', $biodata->kecamatan ?? '') }}" 
+                                       placeholder="Masukkan kecamatan" required>
+                                @error('kecamatan')
                                     <div class="text-danger small mt-1">{{ $message }}</div>
                                 @enderror
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Tanggal Lahir <span class="text-danger">*</span></label>
-                                <input type="date" name="tanggal_lahir" class="form-control" 
-                                       value="{{ old('tanggal_lahir', $biodata ? (\Carbon\Carbon::parse($biodata->tanggal_lahir)->format('Y-m-d')) : '') }}" required>
-                                @error('tanggal_lahir')
-                                    <div class="text-danger small mt-1">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Jenis Kelamin <span class="text-danger">*</span></label>
-                                <select name="jenis_kelamin" class="form-control" required>
-                                    <option value="">Pilih Jenis Kelamin</option>
-                                    <option value="L" {{ old('jenis_kelamin', $biodata->jenis_kelamin ?? '') == 'L' ? 'selected' : '' }}>Laki-laki</option>
-                                    <option value="P" {{ old('jenis_kelamin', $biodata->jenis_kelamin ?? '') == 'P' ? 'selected' : '' }}>Perempuan</option>
-                                </select>
-                                @error('jenis_kelamin')
+                                <label class="form-label">Desa/Kelurahan <span class="text-danger">*</span></label>
+                                <input type="text" name="desa" class="form-control" 
+                                       value="{{ old('desa', $biodata->desa ?? '') }}" 
+                                       placeholder="Masukkan desa/kelurahan" required>
+                                @error('desa')
                                     <div class="text-danger small mt-1">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -107,43 +96,6 @@
                                 <textarea name="alamat" class="form-control" rows="3" 
                                           placeholder="Masukkan alamat lengkap" required>{{ old('alamat', $biodata->alamat ?? '') }}</textarea>
                                 @error('alamat')
-                                    <div class="text-danger small mt-1">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Pekerjaan <span class="text-danger">*</span></label>
-                                <input type="text" name="pekerjaan" class="form-control" 
-                                       value="{{ old('pekerjaan', $biodata->pekerjaan ?? '') }}" 
-                                       placeholder="Contoh: PNS, Swasta, Mahasiswa" required>
-                                @error('pekerjaan')
-                                    <div class="text-danger small mt-1">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Instansi <span class="text-danger">*</span></label>
-                                <input type="text" name="instansi" class="form-control" 
-                                       value="{{ old('instansi', $biodata->instansi ?? '') }}" 
-                                       placeholder="Contoh: BPS, Universitas, Perusahaan" required>
-                                @error('instansi')
-                                    <div class="text-danger small mt-1">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Pendidikan Terakhir <span class="text-danger">*</span></label>
-                                <select name="pendidikan_terakhir" class="form-control" required>
-                                    <option value="">Pilih Pendidikan</option>
-                                    <option value="SD" {{ old('pendidikan_terakhir', $biodata->pendidikan_terakhir ?? '') == 'SD' ? 'selected' : '' }}>SD / Sederajat</option>
-                                    <option value="SMP" {{ old('pendidikan_terakhir', $biodata->pendidikan_terakhir ?? '') == 'SMP' ? 'selected' : '' }}>SMP / Sederajat</option>
-                                    <option value="SMA" {{ old('pendidikan_terakhir', $biodata->pendidikan_terakhir ?? '') == 'SMA' ? 'selected' : '' }}>SMA / Sederajat</option>
-                                    <option value="D3" {{ old('pendidikan_terakhir', $biodata->pendidikan_terakhir ?? '') == 'D3' ? 'selected' : '' }}>Diploma (D3)</option>
-                                    <option value="S1" {{ old('pendidikan_terakhir', $biodata->pendidikan_terakhir ?? '') == 'S1' ? 'selected' : '' }}>Sarjana (S1)</option>
-                                    <option value="S2" {{ old('pendidikan_terakhir', $biodata->pendidikan_terakhir ?? '') == 'S2' ? 'selected' : '' }}>Magister (S2)</option>
-                                    <option value="S3" {{ old('pendidikan_terakhir', $biodata->pendidikan_terakhir ?? '') == 'S3' ? 'selected' : '' }}>Doktor (S3)</option>
-                                </select>
-                                @error('pendidikan_terakhir')
                                     <div class="text-danger small mt-1">{{ $message }}</div>
                                 @enderror
                             </div>

@@ -1035,7 +1035,7 @@
                             
                             <div class="form-group">
                                 <label class="form-label">ID Sobat *</label>
-                                <input type="text" name="id_sobat" class="form-control" placeholder="Contoh: mitra_001" value="{{ old('id_sobat') }}" required>
+                                <input type="text" name="id_sobat" class="form-control" placeholder="Contoh: 630122090056" value="{{ old('id_sobat') }}" required>
                                 <div class="form-help">ID Sobat akan menjadi password default untuk login mitra</div>
                             </div>
 
@@ -1060,29 +1060,19 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label class="form-label">Tempat Lahir *</label>
-                                        <input type="text" name="tempat_lahir" class="form-control" placeholder="Kota/Kabupaten Lahir" value="{{ old('tempat_lahir') }}" required>
+                                        <label class="form-label">Kecamatan *</label>
+                                        <input type="text" name="kecamatan" class="form-control" placeholder="Kecamatan" value="{{ old('kecamatan') }}" required>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label class="form-label">Tanggal Lahir *</label>
-                                        <input type="date" name="tanggal_lahir" class="form-control" value="{{ old('tanggal_lahir') }}" required>
+                                        <label class="form-label">Desa/Kelurahan *</label>
+                                        <input type="text" name="desa" class="form-control" placeholder="Desa" value="{{ old('desa') }}" required>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label class="form-label">Jenis Kelamin *</label>
-                                        <select name="jenis_kelamin" class="form-select" required>
-                                            <option value="">Pilih Jenis Kelamin</option>
-                                            <option value="L" {{ old('jenis_kelamin') == 'L' ? 'selected' : '' }}>Laki-laki</option>
-                                            <option value="P" {{ old('jenis_kelamin') == 'P' ? 'selected' : '' }}>Perempuan</option>
-                                        </select>
-                                    </div>
-                                </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label class="form-label">No Telepon/HP *</label>
@@ -1100,42 +1090,6 @@
                                 <label class="form-label">Foto Profil</label>
                                 <input type="file" name="foto_profil" class="form-file" accept="image/*">
                                 <div class="form-help">Format: JPG, PNG, GIF (Maksimal 2MB)</div>
-                            </div>
-                        </div>
-
-                        <!-- Data Profesional -->
-                        <div class="form-section">
-                            <h3 class="section-title">
-                                <i class="fas fa-briefcase me-2"></i>Data Profesional
-                            </h3>
-
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label class="form-label">Pekerjaan *</label>
-                                        <input type="text" name="pekerjaan" class="form-control" placeholder="Contoh: Mahasiswa, PNS, Wiraswasta" value="{{ old('pekerjaan') }}" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label class="form-label">Instansi *</label>
-                                        <input type="text" name="instansi" class="form-control" placeholder="Contoh: Universitas, Perusahaan, BPS" value="{{ old('instansi') }}" required>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label">Pendidikan Terakhir *</label>
-                                <select name="pendidikan_terakhir" class="form-select" required>
-                                    <option value="">Pilih Pendidikan Terakhir</option>
-                                    <option value="SD" {{ old('pendidikan_terakhir') == 'SD' ? 'selected' : '' }}>SD</option>
-                                    <option value="SMP" {{ old('pendidikan_terakhir') == 'SMP' ? 'selected' : '' }}>SMP</option>
-                                    <option value="SMA" {{ old('pendidikan_terakhir') == 'SMA' ? 'selected' : '' }}>SMA</option>
-                                    <option value="D3" {{ old('pendidikan_terakhir') == 'D3' ? 'selected' : '' }}>D3</option>
-                                    <option value="S1" {{ old('pendidikan_terakhir') == 'S1' ? 'selected' : '' }}>S1</option>
-                                    <option value="S2" {{ old('pendidikan_terakhir') == 'S2' ? 'selected' : '' }}>S2</option>
-                                    <option value="S3" {{ old('pendidikan_terakhir') == 'S3' ? 'selected' : '' }}>S3</option>
-                                </select>
                             </div>
                         </div>
 

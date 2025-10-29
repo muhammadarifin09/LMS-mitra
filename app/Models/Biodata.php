@@ -22,19 +22,11 @@ class Biodata extends Model
         'user_id',
         'username_sobat',
         'nama_lengkap',
-        'tempat_lahir',
-        'tanggal_lahir',
-        'jenis_kelamin',
+        'kecamatan',
+        'desa',
         'alamat',
         'no_telepon',
         'foto_profil',
-        'pekerjaan',
-        'instansi',
-        'pendidikan_terakhir',
-    ];
-
-    protected $casts = [
-        'tanggal_lahir' => 'date',
     ];
 
     public function user()
