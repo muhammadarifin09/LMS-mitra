@@ -659,7 +659,7 @@
                 </a>
                 <div class="nav-menu ms-5">
                     <a href="/admin/dashboard" class="nav-item">Dashboard</a>
-                    <a href="/admin/users" class="nav-item">Manajemen User</a>
+                    <a href="/users" class="nav-item">Manajemen User</a>
                     <a href="/admin/courses" class="nav-item">Manajemen Kursus</a>
                     <a href="/admin/reports" class="nav-item">Laporan</a>
                     <a href="/admin/settings" class="nav-item">Pengaturan</a>
@@ -703,7 +703,7 @@
                     <i class="fas fa-tachometer-alt"></i>
                     <span>Dashboard</span>
                 </a>
-                <a href="/admin/users" class="sidebar-item">
+                <a href="/users" class="sidebar-item">
                     <i class="fas fa-users"></i>
                     <span>Manajemen User</span>
                 </a>
