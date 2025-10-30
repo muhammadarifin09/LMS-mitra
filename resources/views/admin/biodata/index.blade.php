@@ -6,6 +6,8 @@
     <title>MOCC BPS - Manajemen Biodata Mitra</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- SweetAlert CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <style>
         /* CSS yang sudah work dari sebelumnya */
         * {
@@ -645,6 +647,7 @@
             }
         }
     </style>
+    
 </head>
 <body>
     <!-- Navigation - Sticky -->
@@ -777,6 +780,7 @@
                                 <th>Nama</th>
                                 <th>Kecamatan</th>
                                 <th>Desa/Kelurahan</th>
+                                <th>Alamat</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
@@ -798,7 +802,8 @@
                                             <form action="/biodata/{{ $item->id_sobat }}" method="POST" class="d-inline">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn-action btn-delete" title="Hapus" onclick="return confirm('Apakah Anda yakin ingin menghapus biodata ini?')">
+                                                <button type="submit" class="btn-action btn-delete" title="Hapus" 
+                                                        onclick="confirmDelete(event, this.closest('form'))">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>
@@ -909,22 +914,44 @@
     </form>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- SweetAlert JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
-        // Logout Confirmation - Versi Diperbaiki
+        // Logout Confirmation
         function confirmLogout() {
             if (confirm('Apakah Anda yakin ingin keluar?')) {
-                // Submit form logout
                 document.getElementById('logout-form').submit();
             }
         }
 
-        // Alternative logout function jika route logout tidak tersedia
-        function logout() {
+         // Alternative logout function jika route logout tidak tersedia
+         function logout() {
             if (confirm('Apakah Anda yakin ingin keluar?')) {
                 // Redirect langsung ke route logout
                 window.location.href = "{{ route('logout') }}";
             }
         }
-    </script>
+
+        // Delete Confirmation dengan SweetAlert
+        function confirmDelete(event, form) {
+            event.preventDefault();
+            
+            Swal.fire({
+                title: 'Apakah Anda yakin?',
+                text: "Data biodata dan akun mitra akan dihapus permanen!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        }
+    </script>   
 </body>
 </html>

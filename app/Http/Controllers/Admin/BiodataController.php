@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Biodata;
 use App\Models\M_User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class BiodataController extends Controller
 {
@@ -56,16 +57,88 @@ class BiodataController extends Controller
             'username_sobat' => $request->username_sobat,
         ];
 
-        // Handle upload foto profil
+        // Handle upload foto profil - KONSISTEN DENGAN UPDATE
         if ($request->hasFile('foto_profil')) {
-            $file = $request->file('foto_profil');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $file->storeAs('public/foto_profil', $filename);
-            $biodataData['foto_profil'] = 'foto_profil/' . $filename;
+            $path = $request->file('foto_profil')->store('foto_profil', 'public');
+            $biodataData['foto_profil'] = $path; // Simpan path relatif
         }
 
         Biodata::create($biodataData);
 
         return redirect()->route('biodata.index')->with('success', 'Biodata dan akun mitra berhasil ditambahkan!');
+    }
+
+    public function edit($id_sobat)
+    {
+        // dd($id_sobat);
+        $biodata = Biodata::where('id_sobat', (string) $id_sobat)->firstOrFail();
+        
+        return view('admin.biodata.edit', compact('biodata'));
+    }
+
+
+    public function update(Request $request, $id_sobat)
+    {
+        // Gunakan findOrFail karena id_sobat adalah primary key
+        $biodata = Biodata::where('id_sobat', (string) $id_sobat)->firstOrFail();
+
+        // Validasi data
+        $request->validate([
+            'nama_lengkap' => 'required',
+            'kecamatan' => 'required',
+            'desa' => 'required',
+            'alamat' => 'required',
+            'no_telepon' => 'required',
+            'foto_profil' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        // Update data
+        $updateData = [
+            'nama_lengkap' => $request->nama_lengkap,
+            'kecamatan' => $request->kecamatan,
+            'desa' => $request->desa,
+            'alamat' => $request->alamat,
+            'no_telepon' => $request->no_telepon,
+        ];
+
+        // Handle upload foto profil jika ada - KONSISTEN DENGAN STORE()
+        if ($request->hasFile('foto_profil')) {
+            // Hapus foto lama jika ada
+            if ($biodata->foto_profil) {
+                Storage::disk('public')->delete($biodata->foto_profil);
+            }
+            
+            // Simpan foto baru dengan cara yang konsisten
+            $path = $request->file('foto_profil')->store('foto_profil', 'public');
+            $updateData['foto_profil'] = $path;
+        }
+
+        $biodata->update($updateData);
+
+        return redirect()->route('biodata.index')->with('success', 'Biodata berhasil diperbarui!');
+    }
+
+    public function destroy($id_sobat)
+    {
+        try {
+            // Cari biodata berdasarkan id_sobat
+            $biodata = Biodata::findOrFail($id_sobat);
+            
+            // Simpan user_id sebelum menghapus biodata
+            $user_id = $biodata->user_id;
+            
+            // Hapus biodata
+            $biodata->delete();
+            
+            // Hapus user terkait jika ada
+            if ($user_id) {
+                M_User::where('id', $user_id)->delete();
+            }
+            
+            return redirect()->route('biodata.index')->with('success', 'Biodata dan akun mitra berhasil dihapus!');
+            
+        } catch (\Exception $e) {
+            return redirect()->route('biodata.index')->with('error', 'Gagal menghapus biodata: ' . $e->getMessage());
+        }
     }
 }
