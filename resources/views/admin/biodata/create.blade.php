@@ -334,19 +334,19 @@
         .welcome-section {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 40px;
+            padding: 30px;
             border-radius: 15px;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
 
         .welcome-title {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 700;
             margin-bottom: 10px;
         }
 
         .welcome-subtitle {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             line-height: 1.6;
             opacity: 0.9;
         }
@@ -999,10 +999,6 @@
             <div class="form-container">
                 <div class="form-header">
                     <h2 class="form-title">Form Tambah Biodata Mitra</h2>
-                    <a href="{{ route('biodata.index') }}" class="btn-kembali">
-                        <i class="fas fa-arrow-left"></i>
-                        Kembali ke Daftar
-                    </a>
                 </div>
                 
                 <div class="form-content">
@@ -1086,10 +1082,29 @@
                                 <textarea name="alamat" class="form-textarea" placeholder="Alamat lengkap tempat tinggal" required>{{ old('alamat') }}</textarea>
                             </div>
 
-                            <div class="form-group">
-                                <label class="form-label">Foto Profil</label>
-                                <input type="file" name="foto_profil" class="form-file" accept="image/*">
-                                <div class="form-help">Format: JPG, PNG, GIF (Maksimal 2MB)</div>
+                            <!-- Foto Profil Section -->
+                            <div class="row mb-4">
+                                <div class="col-12 text-center">
+                                    <div class="position-relative d-inline-block mb-2">
+                                        <img src="{{ asset('img/default-avatar.png') }}" 
+                                            alt="Foto Profil" 
+                                            class="rounded-circle shadow-sm"
+                                            id="foto-preview"
+                                            style="width: 180px; height: 180px; object-fit: cover; border: 2px solid #1e3c72;">
+                                        <label for="foto_profil" class="btn btn-primary btn-sm rounded-circle position-absolute" 
+                                            style="bottom: 0; right: 0; width: 24px; height: 24px; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-camera" style="font-size: 0.6rem;"></i>
+                                        </label>
+                                        <input type="file" name="foto_profil" id="foto_profil" class="d-none" accept="image/*">
+                                    </div>
+                                    <div class="mt-1">
+                                        <small class="text-muted">Klik ikon kamera untuk mengubah foto</small><br>
+                                        <small class="text-muted">Format: JPG, PNG, GIF (Maks: 2MB)</small>
+                                    </div>
+                                    @error('foto_profil')
+                                        <div class="text-danger small mt-1">{{ $message }}</div>
+                                    @enderror
+                                </div>
                             </div>
                         </div>
 
@@ -1269,6 +1284,37 @@
                 e.preventDefault();
                 alert('Harap lengkapi semua field yang wajib diisi!');
             }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.getElementById('foto_profil');
+            const fotoPreview = document.getElementById('foto-preview');
+            
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    // Validasi ukuran file (max 2MB)
+                    if (file.size > 2 * 1024 * 1024) {
+                        alert('Ukuran file maksimal 2MB');
+                        this.value = '';
+                        return;
+                    }
+                    
+                    // Validasi tipe file
+                    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                    if (!allowedTypes.includes(file.type)) {
+                        alert('Format file harus JPG, PNG, atau GIF');
+                        this.value = '';
+                        return;
+                    }
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        fotoPreview.src = e.target.result;
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
         });
     </script>
 </body>
