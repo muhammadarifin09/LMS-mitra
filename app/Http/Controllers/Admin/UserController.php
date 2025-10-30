@@ -5,19 +5,22 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\M_User;
+use App\Models\Biodata;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
     public function index()
     {
-        $users = M_User::all();
+        $users = M_User::with('biodata')->get();
         return view('admin.users.index', ['users' => $users]);
     }
 
     public function create()
     {
-        return view('admin.users.create');
+        // Ambil biodata yang belum memiliki user
+        $availableBiodata = Biodata::whereNull('user_id')->get();
+        return view('admin.users.create', compact('availableBiodata'));
     }
 
     public function store(Request $request)
@@ -36,7 +39,7 @@ class UserController extends Controller
             'role' => $request->role,
         ]);
 
-        return redirect()->route('admin.users.index')->with('success', 'User berhasil ditambahkan!');
+        return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan!');
     }
 
     public function edit($id)
@@ -68,25 +71,49 @@ class UserController extends Controller
 
         $user->update($updateData);
 
-        return redirect()->route('admin.users.index')->with('success', 'User berhasil diupdate!');
+        return redirect()->route('users.index')->with('success', 'User berhasil diupdate!');
     }
-
     public function destroy($id)
-    {
-        $user = M_User::findOrFail($id);
-        
-        if ($user->biodata) {
-            return redirect()->route('admin.users.index')->with('error', 'Tidak dapat menghapus user karena memiliki data biodata terkait!');
-        }
-        
-        $user->delete();
+{
+    $currentUser = auth()->user();
+    $userToDelete = M_User::findOrFail($id);
 
-        return redirect()->route('admin.users.index')->with('success', 'User berhasil dihapus!');
+    // Cek jika user yang akan dihapus adalah user yang sedang login
+    if ($currentUser->id == $userToDelete->id) {
+        return redirect()->route('users.index')->with('error', 'Tidak dapat menghapus akun sendiri!');
     }
+
+    try {
+        // Putus relasi dengan biodata (set user_id menjadi null)
+        if ($userToDelete->biodata) {
+            $userToDelete->biodata->update(['user_id' => null]);
+        }
+
+        $userToDelete->delete();
+
+        return redirect()->route('users.index')->with('success', 'User berhasil dihapus! Data biodata tetap tersimpan.');
+        
+    } catch (\Exception $e) {
+        return redirect()->route('users.index')->with('error', 'Gagal menghapus user: ' . $e->getMessage());
+    }
+}
 
     public function show($id)
     {
         $user = M_User::with('biodata')->findOrFail($id);
-        return view('admin.users.show', compact('user'));
+        return view('users.show', compact('user'));
+    }
+
+    // Method khusus untuk membuat user dari biodata yang sudah ada
+    public function createFromBiodata($biodataId)
+    {
+        $biodata = Biodata::where('id_sobat', $biodataId)->firstOrFail();
+        
+        // Cek apakah biodata sudah memiliki user
+        if ($biodata->user_id) {
+            return redirect()->route('users.index')->with('error', 'Biodata sudah memiliki user!');
+        }
+
+        return view('admin.users.create-from-biodata', compact('biodata'));
     }
 }

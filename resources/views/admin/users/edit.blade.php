@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MOCC BPS - Manajemen User</title>
+    <title>MOCC BPS - Edit User</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -283,7 +283,8 @@
             opacity: 0.9;
         }
 
-        .table-container {
+        /* Form Styles */
+        .form-container {
             background: white;
             border-radius: 12px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
@@ -291,7 +292,7 @@
             overflow: hidden;
         }
 
-        .table-header {
+        .form-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -300,14 +301,34 @@
             background: #f8f9fa;
         }
 
-        .table-title {
+        .form-title {
             font-size: 1.5rem;
             font-weight: 700;
             color: #1e3c72;
             margin: 0;
         }
 
-        .btn-tambah {
+        .btn-back {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-back:hover {
+            background: #5a6268;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-save {
             background: linear-gradient(135deg, #1e3c72, #2a5298);
             color: white;
             border: none;
@@ -321,48 +342,64 @@
             gap: 8px;
         }
 
-        .btn-tambah:hover {
+        .btn-save:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(30, 60, 114, 0.3);
             color: white;
         }
 
-        .action-buttons {
-            display: flex;
-            gap: 8px;
+        .form-body {
+            padding: 30px;
         }
 
-        .btn-action {
-            width: 36px;
-            height: 36px;
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #1e3c72;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .form-control {
+            border: 2px solid #e9ecef;
             border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            padding: 12px 15px;
+            font-size: 1rem;
             transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: #1e3c72;
+            box-shadow: 0 0 0 0.2rem rgba(30, 60, 114, 0.25);
+        }
+
+        .form-text {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .password-toggle {
+            cursor: pointer;
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            background: none;
             border: none;
+            z-index: 5;
         }
 
-        .btn-edit {
-            background: rgba(52, 152, 219, 0.1);
-            color: #3498db;
+        .password-toggle:hover {
+            color: #1e3c72;
         }
 
-        .btn-edit:hover {
-            background: #3498db;
-            color: white;
-            transform: translateY(-2px);
-        }
-
-        .btn-delete {
-            background: rgba(231, 76, 60, 0.1);
-            color: #e74c3c;
-        }
-
-        .btn-delete:hover {
-            background: #e74c3c;
-            color: white;
-            transform: translateY(-2px);
+        .password-input-group {
+            position: relative;
         }
 
         /* Footer */
@@ -524,27 +561,6 @@
             display: flex !important;
         }
 
-        /* Badge untuk role */
-        .badge-admin {
-            background: #dc3545;
-            color: white;
-        }
-        
-        .badge-mitra {
-            background: #198754;
-            color: white;
-        }
-        
-        .badge-instruktur {
-            background: #0d6efd;
-            color: white;
-        }
-        
-        .badge-moderator {
-            background: #fd7e14;
-            color: white;
-        }
-
         /* Responsif */
         @media (max-width: 1200px) {
             .footer-content {
@@ -590,14 +606,6 @@
                 font-size: 2rem;
             }
             
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .actions-grid {
-                grid-template-columns: 1fr;
-            }
-            
             .footer-content {
                 grid-template-columns: 1fr;
                 gap: 30px;
@@ -634,16 +642,6 @@
             .user-status {
                 font-size: 0.7rem;
             }
-
-            .user-dropdown {
-                position: fixed;
-                top: auto;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                border-radius: 12px 12px 0 0;
-                margin-top: 0;
-            }
         }
 
         @media (max-width: 576px) {
@@ -663,6 +661,21 @@
             .nav-menu {
                 flex-wrap: wrap;
                 justify-content: center;
+            }
+
+            .form-body {
+                padding: 20px;
+            }
+
+            .form-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+
+            .form-header .d-flex {
+                width: 100%;
+                justify-content: space-between;
             }
         }
     </style>
@@ -721,7 +734,7 @@
                     <i class="fas fa-tachometer-alt"></i>
                     <span>Dashboard</span>
                 </a>
-                <a href="/admin/users" class="sidebar-item active">
+                <a href="/admin/users" class="sidebar-item">
                     <i class="fas fa-users"></i>
                     <span>Manajemen User</span>
                 </a>
@@ -773,100 +786,117 @@
         <div class="main-content">
             <!-- WELCOME SECTION -->
             <div class="welcome-section">
-                <h1 class="welcome-title">Manajemen User</h1>
+                <h1 class="welcome-title">Edit User</h1>
                 <p class="welcome-subtitle">
-                    Kelola data user sistem MOCC BPS dengan mudah. Lihat, edit, atau hapus data user sesuai kebutuhan.
+                    Ubah data user sesuai kebutuhan. Password hanya perlu diisi jika ingin mengubah password.
                 </p>
             </div>
 
-            <!-- TABLE SECTION -->
-            <div class="table-container">
-                <div class="table-header">
-                    <h2 class="table-title">Daftar User</h2>
-                    <a href="users/create" class="btn-tambah">
-                        <i class="fas fa-plus-circle"></i>
-                        Tambah User
+            <!-- FORM SECTION -->
+            <div class="form-container">
+                <div class="form-header">
+                    <h2 class="form-title">Form Edit User</h2>
+                    <a href="/users" class="btn-back">
+                        <i class="fas fa-arrow-left"></i>
+                        Kembali
                     </a>
                 </div>
                 
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>No</th>
-                                <th>Nama</th>
-                                <th>Username</th>
-                                <th>Password</th>
-                                <th>Role</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <!-- Di bagian table body -->
-<tbody>
-    @if(isset($users) && $users->count() > 0)
-        @foreach($users as $index => $user)
-        <tr>
-            <td>{{ $index + 1 }}</td>
-            <td>{{ $user->nama }}</td>
-            <td>{{ $user->username }}</td>
-            <td>********</td>
-            <td>
-                @if($user->role == 'admin')
-                    <span class="badge bg-danger">Admin</span>
-                @elseif($user->role == 'mitra')
-                    <span class="badge bg-success">Mitra</span>
-                @elseif($user->role == 'instruktur')
-                    <span class="badge bg-primary">Instruktur</span>
-                @elseif($user->role == 'moderator')
-                    <span class="badge bg-warning text-dark">Moderator</span>
-                @else
-                    <span class="badge bg-secondary">{{ $user->role }}</span>
-                @endif
-                
-                {{-- Tampilkan badge jika user memiliki biodata --}}
-                @if($user->biodata)
-                    <span class="badge bg-info ms-1" title="Memiliki data biodata">
-                        <i class="fas fa-id-card"></i>
-                    </span>
-                @endif
-            </td>
-            <td>
-                <div class="action-buttons">
-                    <a href="{{ route('users.edit', $user->id) }}" class="btn-action btn-edit" title="Edit">
-                        <i class="fas fa-edit"></i>
-                    </a>
-                    
-                    {{-- Tombol hapus: nonaktif hanya untuk user sendiri --}}
-                    @if(auth()->user()->id == $user->id)
-                        {{-- User sendiri - nonaktif --}}
-                        <button class="btn-action btn-delete" title="Tidak dapat menghapus akun sendiri" disabled style="opacity: 0.5; cursor: not-allowed;">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    @else
-                        {{-- User lain - aktif (biodata tidak ikut terhapus) --}}
-                        <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="d-inline">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn-action btn-delete" title="Hapus" 
-                                    onclick="return confirm('Apakah Anda yakin ingin menghapus user {{ $user->nama }}?\n\nData biodata terkait akan tetap tersimpan.')">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </form>
+                <div class="form-body">
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
                     @endif
-                </div>
-            </td>
-        </tr>
-        @endforeach
-    @else
-        <tr>
-            <td colspan="6" class="text-center py-4">
-                <i class="fas fa-database me-2"></i>
-                Tidak ada data user
-            </td>
-        </tr>
-    @endif
-</tbody>
-                    </table>
+
+                    @if(session('success'))
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            {{ session('success') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    @endif
+
+                    <form action="/users/{{ $user->id }}" method="POST" id="editUserForm">
+                        @csrf
+                        @method('PUT')
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="nama" class="form-label">Nama Lengkap *</label>
+                                    <input type="text" class="form-control" id="nama" name="nama" 
+                                           value="{{ old('nama', $user->nama) }}" required>
+                                    @error('nama')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="username" class="form-label">Username (Email) *</label>
+                                    <input type="email" class="form-control" id="username" name="username" 
+                                           value="{{ old('username', $user->username) }}" required>
+                                    @error('username')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="password" class="form-label">Password Baru</label>
+                                    <div class="password-input-group">
+                                        <input type="password" class="form-control" id="password" name="password">
+                                        <button type="button" class="password-toggle" onclick="togglePassword('password')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    <div class="form-text">Kosongkan jika tidak ingin mengubah password</div>
+                                    @error('password')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="password_confirmation" class="form-label">Konfirmasi Password Baru</label>
+                                    <div class="password-input-group">
+                                        <input type="password" class="form-control" id="password_confirmation" name="password_confirmation">
+                                        <button type="button" class="password-toggle" onclick="togglePassword('password_confirmation')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="role" class="form-label">Role *</label>
+                            <select class="form-control" id="role" name="role" required>
+                                <option value="">Pilih Role</option>
+                                <option value="admin" {{ old('role', $user->role) == 'admin' ? 'selected' : '' }}>Admin</option>
+                                <option value="mitra" {{ old('role', $user->role) == 'mitra' ? 'selected' : '' }}>Mitra</option>
+                            </select>
+                            @error('role')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn-save">
+                                <i class="fas fa-save"></i>
+                                Update User
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -906,7 +936,7 @@
                 <div class="footer-section">
                     <h3>Tentang Kami</h3>
                     <ul class="footer-links">
-                        <li><a href="https://ppid.bps.go.id/app/konten/6301/Profil-BPS.html?_gl=1*15t609r*_ga*MjQxOTY0MDAzLjE3NjEyNzM4MzU.*_ga_XXTTVXWHDB*czE3NjEyNzM4MzQkbzEkZzAkdTE3NjEyNzM4MzQkajYwJGwwJGgw">Profil BPS</a></li>
+                        <li><a href="https://ppid.bps.go.id/app/konten/6301/Profil-BPS.html?_gl=1*15t609r*_ga*MjQxOTY0MDAzLjE3NjEyNzM4MzU.*_ga_XXTTVXWHDB*czE3NjEyNzM4MzQkbzEkZzAkdUI3NjEyNzM4MzQkajYwJGwwJGgw">Profil BPS</a></li>
                         <li><a href="#">PPID</a></li>
                         <li><a href="#">Kebijakan Diseminasi</a></li>
                     </ul>
@@ -957,13 +987,53 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Logout Confirmation - Versi Diperbaiki
+        // Logout Confirmation
         function confirmLogout() {
             if (confirm('Apakah Anda yakin ingin keluar?')) {
-                // Submit form logout
                 document.getElementById('logout-form').submit();
             }
         }
+
+        // Password Toggle Function - Fixed
+        function togglePassword(fieldId) {
+            const passwordField = document.getElementById(fieldId);
+            const toggleButton = passwordField.nextElementSibling;
+            const toggleIcon = toggleButton.querySelector('i');
+            
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordField.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        }
+
+        // Form Validation and Success Handling
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('editUserForm');
+            const password = document.getElementById('password');
+            const confirmPassword = document.getElementById('password_confirmation');
+            
+            // Check if there's a success message and redirect after 2 seconds
+            const successAlert = document.querySelector('.alert-success');
+            if (successAlert) {
+                setTimeout(() => {
+                    window.location.href = '/users';
+                }, 2000);
+            }
+            
+            // Form validation
+            form.addEventListener('submit', function(e) {
+                if (password.value !== confirmPassword.value) {
+                    e.preventDefault();
+                    alert('Password dan Konfirmasi Password tidak cocok!');
+                    confirmPassword.focus();
+                }
+            });
+        });
     </script>
 </body>
 </html>
