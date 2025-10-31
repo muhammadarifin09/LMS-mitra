@@ -730,11 +730,11 @@
             <!-- Admin Menu Section -->
             <div class="sidebar-section">
                 <div class="sidebar-title">Menu Admin</div>
-                <a href="/admin/dashboard" class="sidebar-item">
+                <a href="/dashboard" class="sidebar-item">
                     <i class="fas fa-tachometer-alt"></i>
                     <span>Dashboard</span>
                 </a>
-                <a href="/admin/users" class="sidebar-item">
+                <a href="/users" class="sidebar-item">
                     <i class="fas fa-users"></i>
                     <span>Manajemen User</span>
                 </a>
