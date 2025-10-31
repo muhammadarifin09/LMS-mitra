@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MOCC BPS - Admin Dashboard</title>
+    <title>MOCC BPS - Tambah Kursus Baru</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- SweetAlert CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <style>
+        /* CSS yang sama dengan halaman index */
         * {
             margin: 0;
             padding: 0;
@@ -21,7 +24,6 @@
             flex-direction: column;
         }
         
-        /* Navigation - Sticky dengan teks besar */
         .main-nav {
             background: rgba(255, 255, 255, 0.98);
             padding: 20px 60px;
@@ -54,11 +56,6 @@
             border-radius: 2px;
         }
         
-        .nav-brand span {
-            color: #2a5298;
-        }
-        
-        /* Logo MOCC BPS sebagai gambar */
         .logo-image {
             height: 50px;
             width: auto;
@@ -75,7 +72,6 @@
             align-items: center;
         }
 
-        /* Style untuk ikon navigasi */
         .nav-icon {
             position: relative;
             width: 45px;
@@ -97,7 +93,6 @@
             transform: scale(1.1);
         }
 
-        /* Badge notifikasi */
         .notification-badge {
             position: absolute;
             top: -5px;
@@ -114,7 +109,6 @@
             font-weight: bold;
         }
         
-        /* Perbesar ukuran teks navigasi */
         .nav-item {
             padding: 12px 25px;
             border-radius: 25px;
@@ -131,7 +125,6 @@
             transform: translateY(-2px);
         }
         
-        /* User Profile & Avatar Styles */
         .user-profile {
             display: flex;
             align-items: center;
@@ -142,7 +135,6 @@
             transition: all 0.3s ease;
             margin-left: 20px;
             cursor: pointer;
-            position: relative;
         }
 
         .user-profile:hover {
@@ -162,13 +154,6 @@
             flex-shrink: 0;
             border: 2px solid white;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        }
-
-        .avatar-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 50%;
         }
 
         .avatar-initials {
@@ -211,62 +196,11 @@
             display: inline-block;
         }
 
-        /* User Dropdown Menu */
-        .user-dropdown {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-            min-width: 200px;
-            z-index: 1000;
-            display: none;
-            margin-top: 10px;
-            border: 1px solid #e9ecef;
-        }
-
-        .user-dropdown.show {
-            display: block;
-        }
-
-        .dropdown-header {
-            padding: 15px 20px;
-            border-bottom: 1px solid #e9ecef;
-            background: #f8f9fa;
-        }
-
-        .dropdown-item {
-            padding: 12px 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: #5a6c7d;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            border-left: 3px solid transparent;
-        }
-
-        .dropdown-item:hover {
-            background: rgba(30, 60, 114, 0.05);
-            color: #1e3c72;
-            border-left-color: #1e3c72;
-        }
-
-        .dropdown-item.logout {
-            color: #e74c3c;
-            border-top: 1px solid #e9ecef;
-        }
-
-        .dropdown-item.logout:hover {
-            background: rgba(231, 76, 60, 0.05);
-            color: #e74c3c;
-        }
-
         /* Dashboard Layout */
         .dashboard-container {
             display: flex;
             min-height: calc(100vh - 100px);
+            flex: 1;
         }
 
         /* Sidebar Styles */
@@ -333,167 +267,25 @@
         .welcome-section {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 40px;
+            padding: 30px;
             border-radius: 15px;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
 
         .welcome-title {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 700;
             margin-bottom: 10px;
         }
 
         .welcome-subtitle {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             line-height: 1.6;
             opacity: 0.9;
         }
 
-        .admin-badge {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            display: inline-block;
-            margin-bottom: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-
-        /* Stats Grid - Admin */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-            border: 1px solid #e9ecef;
-            transition: transform 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-        }
-
-        .stat-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 15px;
-            font-size: 1.5rem;
-        }
-
-        .stat-number {
-            font-size: 2.2rem;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
-            color: #5a6c7d;
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-
-        .stat-trend {
-            font-size: 0.8rem;
-            margin-top: 5px;
-        }
-
-        .trend-up {
-            color: #28a745;
-        }
-
-        .trend-down {
-            color: #e74c3c;
-        }
-
-        /* Quick Actions */
-        .quick-actions {
-            margin-bottom: 40px;
-        }
-
-        .section-title {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #1e3c72;
-            margin-bottom: 25px;
-        }
-
-        .actions-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-        }
-
-        .action-card {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-            border: 1px solid #e9ecef;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            text-decoration: none;
-            color: inherit;
-        }
-
-        .action-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            color: white;
-        }
-
-        .action-card:hover .action-icon {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-        }
-
-        .action-icon {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.5rem;
-            margin: 0 auto 15px;
-            transition: all 0.3s ease;
-        }
-
-        .action-card h5 {
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-
-        .action-card p {
-            font-size: 0.9rem;
-            opacity: 0.8;
-        }
-
-        /* Recent Activity */
-        .recent-activity {
-            margin-bottom: 40px;
-        }
-
-        .activity-list {
+        /* Form Styles */
+        .form-container {
             background: white;
             border-radius: 12px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
@@ -501,48 +293,131 @@
             overflow: hidden;
         }
 
-        .activity-item {
+        .form-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             padding: 20px 25px;
             border-bottom: 1px solid #e9ecef;
-            display: flex;
-            align-items: center;
-            gap: 15px;
+            background: #f8f9fa;
         }
 
-        .activity-item:last-child {
-            border-bottom: none;
+        .form-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e3c72;
+            margin: 0;
         }
 
-        .activity-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .btn-back {
+            background: #6c757d;
             color: white;
-            font-size: 1rem;
-            flex-shrink: 0;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        .activity-content {
-            flex: 1;
+        .btn-back:hover {
+            background: #5a6268;
+            color: white;
         }
 
-        .activity-title {
+        .btn-primary {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(30, 60, 114, 0.3);
+        }
+
+        .form-body {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
             font-weight: 600;
             color: #1e3c72;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            display: block;
         }
 
-        .activity-desc {
-            color: #5a6c7d;
-            font-size: 0.9rem;
+        .form-control, .form-select {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 12px 15px;
+            font-size: 14px;
+            transition: all 0.3s ease;
         }
 
-        .activity-time {
-            color: #8a9aac;
-            font-size: 0.8rem;
+        .form-control:focus, .form-select:focus {
+            border-color: #1e3c72;
+            box-shadow: 0 0 0 0.2rem rgba(30, 60, 114, 0.25);
+        }
+
+        .form-text {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .required::after {
+            content: " *";
+            color: #e74c3c;
+        }
+
+        .image-preview {
+            max-width: 200px;
+            max-height: 150px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            display: none;
+            margin-top: 10px;
+        }
+
+        .image-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 4px;
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 -10px;
+        }
+
+        .col-md-6 {
+            flex: 0 0 50%;
+            padding: 0 10px;
+        }
+
+        /* PERBAIKAN: Menambahkan CSS yang sama seperti di edit form */
+        .form-group-with-image {
+            margin-bottom: 30px;
+        }
+
+        .image-preview-container {
+            max-height: 200px;
+            overflow: hidden;
+            margin-bottom: 15px;
         }
 
         /* Footer */
@@ -575,13 +450,6 @@
             color: white;
             border-bottom: 2px solid #2d74da;
             padding-bottom: 8px;
-        }
-
-        .footer-section h4 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 15px;
-            color: white;
         }
 
         .footer-address {
@@ -693,25 +561,7 @@
             text-decoration: underline;
         }
 
-        /* CSS untuk Fallback Image */
-        .avatar-image[src=""],
-        .avatar-image:not([src]) {
-            opacity: 0;
-        }
-
-        .avatar-image:not([src]) + .avatar-initials,
-        .avatar-image[src=""] + .avatar-initials {
-            display: flex !important;
-        }
-
         /* Responsif */
-        @media (max-width: 1200px) {
-            .footer-content {
-                grid-template-columns: 1fr 1fr;
-                gap: 30px;
-            }
-        }
-
         @media (max-width: 768px) {
             .main-nav {
                 padding: 12px 20px;
@@ -749,14 +599,6 @@
                 font-size: 2rem;
             }
             
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .actions-grid {
-                grid-template-columns: 1fr;
-            }
-            
             .footer-content {
                 grid-template-columns: 1fr;
                 gap: 30px;
@@ -770,7 +612,6 @@
                 max-width: 150px;
             }
 
-            /* Responsif untuk User Profile */
             .user-profile {
                 margin-left: 10px;
                 padding: 6px 12px;
@@ -794,14 +635,9 @@
                 font-size: 0.7rem;
             }
 
-            .user-dropdown {
-                position: fixed;
-                top: auto;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                border-radius: 12px 12px 0 0;
-                margin-top: 0;
+            .col-md-6 {
+                flex: 0 0 100%;
+                padding: 0;
             }
         }
 
@@ -823,6 +659,10 @@
                 flex-wrap: wrap;
                 justify-content: center;
             }
+
+            .form-body {
+                padding: 20px;
+            }
         }
     </style>
 </head>
@@ -831,93 +671,39 @@
     <nav class="main-nav">
         <div class="d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center">
-                <!-- Logo MOCC BPS sebagai gambar -->
                 <a href="#" class="nav-brand">
                     <img src="{{ asset('img/Logo_E-Learning.png') }}" alt="MOCC BPS Logo" class="logo-image">
                 </a>
                 <div class="nav-menu ms-5">
-                    <a href="/admin/dashboard" class="nav-item active">Dashboard</a>
-                    <a href="/admin/users" class="nav-item">Manajemen User</a>
-                    <a href="/admin/kursus" class="nav-item">Manajemen Kursus</a>
+                    <a href="/admin/dashboard" class="nav-item">Dashboard</a>
+                    <a href="/users" class="nav-item">Manajemen User</a>
+                    <a href="/admin/kursus" class="nav-item active">Manajemen Kursus</a>
                     <a href="/admin/reports" class="nav-item">Laporan</a>
                     <a href="/admin/settings" class="nav-item">Pengaturan</a>
                 </div>
             </div>
             
-            <!-- Tambahkan bagian ikon di sini -->
             <div class="d-flex align-items-center">
-                <!-- Ikon Bahasa -->
                 <div class="nav-icon me-3">
                     <i class="fas fa-globe"></i>
                 </div>
                 
-                <!-- Ikon Notifikasi -->
                 <div class="nav-icon me-4">
                     <i class="fas fa-bell"></i>
-                    <span class="notification-badge">5</span>
+                    <span class="notification-badge">3</span>
                 </div>
                 
-                <!-- User Profile Admin dengan Data Dinamis -->
-                <div class="user-profile" id="userProfile">
+                <div class="user-profile">
                     <div class="user-avatar">
-                        @auth
-                            @php
-                                $user = Auth::user();
-                                $biodata = $user->biodata ?? null;
-                                // Generate initials from user name
-                                $nameParts = explode(' ', $user->name);
-                                $initials = '';
-                                if (count($nameParts) >= 2) {
-                                    $initials = strtoupper(substr($nameParts[0], 0, 1) . substr($nameParts[1], 0, 1));
-                                } else {
-                                    $initials = strtoupper(substr($user->name, 0, 2));
-                                }
-                            @endphp
-                            
-                            @if($biodata && $biodata->foto_profil)
-                                <img src="{{ asset('storage/' . $biodata->foto_profil) }}" 
-                                     alt="Foto Profil Admin" 
-                                     class="avatar-image"
-                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                <div class="avatar-initials" style="display: none;">{{ $initials }}</div>
-                            @else
-                                <div class="avatar-initials">{{ $initials }}</div>
-                            @endif
-                        @endauth
+                        <div class="avatar-initials">AD</div>
                     </div>
                     <div class="user-info">
-                        <div class="user-name">
-                            {{ Auth::user()->biodata->nama_lengkap ?? Auth::user()->name }}
-                        </div>
+                        <div class="user-name">Administrator</div>
                         <div class="user-status">
                             <span class="status-dot"></span>
-                            {{ ucfirst(Auth::user()->role) }}
+                            Admin
                         </div>
                     </div>
-                    <i class="fas fa-chevron-down ms-2" style="color: #5a6c7d; font-size: 0.8rem;"></i>
-                </div>
-
-                <!-- User Dropdown Menu -->
-                <div class="user-dropdown" id="userDropdown">
-                    <div class="dropdown-header">
-                        <div class="user-name">{{ Auth::user()->biodata->nama_lengkap ?? Auth::user()->name }}</div>
-                        <div class="user-status">
-                            <span class="status-dot"></span>
-                            {{ ucfirst(Auth::user()->role) }}
-                        </div>
-                    </div>
-                    <a href="/admin/profile" class="dropdown-item">
-                        <i class="fas fa-user-cog"></i>
-                        <span>Profil Saya</span>
-                    </a>
-                    <a href="/admin/settings" class="dropdown-item">
-                        <i class="fas fa-cog"></i>
-                        <span>Pengaturan</span>
-                    </a>
-                    <a href="#" class="dropdown-item logout" onclick="event.preventDefault(); confirmLogout()">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span>Keluar</span>
-                    </a>
                 </div>
             </div>
         </div>
@@ -930,7 +716,7 @@
             <!-- Admin Menu Section -->
             <div class="sidebar-section">
                 <div class="sidebar-title">Menu Admin</div>
-                <a href="/admin/dashboard" class="sidebar-item active">
+                <a href="/admin/dashboard" class="sidebar-item">
                     <i class="fas fa-tachometer-alt"></i>
                     <span>Dashboard</span>
                 </a>
@@ -942,7 +728,7 @@
                     <i class="fas fa-id-card"></i>
                     <span>Manajemen Biodata</span>
                 </a>
-                <a href="/admin/courses" class="sidebar-item">
+                <a href="/admin/kursus" class="sidebar-item active">
                     <i class="fas fa-book"></i>
                     <span>Manajemen Kursus</span>
                 </a>
@@ -975,7 +761,7 @@
                     <i class="fas fa-user-cog"></i>
                     <span>Profil Admin</span>
                 </a>
-                <a href="#" class="sidebar-item text-danger" onclick="event.preventDefault(); confirmLogout()">
+                <a href="#" class="sidebar-item text-danger" onclick="confirmLogout()">
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Keluar</span>
                 </a>
@@ -984,148 +770,200 @@
 
         <!-- Main Content -->
         <div class="main-content">
-            <!-- Welcome Section dengan Nama Admin -->
+            <!-- WELCOME SECTION -->
             <div class="welcome-section">
-                <div class="admin-badge">
-                    <i class="fas fa-shield-alt me-2"></i>{{ ucfirst(Auth::user()->role) }}
-                </div>
-                <h1 class="welcome-title">Selamat Datang, {{ Auth::user()->biodata->nama_lengkap ?? Auth::user()->name }}!</h1>
+                <h1 class="welcome-title">Tambah Kursus Baru</h1>
                 <p class="welcome-subtitle">
-                    Kelola sistem MOCC BPS dengan mudah dan efisien. Pantau aktivitas, kelola pengguna, dan optimalkan pengalaman belajar.
+                    Isi form berikut untuk menambahkan kursus baru ke platform MOCC BPS.
                 </p>
             </div>
 
-            <!-- Stats Grid - Admin -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: #3498db; color: white;">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="stat-number" style="color: #3498db;">2,847</div>
-                    <div class="stat-label">Total Pengguna</div>
-                    <div class="stat-trend trend-up">
-                        <i class="fas fa-arrow-up me-1"></i>12% dari bulan lalu
-                    </div>
+            <!-- FORM SECTION -->
+            <div class="form-container">
+                <div class="form-header">
+                    <h2 class="form-title">Form Tambah Kursus</h2>
+                    <a href="{{ route('admin.kursus.index') }}" class="btn-back">
+                        <i class="fas fa-arrow-left"></i>
+                        Kembali
+                    </a>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: #2ecc71; color: white;">
-                        <i class="fas fa-book"></i>
-                    </div>
-                    <div class="stat-number" style="color: #2ecc71;">24</div>
-                    <div class="stat-label">Kursus Aktif</div>
-                    <div class="stat-trend trend-up">
-                        <i class="fas fa-arrow-up me-1"></i>3 kursus baru
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: #e74c3c; color: white;">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <div class="stat-number" style="color: #e74c3c;">94%</div>
-                    <div class="stat-label">Tingkat Penyelesaian</div>
-                    <div class="stat-trend trend-up">
-                        <i class="fas fa-arrow-up me-1"></i>5% peningkatan
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: #f39c12; color: white;">
-                        <i class="fas fa-comments"></i>
-                    </div>
-                    <div class="stat-number" style="color: #f39c12;">156</div>
-                    <div class="stat-label">Diskusi Aktif</div>
-                    <div class="stat-trend trend-up">
-                        <i class="fas fa-arrow-up me-1"></i>8 diskusi baru
-                    </div>
-                </div>
-            </div>
+                
+                <div class="form-body">
+                    <form action="{{ route('admin.kursus.store') }}" method="POST" enctype="multipart/form-data" id="kursusForm">
+                        @csrf
+                        
+                        <div class="row">
+                            <!-- Kolom Kiri -->
+                            <div class="col-md-6">
+                                <!-- Judul Kursus -->
+                                <div class="form-group">
+                                    <label for="judul_kursus" class="form-label required">Judul Kursus</label>
+                                    <input type="text" class="form-control" id="judul_kursus" name="judul_kursus" 
+                                           value="{{ old('judul_kursus') }}" required 
+                                           placeholder="Masukkan judul kursus">
+                                    @error('judul_kursus')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
 
-            <!-- Quick Actions -->
-            <div class="quick-actions">
-                <h3 class="section-title">Aksi Cepat</h3>
-                <div class="actions-grid">
-                    <a href="/admin/users/create" class="action-card">
-                        <div class="action-icon">
-                            <i class="fas fa-user-plus"></i>
-                        </div>
-                        <h5>Tambah User</h5>
-                        <p>Buat akun pengguna baru</p>
-                    </a>
-                    <a href="/admin/courses/create" class="action-card">
-                        <div class="action-icon">
-                            <i class="fas fa-plus-circle"></i>
-                        </div>
-                        <h5>Buat Kursus</h5>
-                        <p>Tambahkan kursus baru</p>
-                    </a>
-                    <a href="/admin/reports" class="action-card">
-                        <div class="action-icon">
-                            <i class="fas fa-chart-pie"></i>
-                        </div>
-                        <h5>Lihat Laporan</h5>
-                        <p>Analisis data sistem</p>
-                    </a>
-                    <a href="/admin/settings" class="action-card">
-                        <div class="action-icon">
-                            <i class="fas fa-cogs"></i>
-                        </div>
-                        <h5>Pengaturan</h5>
-                        <p>Konfigurasi sistem</p>
-                    </a>
-                </div>
-            </div>
+                                <!-- Penerbit -->
+                                <div class="form-group">
+                                    <label for="penerbit" class="form-label required">Penerbit</label>
+                                    <input type="text" class="form-control" id="penerbit" name="penerbit" 
+                                           value="{{ old('penerbit') }}" required 
+                                           placeholder="Masukkan nama penerbit">
+                                    @error('penerbit')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
 
-            <!-- Recent Activity -->
-            <div class="recent-activity">
-                <h3 class="section-title">Aktivitas Terbaru</h3>
-                <div class="activity-list">
-                    <div class="activity-item">
-                        <div class="activity-icon" style="background: #3498db;">
-                            <i class="fas fa-user-plus"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div class="activity-title">User Baru Terdaftar</div>
-                            <div class="activity-desc">Budi Santoso mendaftar sebagai mitra BPS</div>
-                        </div>
-                        <div class="activity-time">5 menit lalu</div>
-                    </div>
-                    <div class="activity-item">
-                        <div class="activity-icon" style="background: #2ecc71;">
-                            <i class="fas fa-book"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div class="activity-title">Kursus Diselesaikan</div>
-                            <div class="activity-desc">Siti Rahayu menyelesaikan kursus Data Analysis</div>
-                        </div>
-                        <div class="activity-time">1 jam lalu</div>
-                    </div>
-                    <div class="activity-item">
-                        <div class="activity-icon" style="background: #e74c3c;">
-                            <i class="fas fa-exclamation-triangle"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div class="activity-title">Peringatan Sistem</div>
-                            <div class="activity-desc">Backup otomatis berhasil dilakukan</div>
-                        </div>
-                        <div class="activity-time">2 jam lalu</div>
-                    </div>
-                    <div class="activity-item">
-                        <div class="activity-icon" style="background: #f39c12;">
-                            <i class="fas fa-comment"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div class="activity-title">Diskusi Baru</div>
-                            <div class="activity-desc">Pertanyaan baru di forum Statistik Dasar</div>
-                        </div>
-                        <div class="activity-time">3 jam lalu</div>
-                    </div>
-                </div>
-            </div>
+                                <!-- Tingkat Kesulitan -->
+                                <div class="form-group">
+                                    <label for="tingkat_kesulitan" class="form-label required">Tingkat Kesulitan</label>
+                                    <select class="form-select" id="tingkat_kesulitan" name="tingkat_kesulitan" required>
+                                        <option value="">Pilih Tingkat Kesulitan</option>
+                                        <option value="pemula" {{ old('tingkat_kesulitan') == 'pemula' ? 'selected' : '' }}>Pemula</option>
+                                        <option value="menengah" {{ old('tingkat_kesulitan') == 'menengah' ? 'selected' : '' }}>Menengah</option>
+                                        <option value="lanjutan" {{ old('tingkat_kesulitan') == 'lanjutan' ? 'selected' : '' }}>Lanjutan</option>
+                                    </select>
+                                    @error('tingkat_kesulitan')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
 
-            <!-- Copyright -->
-            <div class="text-center mt-5 pt-4 border-top">
-                <p style="color: #5a6c7d; font-size: 0.9rem;">
-                    Copyright © 2025 | MOCC BPS - Admin Dashboard
-                </p>
+                                <!-- Durasi -->
+                                <div class="form-group">
+                                    <label for="durasi_jam" class="form-label required">Durasi (Jam)</label>
+                                    <input type="number" class="form-control" id="durasi_jam" name="durasi_jam" 
+                                           value="{{ old('durasi_jam', 0) }}" min="0" required 
+                                           placeholder="Masukkan durasi dalam jam">
+                                    <div class="form-text">Durasi total kursus dalam jam</div>
+                                    @error('durasi_jam')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <!-- PERBAIKAN: Kuota Peserta dipindah ke kolom kiri -->
+                                <div class="form-group">
+                                    <label for="kuota_peserta" class="form-label">Kuota Peserta</label>
+                                    <input type="number" class="form-control" id="kuota_peserta" name="kuota_peserta" 
+                                           value="{{ old('kuota_peserta') }}" min="1" 
+                                           placeholder="Kosongkan untuk tidak terbatas">
+                                    <div class="form-text">Biarkan kosong jika kuota tidak terbatas</div>
+                                    @error('kuota_peserta')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <!-- Tanggal Mulai & Selesai -->
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="tanggal_mulai" class="form-label">Tanggal Mulai</label>
+                                            <input type="date" class="form-control" id="tanggal_mulai" name="tanggal_mulai" 
+                                                   value="{{ old('tanggal_mulai') }}">
+                                            @error('tanggal_mulai')
+                                                <div class="text-danger">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="tanggal_selesai" class="form-label">Tanggal Selesai</label>
+                                            <input type="date" class="form-control" id="tanggal_selesai" name="tanggal_selesai" 
+                                                   value="{{ old('tanggal_selesai') }}">
+                                            @error('tanggal_selesai')
+                                                <div class="text-danger">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Kolom Kanan -->
+                            <div class="col-md-6">
+                                <!-- Status -->
+                                <div class="form-group">
+                                    <label for="status" class="form-label required">Status</label>
+                                    <select class="form-select" id="status" name="status" required>
+                                        <option value="">Pilih Status</option>
+                                        <option value="draft" {{ old('status') == 'draft' ? 'selected' : '' }}>Draft</option>
+                                        <option value="aktif" {{ old('status') == 'aktif' ? 'selected' : '' }}>Aktif</option>
+                                        <option value="nonaktif" {{ old('status') == 'nonaktif' ? 'selected' : '' }}>Nonaktif</option>
+                                    </select>
+                                    @error('status')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <!-- PERBAIKAN: Gambar Kursus dengan container yang lebih baik -->
+                                <div class="form-group form-group-with-image">
+                                    <label for="gambar_kursus" class="form-label">Gambar Kursus</label>
+                                    <input type="file" class="form-control" id="gambar_kursus" name="gambar_kursus" 
+                                           accept="image/*" onchange="previewImage(this)">
+                                    <div class="form-text">Format: JPG, PNG, GIF. Maksimal 2MB</div>
+                                    <div class="image-preview-container">
+                                        <div class="image-preview" id="imagePreview">
+                                            <img src="" alt="Preview Gambar" style="max-height: 150px;">
+                                        </div>
+                                    </div>
+                                    @error('gambar_kursus')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Deskripsi Kursus -->
+                        <div class="form-group">
+                            <label for="deskripsi_kursus" class="form-label required">Deskripsi Kursus</label>
+                            <textarea class="form-control" id="deskripsi_kursus" name="deskripsi_kursus" 
+                                      rows="4" required placeholder="Masukkan deskripsi lengkap kursus">{{ old('deskripsi_kursus') }}</textarea>
+                            @error('deskripsi_kursus')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <!-- Output Pelatihan -->
+                        <div class="form-group">
+                            <label for="output_pelatihan" class="form-label">Output Pelatihan</label>
+                            <textarea class="form-control" id="output_pelatihan" name="output_pelatihan" 
+                                      rows="3" placeholder="Masukkan output yang akan didapat peserta (pisahkan dengan enter)">{{ old('output_pelatihan') }}</textarea>
+                            <div class="form-text">Pisahkan setiap poin dengan enter (baris baru)</div>
+                            @error('output_pelatihan')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <!-- Persyaratan -->
+                        <div class="form-group">
+                            <label for="persyaratan" class="form-label">Persyaratan</label>
+                            <textarea class="form-control" id="persyaratan" name="persyaratan" 
+                                      rows="3" placeholder="Masukkan persyaratan untuk mengikuti kursus">{{ old('persyaratan') }}</textarea>
+                            @error('persyaratan')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <!-- Fasilitas -->
+                        <div class="form-group">
+                            <label for="fasilitas" class="form-label">Fasilitas</label>
+                            <textarea class="form-control" id="fasilitas" name="fasilitas" 
+                                      rows="3" placeholder="Masukkan fasilitas yang didapat peserta">{{ old('fasilitas') }}</textarea>
+                            @error('fasilitas')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="form-group text-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i>
+                                Simpan Kursus
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -1209,25 +1047,15 @@
     </footer>
 
     <!-- Hidden Logout Form -->
-    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+    <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
         @csrf
     </form>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- SweetAlert JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
-        // User Profile Dropdown Toggle
-        document.getElementById('userProfile').addEventListener('click', function(e) {
-            e.stopPropagation();
-            document.getElementById('userDropdown').classList.toggle('show');
-        });
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!document.getElementById('userProfile').contains(e.target)) {
-                document.getElementById('userDropdown').classList.remove('show');
-            }
-        });
-
         // Logout Confirmation
         function confirmLogout() {
             if (confirm('Apakah Anda yakin ingin keluar?')) {
@@ -1235,32 +1063,43 @@
             }
         }
 
-        // Sidebar item active state
-        document.querySelectorAll('.sidebar-item').forEach(item => {
-            item.addEventListener('click', function() {
-                document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
-
-        // Nav item active state
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', function() {
-                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
-
-        // Handle image loading errors
-        document.querySelectorAll('.avatar-image').forEach(img => {
-            img.addEventListener('error', function() {
-                this.style.display = 'none';
-                const initials = this.nextElementSibling;
-                if (initials && initials.classList.contains('avatar-initials')) {
-                    initials.style.display = 'flex';
+        // Image Preview Function
+        function previewImage(input) {
+            const preview = document.getElementById('imagePreview');
+            const file = input.files[0];
+            
+            if (file) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    preview.style.display = 'block';
+                    preview.querySelector('img').src = e.target.result;
                 }
-            });
+                
+                reader.readAsDataURL(file);
+            } else {
+                preview.style.display = 'none';
+                preview.querySelector('img').src = '';
+            }
+        }
+
+        // Form Validation
+        document.getElementById('kursusForm').addEventListener('submit', function(e) {
+            const judul = document.getElementById('judul_kursus').value.trim();
+            const penerbit = document.getElementById('penerbit').value.trim();
+            const tingkat = document.getElementById('tingkat_kesulitan').value;
+            const status = document.getElementById('status').value;
+            
+            if (!judul || !penerbit || !tingkat || !status) {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Data Belum Lengkap!',
+                    text: 'Harap isi semua field yang wajib diisi.',
+                    icon: 'warning',
+                    confirmButtonColor: '#1e3c72'
+                });
+            }
         });
-    </script>
+    </script>   
 </body>
 </html>

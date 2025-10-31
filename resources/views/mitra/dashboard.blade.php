@@ -667,7 +667,7 @@
                 <div class="nav-menu ms-5">
                     <a href="/beranda" class="nav-item">Beranda</a>
                     <a href="/dashboard" class="nav-item active">Dashboard</a>
-                    <a href="/kursus" class="nav-item">Kursus</a>
+                    <a href="/mitra/kursus" class="nav-item">Kursus</a>
                     <a href="#" class="nav-item">Kursus Saya</a>
                 </div>
             </div>
