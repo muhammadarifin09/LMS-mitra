@@ -400,36 +400,31 @@
             border-radius: 4px;
         }
 
-        /* PERBAIKAN UTAMA: Course Image Styles - Full Image Display */
+        /* Improved Course Image Styles */
         .course-image-container {
             position: relative;
             width: 100%;
+            height: 280px;
             border-radius: 12px;
             overflow: hidden;
             margin-bottom: 20px;
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 200px;
-            max-height: 400px;
         }
 
         .course-image {
             width: 100%;
-            height: auto;
-            max-height: 400px;
-            object-fit: contain; /* Changed from cover to contain */
+            height: 100%;
+            object-fit: cover;
             transition: transform 0.3s ease;
         }
 
         .course-image:hover {
-            transform: scale(1.02);
+            transform: scale(1.05);
         }
 
         .course-image-placeholder {
             width: 100%;
-            height: 250px;
+            height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -788,7 +783,7 @@
             }
             
             .course-image-container {
-                max-height: 350px;
+                height: 250px;
             }
         }
 
@@ -875,8 +870,7 @@
             }
             
             .course-image-container {
-                max-height: 300px;
-                min-height: 180px;
+                height: 220px;
             }
             
             .footer-content {
@@ -928,8 +922,7 @@
             }
             
             .course-image-container {
-                max-height: 250px;
-                min-height: 150px;
+                height: 200px;
             }
         }
     </style>
@@ -1069,7 +1062,7 @@
                 @foreach($kursus as $item)
                     @if($item->status == 'aktif')
                     <div class="course-card">
-                        <!-- Gambar Kursus dengan Container - SUDAH DIPERBAIKI -->
+                        <!-- Gambar Kursus dengan Container -->
                         <div class="course-image-container">
                             @if($item->gambar_kursus)
                                 <img src="{{ asset('storage/' . $item->gambar_kursus) }}" 
@@ -1331,7 +1324,7 @@
                 e.preventDefault();
                 const courseTitle = this.closest('.course-card').querySelector('.course-title').textContent;
                 if (confirm(`Apakah Anda yakin ingin mengikuti kursus "${courseTitle}"?`)) {
-                    this.closest('form').submit();a
+                    this.closest('form').submit();
                 }
             });
         });
