@@ -942,7 +942,7 @@
                     <i class="fas fa-id-card"></i>
                     <span>Manajemen Biodata</span>
                 </a>
-                <a href="/admin/courses" class="sidebar-item">
+                <a href="/admin/kursus" class="sidebar-item">
                     <i class="fas fa-book"></i>
                     <span>Manajemen Kursus</span>
                 </a>

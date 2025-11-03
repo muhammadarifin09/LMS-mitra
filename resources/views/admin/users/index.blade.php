@@ -134,6 +134,7 @@
             transition: all 0.3s ease;
             margin-left: 20px;
             cursor: pointer;
+            position: relative;
         }
 
         .user-profile:hover {
@@ -161,6 +162,13 @@
             font-size: 16px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+        }
+
+        .avatar-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
         }
 
         .user-info {
@@ -193,6 +201,70 @@
             background: #28a745;
             border-radius: 50%;
             display: inline-block;
+        }
+
+        /* User Dropdown Styles */
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            width: 240px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            margin-top: 10px;
+            padding: 15px 0;
+            z-index: 1001;
+            display: none;
+            border: 1px solid #e9ecef;
+            overflow: hidden;
+        }
+
+        .user-dropdown.show {
+            display: block;
+        }
+
+        .dropdown-header {
+            padding: 0 20px 15px;
+            border-bottom: 1px solid #e9ecef;
+            margin-bottom: 10px;
+        }
+
+        .dropdown-header .user-name {
+            font-size: 1rem;
+            color: #1e3c72;
+            max-width: none;
+            margin-bottom: 4px;
+        }
+
+        .dropdown-header .user-status {
+            font-size: 0.8rem;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: #5a6c7d;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(30, 60, 114, 0.08);
+            color: #1e3c72;
+        }
+
+        .dropdown-item.logout {
+            border-top: 1px solid #e9ecef;
+            margin-top: 10px;
+            padding-top: 15px;
+            color: #e74c3c;
+        }
+
+        .dropdown-item.logout:hover {
+            background: rgba(231, 76, 60, 0.08);
         }
 
         /* Dashboard Layout */
@@ -413,66 +485,6 @@
             margin-bottom: 8px;
         }
 
-        .footer-links {
-            list-style: none;
-        }
-
-        .footer-links li {
-            margin-bottom: 10px;
-        }
-
-        .footer-links a {
-            color: rgba(255, 255, 255, 0.85);
-            text-decoration: none;
-            transition: color 0.3s ease;
-            font-size: 14px;
-        }
-
-        .footer-links a:hover {
-            color: white;
-            text-decoration: underline;
-        }
-
-        .news-item {
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .news-date {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 5px;
-        }
-
-        .news-title {
-            font-weight: 500;
-            line-height: 1.4;
-        }
-
-        .footer-divider {
-            height: 1px;
-            background: rgba(255, 255, 255, 0.2);
-            margin: 30px 0;
-        }
-
-        .footer-bottom {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .bps-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 15px;
-            color: white;
-        }
-
         .contact-info {
             margin-top: 15px;
         }
@@ -643,6 +655,7 @@
                 right: 0;
                 border-radius: 12px 12px 0 0;
                 margin-top: 0;
+                width: 100%;
             }
         }
 
@@ -694,36 +707,61 @@
                     <span class="notification-badge">5</span>
                 </div>
                 
-                <div class="user-profile">
+                <!-- User Profile Admin dengan Data Dinamis -->
+                <div class="user-profile" id="userProfile">
                     <div class="user-avatar">
-                        <div class="avatar-initials">AD</div>
+                        <!-- Simulasi data user -->
+                        <div class="avatar-initials">{{ strtoupper(substr(auth()->user()->nama, 0, 2)) }}</div>
                     </div>
                     <div class="user-info">
+                        <div class="user-name">{{auth()->user()->nama}}</div>
+                        <div class="user-status">
+                            <span class="status-dot"></span>
+                            {{ ucfirst(auth()->user()->role) }}
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-down ms-2" style="color: #5a6c7d; font-size: 0.8rem;"></i>
+                </div>
+
+                <!-- User Dropdown Menu -->
+                <div class="user-dropdown" id="userDropdown">
+                    <div class="dropdown-header">
                         <div class="user-name">Administrator</div>
                         <div class="user-status">
                             <span class="status-dot"></span>
                             Admin
                         </div>
                     </div>
+                    <a href="/admin/profile" class="dropdown-item">
+                        <i class="fas fa-user-cog"></i>
+                        <span>Profil Saya</span>
+                    </a>
+                    <a href="/admin/settings" class="dropdown-item">
+                        <i class="fas fa-cog"></i>
+                        <span>Pengaturan</span>
+                    </a>
+                    <a href="#" class="dropdown-item logout" onclick="event.preventDefault(); confirmLogout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Keluar</span>
+                    </a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- Dashboard Content -->
+    <!-- Dashboard Layout -->
     <div class="dashboard-container">
-        <!-- Sidebar Admin -->
+        <!-- Sidebar -->
         <div class="sidebar">
-            <!-- Admin Menu Section -->
             <div class="sidebar-section">
-                <div class="sidebar-title">Menu Admin</div>
+                <div class="sidebar-title">Menu Utama</div>
                 <a href="/admin/dashboard" class="sidebar-item">
                     <i class="fas fa-tachometer-alt"></i>
-                    <span>Dashboard</span>
+                    Dashboard
                 </a>
                 <a href="/admin/users" class="sidebar-item active">
                     <i class="fas fa-users"></i>
-                    <span>Manajemen User</span>
+                    Manajemen User
                 </a>
                 <a href="/biodata" class="sidebar-item">
                     <i class="fas fa-id-card"></i>
@@ -731,15 +769,17 @@
                 </a>
                 <a href="/admin/courses" class="sidebar-item">
                     <i class="fas fa-book"></i>
-                    <span>Manajemen Kursus</span>
+                    Manajemen Kursus
                 </a>
-                <a href="/admin/categories" class="sidebar-item">
-                    <i class="fas fa-tags"></i>
-                    <span>Kategori Kursus</span>
+                <a href="/admin/reports" class="sidebar-item">
+                    <i class="fas fa-chart-bar"></i>
+                    Laporan
+                </a>
+                <a href="/admin/settings" class="sidebar-item">
+                    <i class="fas fa-cog"></i>
+                    Pengaturan
                 </a>
             </div>
-
-            <!-- System Section -->
             <div class="sidebar-section">
                 <div class="sidebar-title">Sistem</div>
                 <a href="/admin/reports" class="sidebar-item">
@@ -762,7 +802,7 @@
                     <i class="fas fa-user-cog"></i>
                     <span>Profil Admin</span>
                 </a>
-                <a href="#" class="sidebar-item text-danger" onclick="confirmLogout()">
+                <a href="#" class="sidebar-item text-danger" onclick="event.preventDefault(); confirmLogout()">
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Keluar</span>
                 </a>
@@ -802,70 +842,66 @@
                             </tr>
                         </thead>
                         <!-- Di bagian table body -->
-<tbody>
-    @if(isset($users) && $users->count() > 0)
-        @foreach($users as $index => $user)
-        <tr>
-            <td>{{ $index + 1 }}</td>
-            <td>{{ $user->nama }}</td>
-            <td>{{ $user->username }}</td>
-            <td>********</td>
-            <td>
-                @if($user->role == 'admin')
-                    <span class="badge bg-danger">Admin</span>
-                @elseif($user->role == 'mitra')
-                    <span class="badge bg-success">Mitra</span>
-                @elseif($user->role == 'instruktur')
-                    <span class="badge bg-primary">Instruktur</span>
-                @elseif($user->role == 'moderator')
-                    <span class="badge bg-warning text-dark">Moderator</span>
-                @else
-                    <span class="badge bg-secondary">{{ $user->role }}</span>
-                @endif
-                
-                {{-- Tampilkan badge jika user memiliki biodata --}}
-                @if($user->biodata)
-                    <span class="badge bg-info ms-1" title="Memiliki data biodata">
-                        <i class="fas fa-id-card"></i>
-                    </span>
-                @endif
-            </td>
-            <td>
-                <div class="action-buttons">
-                    <a href="{{ route('users.edit', $user->id) }}" class="btn-action btn-edit" title="Edit">
-                        <i class="fas fa-edit"></i>
-                    </a>
-                    
-                    {{-- Tombol hapus: nonaktif hanya untuk user sendiri --}}
-                    @if(auth()->user()->id == $user->id)
-                        {{-- User sendiri - nonaktif --}}
-                        <button class="btn-action btn-delete" title="Tidak dapat menghapus akun sendiri" disabled style="opacity: 0.5; cursor: not-allowed;">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    @else
-                        {{-- User lain - aktif (biodata tidak ikut terhapus) --}}
-                        <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="d-inline">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn-action btn-delete" title="Hapus" 
-                                    onclick="return confirm('Apakah Anda yakin ingin menghapus user {{ $user->nama }}?\n\nData biodata terkait akan tetap tersimpan.')">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </form>
-                    @endif
-                </div>
-            </td>
-        </tr>
-        @endforeach
-    @else
-        <tr>
-            <td colspan="6" class="text-center py-4">
-                <i class="fas fa-database me-2"></i>
-                Tidak ada data user
-            </td>
-        </tr>
-    @endif
-</tbody>
+                        <tbody>
+                            @if(isset($users) && $users->count() > 0)
+                                @foreach($users as $index => $user)
+                                <tr>
+                                    <td>{{ $index + 1 }}</td>
+                                    <td>{{ $user->nama }}</td>
+                                    <td>{{ $user->username }}</td>
+                                    <td>********</td>
+                                    <td>
+                                        @if($user->role == 'admin')
+                                            <span class="badge bg-success">Admin</span>
+                                        @elseif($user->role == 'mitra')
+                                            <span class="badge bg-primary">Mitra</span>
+                                        @else
+                                            <span class="badge bg-secondary">{{ $user->role }}</span>
+                                        @endif
+                                        
+                                        {{-- Tampilkan badge jika user memiliki biodata --}}
+                                        @if($user->biodata)
+                                            <span class="badge bg-info ms-1" title="Memiliki data biodata">
+                                                <i class="fas fa-id-card"></i>
+                                            </span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="{{ route('users.edit', $user->id) }}" class="btn-action btn-edit" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            
+                                            {{-- Tombol hapus: nonaktif hanya untuk user sendiri --}}
+                                            @if(auth()->user()->id == $user->id)
+                                                {{-- User sendiri - nonaktif --}}
+                                                <button class="btn-action btn-delete" title="Tidak dapat menghapus akun sendiri" disabled style="opacity: 0.5; cursor: not-allowed;">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            @else
+                                                {{-- User lain - aktif (biodata tidak ikut terhapus) --}}
+                                                <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="d-inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn-action btn-delete" title="Hapus" 
+                                                            onclick="return confirm('Apakah Anda yakin ingin menghapus user {{ $user->nama }}?\n\nData biodata terkait akan tetap tersimpan.')">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </div>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            @else
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">
+                                        <i class="fas fa-database me-2"></i>
+                                        Tidak ada data user
+                                    </td>
+                                </tr>
+                            @endif
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -964,6 +1000,29 @@
                 document.getElementById('logout-form').submit();
             }
         }
+
+        // Dropdown Toggle for User Profile
+        document.addEventListener('DOMContentLoaded', function() {
+            const userProfile = document.getElementById('userProfile');
+            const userDropdown = document.getElementById('userDropdown');
+
+            if (userProfile && userDropdown) {
+                userProfile.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    userDropdown.classList.toggle('show');
+                });
+
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function() {
+                    userDropdown.classList.remove('show');
+                });
+
+                // Prevent closing when clicking inside dropdown
+                userDropdown.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            }
+        });
     </script>
 </body>
 </html>

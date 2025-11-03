@@ -836,7 +836,7 @@
                                         @endforeach
                                     </select>
                                     <div class="form-text">Pilih biodata yang sudah terdaftar untuk dikaitkan dengan user ini</div>
-                                    @error('biodata_id')
+                                    @error('user_id')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
                                 </div>
