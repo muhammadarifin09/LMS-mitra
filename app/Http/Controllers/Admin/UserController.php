@@ -10,11 +10,13 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function index()
-    {
-        $users = M_User::with('biodata')->get();
-        return view('admin.users.index', ['users' => $users]);
-    }
+   // app/Http\Controllers/Admin\UserController.php
+public function index()
+{
+    // PASTIKAN MENGGUNAKAN paginate() BUKAN get() atau all()
+    $users = \App\Models\M_User::paginate(10);
+    return view('admin.users.index', compact('users'));
+}
 
     public function create()
     {
@@ -39,7 +41,7 @@ class UserController extends Controller
             'role' => $request->role,
         ]);
 
-        return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan!');
+        return redirect()->route('admin.users.index')->with('success', 'User berhasil ditambahkan!');
     }
 
     public function edit($id)
@@ -71,7 +73,7 @@ class UserController extends Controller
 
         $user->update($updateData);
 
-        return redirect()->route('users.index')->with('success', 'User berhasil diupdate!');
+        return redirect()->route('admin.users.index')->with('success', 'User berhasil diupdate!');
     }
     public function destroy($id)
 {
@@ -91,10 +93,10 @@ class UserController extends Controller
 
         $userToDelete->delete();
 
-        return redirect()->route('users.index')->with('success', 'User berhasil dihapus! Data biodata tetap tersimpan.');
+        return redirect()->route('admin.users.index')->with('success', 'User berhasil dihapus! Data biodata tetap tersimpan.');
         
     } catch (\Exception $e) {
-        return redirect()->route('users.index')->with('error', 'Gagal menghapus user: ' . $e->getMessage());
+        return redirect()->route('admin.users.index')->with('error', 'Gagal menghapus user: ' . $e->getMessage());
     }
 }
 

@@ -793,112 +793,114 @@
             </div>
 
             <!-- FORM SECTION -->
-            <div class="form-container">
-                <div class="form-header">
-                    <h2 class="form-title">Form Edit User</h2>
-                    <a href="/users" class="btn-back">
-                        <i class="fas fa-arrow-left"></i>
-                        Kembali
-                    </a>
+<div class="form-container">
+    <div class="form-header">
+        <h2 class="form-title">Form Edit User</h2>
+        <a href="{{ route('admin.users.index') }}" class="btn-back">
+            <i class="fas fa-arrow-left"></i>
+            Kembali
+        </a>
+    </div>
+    
+    <div class="form-body">
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        <form action="{{ route('admin.users.update', $user->id) }}" method="POST" id="editUserForm">
+            @csrf
+            @method('PUT')
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="nama" class="form-label">Nama Lengkap *</label>
+                        <input type="text" class="form-control" id="nama" name="nama" 
+                               value="{{ old('nama', $user->nama) }}" required>
+                        @error('nama')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
                 </div>
                 
-                <div class="form-body">
-                    @if ($errors->any())
-                        <div class="alert alert-danger">
-                            <ul class="mb-0">
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
-
-                    @if(session('success'))
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            {{ session('success') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    @endif
-
-                    <form action="/users/{{ $user->id }}" method="POST" id="editUserForm">
-                        @csrf
-                        @method('PUT')
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="nama" class="form-label">Nama Lengkap *</label>
-                                    <input type="text" class="form-control" id="nama" name="nama" 
-                                           value="{{ old('nama', $user->nama) }}" required>
-                                    @error('nama')
-                                        <div class="text-danger">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="username" class="form-label">Username (Email) *</label>
-                                    <input type="email" class="form-control" id="username" name="username" 
-                                           value="{{ old('username', $user->username) }}" required>
-                                    @error('username')
-                                        <div class="text-danger">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="password" class="form-label">Password Baru</label>
-                                    <div class="password-input-group">
-                                        <input type="password" class="form-control" id="password" name="password">
-                                        <button type="button" class="password-toggle" onclick="togglePassword('password')">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                    </div>
-                                    <div class="form-text">Kosongkan jika tidak ingin mengubah password</div>
-                                    @error('password')
-                                        <div class="text-danger">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="password_confirmation" class="form-label">Konfirmasi Password Baru</label>
-                                    <div class="password-input-group">
-                                        <input type="password" class="form-control" id="password_confirmation" name="password_confirmation">
-                                        <button type="button" class="password-toggle" onclick="togglePassword('password_confirmation')">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="role" class="form-label">Role *</label>
-                            <select class="form-control" id="role" name="role" required>
-                                <option value="">Pilih Role</option>
-                                <option value="admin" {{ old('role', $user->role) == 'admin' ? 'selected' : '' }}>Admin</option>
-                                <option value="mitra" {{ old('role', $user->role) == 'mitra' ? 'selected' : '' }}>Mitra</option>
-                            </select>
-                            @error('role')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="form-group mt-4">
-                            <button type="submit" class="btn-save">
-                                <i class="fas fa-save"></i>
-                                Update User
-                            </button>
-                        </div>
-                    </form>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="username" class="form-label">Username (Email) *</label>
+                        <input type="email" class="form-control" id="username" name="username" 
+                               value="{{ old('username', $user->username) }}" required>
+                        @error('username')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
                 </div>
             </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="password" class="form-label">Password Baru</label>
+                        <div class="password-input-group">
+                            <input type="password" class="form-control" id="password" name="password">
+                            <button type="button" class="password-toggle" onclick="togglePassword('password')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="form-text">Kosongkan jika tidak ingin mengubah password</div>
+                        @error('password')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="password_confirmation" class="form-label">Konfirmasi Password Baru</label>
+                        <div class="password-input-group">
+                            <input type="password" class="form-control" id="password_confirmation" name="password_confirmation">
+                            <button type="button" class="password-toggle" onclick="togglePassword('password_confirmation')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="role" class="form-label">Role *</label>
+                <select class="form-control" id="role" name="role" required>
+                    <option value="">Pilih Role</option>
+                    <option value="admin" {{ old('role', $user->role) == 'admin' ? 'selected' : '' }}>Admin</option>
+                    <option value="mitra" {{ old('role', $user->role) == 'mitra' ? 'selected' : '' }}>Mitra</option>
+                    <option value="instruktur" {{ old('role', $user->role) == 'instruktur' ? 'selected' : '' }}>Instruktur</option>
+                    <option value="moderator" {{ old('role', $user->role) == 'moderator' ? 'selected' : '' }}>Moderator</option>
+                </select>
+                @error('role')
+                    <div class="text-danger">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="form-group mt-4">
+                <button type="submit" class="btn-save">
+                    <i class="fas fa-save"></i>
+                    Update User
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
         </div>
     </div>
 
