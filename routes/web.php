@@ -27,11 +27,24 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/dashboard', fn() => view('admin.dashboard'))->name('admin.dashboard');
 
+
     Route::get('/biodata', [BiodataController::class, 'index'])->name('biodata.index');
     Route::get('/biodata/create', [BiodataController::class, 'create'])->name('biodata.create');
     Route::post('/biodata', [BiodataController::class, 'store'])->name('biodata.store');
-    
+    Route::get('/biodata/{id_sobat}/edit', [BiodataController::class, 'edit'])->name('biodata.edit');
+    Route::put('/biodata/{id_sobat}', [BiodataController::class, 'update'])->name('biodata.update');
+    Route::delete('/biodata/{id_sobat}', [BiodataController::class, 'destroy'])->name('biodata.destroy');
+
+    Route::prefix('admin')->name('admin.')->group(function () {
     Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
+    // Route Biodata khusus Admin dengan prefix admin
+        Route::get('/biodata', [\App\Http\Controllers\Admin\BiodataController::class, 'index'])->name('biodata.index');
+        Route::get('/biodata/create', [\App\Http\Controllers\Admin\BiodataController::class, 'create'])->name('biodata.create');
+        Route::post('/biodata', [\App\Http\Controllers\Admin\BiodataController::class, 'store'])->name('biodata.store');
+        Route::get('/biodata/{id_sobat}/edit', [\App\Http\Controllers\Admin\BiodataController::class, 'edit'])->name('biodata.edit');
+        Route::put('/biodata/{id_sobat}', [\App\Http\Controllers\Admin\BiodataController::class, 'update'])->name('biodata.update');
+        Route::delete('/biodata/{id_sobat}', [\App\Http\Controllers\Admin\BiodataController::class, 'destroy'])->name('biodata.destroy');
+    });
 });
 
 // Mitra

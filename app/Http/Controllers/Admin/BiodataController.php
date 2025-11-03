@@ -14,8 +14,6 @@ class BiodataController extends Controller
     public function index()
     {
         $biodata = Biodata::with('user')->get();
-        
-        // Return yang sangat eksplisit
         return view('admin.biodata.index', ['biodata' => $biodata]);
     }
 
@@ -25,18 +23,19 @@ class BiodataController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $request->validate([
-            'id_sobat' => 'required|unique:biodata',
-            'nama_lengkap' => 'required',
-            'kecamatan' => 'required',
-            'desa' => 'required',
-            'alamat' => 'required',
-            'no_telepon' => 'required',
-            'username_sobat' => 'required|email|unique:users,username',
-            'foto_profil' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
+{
+    $request->validate([
+        'id_sobat' => 'required|unique:biodata',
+        'nama_lengkap' => 'required',
+        'kecamatan' => 'required',
+        'desa' => 'required',
+        'alamat' => 'required',
+        'no_telepon' => 'required',
+        'username_sobat' => 'required|email|unique:users,username',
+        'foto_profil' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+    ]);
 
+    try {
         // 1. BUAT USER BARU
         $user = M_User::create([
             'username' => $request->username_sobat,
@@ -48,7 +47,7 @@ class BiodataController extends Controller
         // 2. BUAT BIODATA
         $biodataData = [
             'id_sobat' => $request->id_sobat,
-            'user_id' => $user->id,
+            'user_id' => $user->id, // Pastikan user_id tidak null
             'nama_lengkap' => $request->nama_lengkap,
             'kecamatan' => $request->kecamatan,
             'desa' => $request->desa,
@@ -66,8 +65,12 @@ class BiodataController extends Controller
         Biodata::create($biodataData);
 
         return redirect()->route('biodata.index')->with('success', 'Biodata dan akun mitra berhasil ditambahkan!');
+        
+    } catch (\Exception $e) {
+        return redirect()->back()->with('error', 'Gagal menambahkan biodata: ' . $e->getMessage());
     }
-
+}
+   
     public function edit($id_sobat)
     {
         // dd($id_sobat);
