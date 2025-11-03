@@ -179,40 +179,40 @@
             </div>
         @endif
 
-        <form action="{{ route('admin.users.store') }}" method="POST" id="createUserForm">
-            @csrf
-            
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="biodata_id" class="form-label">Pilih Biodata</label>
-                        <select name="biodata_id" id="biodata_id" class="form-control" required>
-                            <option value="">-- Pilih Biodata --</option>
-                            @foreach($availableBiodata as $biodata)
-                                <option value="{{ $biodata->id_sobat }}" {{ old('biodata_id') == $biodata->id_sobat ? 'selected' : '' }}>
-                                    {{ $biodata->id_sobat }} - {{ $biodata->nama_lengkap }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <div class="form-text">Pilih biodata yang sudah terdaftar untuk dikaitkan dengan user ini</div>
-                        @error('biodata_id')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
-                
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="nama" class="form-label">Nama Lengkap *</label>
-                        <input type="text" class="form-control" id="nama" name="nama" 
-                               value="{{ old('nama') }}" readonly>
-                        <div class="form-text">Nama akan otomatis terisi dari biodata yang dipilih</div>
-                        @error('nama')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
-            </div>
+                    <form action="{{ route('users.store') }}" method="POST" id="createUserForm">
+                        @csrf
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="biodata_id" class="form-label">Pilih Biodata</label>
+                                    <select name="biodata_id" id="biodata_id" class="form-control" required>
+                                        <option value="">-- Pilih Biodata --</option>
+                                        @foreach($availableBiodata as $biodata)
+                                            <option value="{{ $biodata->id_sobat }}" {{ old('biodata_id') == $biodata->id_sobat ? 'selected' : '' }}>
+                                                {{ $biodata->id_sobat }} - {{ $biodata->nama_lengkap }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <div class="form-text">Pilih biodata yang sudah terdaftar untuk dikaitkan dengan user ini</div>
+                                    @error('biodata_id')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="nama" class="form-label">Nama Lengkap *</label>
+                                    <input type="text" class="form-control" id="nama" name="nama" 
+                                           value="{{ old('nama') }}" readonly>
+                                    <div class="form-text">Nama akan otomatis terisi dari biodata yang dipilih</div>
+                                    @error('nama')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
 
             <div class="row">
                 <div class="col-md-6">
