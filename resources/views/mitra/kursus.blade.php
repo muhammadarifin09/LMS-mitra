@@ -22,6 +22,78 @@
         }
         
         /* Navigation - Sticky dengan teks besar */
+
+        /* Tombol Ikuti Kursus - Warna biru */
+.btn-follow-course {
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+/* Tombol Lihat Kursus - Warna putih dengan border biru */
+.btn-view-course-white {
+    background: white;
+    color: #1e3c72;
+    border: 2px solid #1e3c72;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.btn-view-course-white:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(30, 60, 114, 0.2);
+    background: #f8f9fa;
+    color: #1e3c72;
+    border-color: #1e3c72;
+}
+
+.btn-follow-course:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(30, 60, 114, 0.3);
+    color: white;
+}
+
+/* Tombol Lihat Kursus - Warna putih */
+.btn-view-course {
+    background: white;
+    color: #1e3c72;
+    border: 1px solid #1e3c72;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.btn-view-course:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(30, 60, 114, 0.2);
+    background: #f8f9fa;
+    color: #1e3c72;
+}
         .main-nav {
             background: rgba(255, 255, 255, 0.98);
             padding: 15px 60px;
@@ -131,7 +203,7 @@
             transform: translateY(-2px);
         }
 
-        /* User Profile & Avatar Styles - DIPERBAIKI */
+        /* User Profile & Avatar Styles */
         .user-profile {
             display: flex;
             align-items: center;
@@ -211,17 +283,6 @@
             background: #28a745;
             border-radius: 50%;
             display: inline-block;
-        }
-
-        /* CSS untuk Fallback Image */
-        .avatar-image[src=""],
-        .avatar-image:not([src]) {
-            opacity: 0;
-        }
-
-        .avatar-image:not([src]) + .avatar-initials,
-        .avatar-image[src=""] + .avatar-initials {
-            display: flex !important;
         }
 
         /* Dashboard Layout */
@@ -308,197 +369,184 @@
             color: #5a6c7d;
         }
 
-        /* Messages Section */
-        .messages-section {
-            background: #f8f9fa;
-            padding: 25px;
-            border-radius: 12px;
+        /* Course Grid Layout - 4 cards per row */
+        .course-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
             margin-bottom: 30px;
-            border-left: 4px solid #1e3c72;
         }
 
-        .messages-title {
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #1e3c72;
-            margin-bottom: 15px;
-        }
-
-        .profile-item {
-            display: flex;
-            align-items: center;
-            padding: 15px;
+        /* Modern Course Card Design - Updated for database content */
+        .modern-course-card {
             background: white;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        .profile-icon {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            margin-right: 15px;
-        }
-
-        .profile-text {
-            font-weight: 500;
-            color: #1e3c72;
-        }
-
-        /* Performance Section */
-        .performance-section {
-            background: #f8f9fa;
-            padding: 25px;
             border-radius: 12px;
-            margin-bottom: 30px;
-            border-left: 4px solid #28a745;
-        }
-
-        .performance-title {
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #1e3c72;
-            margin-bottom: 15px;
-        }
-
-        .performance-item {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        .progress-container {
-            margin-top: 10px;
-        }
-
-        .progress-label {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-            font-size: 0.9rem;
-            color: #5a6c7d;
-        }
-
-        .progress-bar {
-            height: 8px;
-            background: #e9ecef;
-            border-radius: 4px;
             overflow: hidden;
-        }
-
-        .progress-fill {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
             height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* PERBAIKAN UTAMA: Course Image Styles - Full Image Display */
-        .course-image-container {
+        .modern-course-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .course-image-wrapper {
             position: relative;
             width: 100%;
-            border-radius: 12px;
+            height: 160px;
             overflow: hidden;
-            margin-bottom: 20px;
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 200px;
-            max-height: 400px;
         }
 
-        .course-image {
+        .course-main-image {
             width: 100%;
-            height: auto;
-            max-height: 400px;
-            object-fit: contain; /* Changed from cover to contain */
+            height: 100%;
+            object-fit: cover;
             transition: transform 0.3s ease;
         }
 
-        .course-image:hover {
-            transform: scale(1.02);
+        .course-image-wrapper:hover .course-main-image {
+            transform: scale(1.05);
         }
 
-        .course-image-placeholder {
-            width: 100%;
-            height: 250px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .course-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(30, 60, 114, 0.9);
             color: white;
-            font-size: 3rem;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
         }
 
-        /* Course Card Layout Improvements */
-        .course-card {
-            background: white;
-            border-radius: 16px;
-            padding: 25px;
-            margin-bottom: 30px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-            border: 1px solid #e9ecef;
-            transition: all 0.3s ease;
-            overflow: hidden;
-        }
-
-        .course-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
-        }
-
-        .course-header {
+        .course-content-wrapper {
+            padding: 20px;
+            flex: 1;
             display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 20px;
-            gap: 15px;
+            flex-direction: column;
         }
 
-        .course-title {
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: #1e3c72;
-            margin-bottom: 10px;
-            line-height: 1.3;
-        }
-
-        .course-meta {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }
-
-        .meta-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .course-date {
+            font-size: 0.75rem;
             color: #5a6c7d;
-            font-size: 0.95rem;
+            margin-bottom: 8px;
             font-weight: 500;
         }
 
-        .meta-item i {
+        .course-main-title {
+            font-size: 1.1rem;
+            font-weight: 700;
             color: #1e3c72;
-            width: 16px;
+            margin-bottom: 8px;
+            line-height: 1.3;
+            height: 2.6em;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
         }
 
-        /* Badge Improvements */
-        .level-badge, .status-badge {
-            padding: 6px 12px;
-            border-radius: 20px;
+        .course-category {
             font-size: 0.8rem;
+            color: #5a6c7d;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .course-description {
+            color: #5a6c7d;
+            line-height: 1.5;
+            font-size: 0.8rem;
+            margin-bottom: 15px;
+            flex: 1;
+            height: 3.6em;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+
+        .course-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .meta-card {
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .meta-value {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #1e3c72;
+            margin-bottom: 2px;
+        }
+
+        .meta-label {
+            font-size: 0.7rem;
+            color: #5a6c7d;
+            font-weight: 500;
+        }
+
+        .course-action-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+            padding-top: 15px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .lessons-info {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: #5a6c7d;
+        }
+
+        .btn-view-course {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
             font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
             white-space: nowrap;
+        }
+
+        .btn-view-course:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(30, 60, 114, 0.3);
+            color: white;
+        }
+
+        /* Level Badges */
+        .level-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
         }
 
         .level-pemula {
@@ -516,279 +564,34 @@
             color: white;
         }
 
+        /* Status Badges */
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
         .status-aktif {
             background: linear-gradient(135deg, #27ae60, #229954);
             color: white;
         }
 
-        /* Course Content Layout */
-        .course-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin-bottom: 25px;
-        }
-
-        .course-description {
-            color: #5a6c7d;
-            line-height: 1.7;
-            font-size: 1rem;
-            margin-bottom: 0;
-        }
-
-        .course-requirements {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            border-left: 4px solid #1e3c72;
-        }
-
-        .requirements-title {
-            font-weight: 700;
-            color: #1e3c72;
-            margin-bottom: 15px;
-            font-size: 1.1rem;
-        }
-
-        .requirements-list {
-            list-style: none;
-            padding-left: 0;
-        }
-
-        .requirements-list li {
-            padding: 8px 0;
-            color: #5a6c7d;
-            position: relative;
-            padding-left: 25px;
-            line-height: 1.5;
-        }
-
-        .requirements-list li:before {
-            content: "✓";
-            color: #27ae60;
-            font-weight: bold;
-            position: absolute;
-            left: 0;
-            font-size: 1rem;
-        }
-
-        /* Progress and Action Section */
-        .course-action {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 25px;
-            padding-top: 20px;
-            border-top: 2px solid #f1f3f4;
-        }
-
-        .progress-container {
-            flex: 1;
-            margin-right: 30px;
-        }
-
-        .progress-label {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 0.95rem;
-            color: #5a6c7d;
-            font-weight: 500;
-        }
-
-        .progress-bar {
-            height: 10px;
-            background: #e9ecef;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 10px;
-            transition: width 0.5s ease;
-        }
-
-        .btn-ikuti {
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
+        .status-draft {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
             color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 1rem;
-        }
-
-        .btn-ikuti:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(30, 60, 114, 0.3);
-            color: white;
-        }
-
-        /* Footer */
-        .main-footer {
-            background: #1a365d;
-            color: white;
-            padding: 50px 0 25px;
-            margin-top: auto;
-            width: 100%;
-            font-size: 14px;
-        }
-
-        .footer-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        .footer-content {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1.5fr;
-            gap: 40px;
-            margin-bottom: 40px;
-        }
-
-        .footer-section h3 {
-            font-size: 1.2rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-            color: white;
-            border-bottom: 2px solid #2d74da;
-            padding-bottom: 8px;
-        }
-
-        .footer-section h4 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 15px;
-            color: white;
-        }
-
-        .footer-address {
-            line-height: 1.7;
-            margin-bottom: 20px;
-        }
-
-        .footer-address p {
-            margin-bottom: 8px;
-        }
-
-        .footer-links {
-            list-style: none;
-        }
-
-        .footer-links li {
-            margin-bottom: 10px;
-        }
-
-        .footer-links a {
-            color: rgba(255, 255, 255, 0.85);
-            text-decoration: none;
-            transition: color 0.3s ease;
-            font-size: 14px;
-        }
-
-        .footer-links a:hover {
-            color: white;
-            text-decoration: underline;
-        }
-
-        .news-item {
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .news-date {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 5px;
-        }
-
-        .news-title {
-            font-weight: 500;
-            line-height: 1.4;
-        }
-
-        .footer-divider {
-            height: 1px;
-            background: rgba(255, 255, 255, 0.2);
-            margin: 30px 0;
-        }
-
-        .footer-bottom {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .bps-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 15px;
-            color: white;
-        }
-
-        .contact-info {
-            margin-top: 15px;
-        }
-
-        .contact-info p {
-            margin-bottom: 5px;
-        }
-
-        .berakhlak-container {
-            margin-top: 25px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .berakhlak-image {
-            max-width: 200px;
-            margin-bottom: 15px;
-        }
-
-        .berakhlak-links {
-            list-style: none;
-            margin-top: 10px;
-        }
-
-        .berakhlak-links li {
-            margin-bottom: 8px;
-        }
-
-        .berakhlak-links a {
-            color: rgba(255, 255, 255, 0.85);
-            text-decoration: none;
-            transition: color 0.3s ease;
-            font-size: 14px;
-        }
-
-        .berakhlak-links a:hover {
-            color: white;
-            text-decoration: underline;
         }
 
         /* Responsive Design */
-        @media (max-width: 1200px) {
-            .course-content {
-                grid-template-columns: 1fr;
-                gap: 20px;
+        @media (max-width: 1400px) {
+            .course-grid {
+                grid-template-columns: repeat(3, 1fr);
             }
-            
-            .course-image-container {
-                max-height: 350px;
+        }
+
+        @media (max-width: 1200px) {
+            .course-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
 
@@ -858,38 +661,8 @@
                 font-size: 1.8rem;
             }
             
-            .course-header {
-                flex-direction: column;
-                gap: 10px;
-            }
-            
-            .course-action {
-                flex-direction: column;
-                gap: 20px;
-                align-items: stretch;
-            }
-            
-            .progress-container {
-                margin-right: 0;
-                margin-bottom: 15px;
-            }
-            
-            .course-image-container {
-                max-height: 300px;
-                min-height: 180px;
-            }
-            
-            .footer-content {
+            .course-grid {
                 grid-template-columns: 1fr;
-                gap: 30px;
-            }
-            
-            .footer-container {
-                padding: 0 15px;
-            }
-            
-            .berakhlak-image {
-                max-width: 150px;
             }
         }
 
@@ -913,23 +686,20 @@
                 justify-content: center;
             }
 
-            .course-card {
-                padding: 20px;
-                margin-bottom: 20px;
+            .course-content-wrapper {
+                padding: 15px;
             }
             
-            .course-title {
-                font-size: 1.3rem;
+            .course-main-title {
+                font-size: 1rem;
             }
             
-            .course-meta {
-                flex-direction: column;
-                gap: 8px;
+            .course-meta-grid {
+                grid-template-columns: 1fr;
             }
             
-            .course-image-container {
-                max-height: 250px;
-                min-height: 150px;
+            .course-image-wrapper {
+                height: 140px;
             }
         }
     </style>
@@ -964,7 +734,7 @@
                     <span class="notification-badge">3</span>
                 </div>
                 
-                <!-- User Profile dengan Foto - VERSI DIPERBAIKI -->
+                <!-- User Profile dengan Foto -->
                 <a href="{{ route('profil.index') }}" class="user-profile">
                     <div class="user-avatar">
                         @auth
@@ -1036,176 +806,171 @@
                 <p class="kursus-subtitle">Pilih dan ikuti kursus yang sesuai dengan minat Anda</p>
             </div>
 
-            <!-- Messages Section -->
-            <div class="messages-section">
-                <h3 class="messages-title">Informasi Penting</h3>
-                <div class="profile-item">
-                    <div class="profile-icon">
-                        <i class="fas fa-info-circle"></i>
-                    </div>
-                    <div class="profile-text">Selamat datang di platform kursus MOCC BPS</div>
-                </div>
-            </div>
-
-            <!-- Performance Section -->
-            <div class="performance-section">
-                <h3 class="performance-title">Progress Belajar</h3>
-                <div class="performance-item">
-                    <div class="profile-text">Kursus yang Diikuti</div>
-                    <div class="progress-container">
-                        <div class="progress-label">
-                            <span>Total Progress</span>
-                            <span>45%</span>
-                        </div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 45%"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Course Cards dari Database -->
-            @if(isset($kursus) && $kursus->count() > 0)
-                @foreach($kursus as $item)
-                    @if($item->status == 'aktif')
-                    <div class="course-card">
-                        <!-- Gambar Kursus dengan Container - SUDAH DIPERBAIKI -->
-                        <div class="course-image-container">
-                            @if($item->gambar_kursus)
-                                <img src="{{ asset('storage/' . $item->gambar_kursus) }}" 
-                                     alt="{{ $item->judul_kursus }}" 
-                                     class="course-image"
-                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                <div class="course-image-placeholder" style="display: none;">
-                                    <i class="fas fa-book-open"></i>
-                                </div>
-                            @else
-                                <div class="course-image-placeholder">
-                                    <i class="fas fa-book-open"></i>
-                                </div>
-                            @endif
-                        </div>
-                        
-                        <div class="course-header">
-                            <div style="flex: 1;">
-                                <h2 class="course-title">{{ $item->judul_kursus }}</h2>
-                                <div class="course-meta">
-                                    <span class="meta-item">
-                                        <i class="fas fa-user-tie"></i>
-                                        {{ $item->penerbit }}
-                                    </span>
-                                    <span class="meta-item">
-                                        <i class="fas fa-clock"></i>
-                                        {{ $item->durasi_jam }} jam
-                                    </span>
-                                    <span class="meta-item">
-                                        <i class="fas fa-users"></i>
-                                        {{ $item->peserta_terdaftar }} peserta
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex align-items-center gap-2 flex-wrap">
-                                @if($item->tingkat_kesulitan == 'pemula')
-                                    <span class="level-badge level-pemula">Pemula</span>
-                                @elseif($item->tingkat_kesulitan == 'menengah')
-                                    <span class="level-badge level-menengah">Menengah</span>
+            <!-- Course Grid from Database -->
+            <div class="course-grid">
+                @if(isset($kursus) && $kursus->count() > 0)
+                    @foreach($kursus as $item)
+                        @if($item->status == 'aktif')
+                        <div class="modern-course-card">
+                            <!-- Course Image -->
+                            <div class="course-image-wrapper">
+                                @if($item->gambar_kursus)
+                                    <img src="{{ asset('storage/' . $item->gambar_kursus) }}" 
+                                         alt="{{ $item->judul_kursus }}" 
+                                         class="course-main-image"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div class="course-main-image" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: none; align-items: center; justify-content: center; color: white; font-size: 2rem;">
+                                        <i class="fas fa-book-open"></i>
+                                    </div>
                                 @else
-                                    <span class="level-badge level-lanjutan">Lanjutan</span>
+                                    <div class="course-main-image" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem;">
+                                        <i class="fas fa-book-open"></i>
+                                    </div>
                                 @endif
-                                <span class="status-badge status-aktif">Aktif</span>
-                            </div>
-                        </div>
-                        
-                        <div class="course-content">
-                            <div>
-                                <p class="course-description">
-                                    {{ $item->deskripsi_kursus }}
-                                </p>
-                            </div>
-                            
-                            <div>
-                                @if($item->output_pelatihan)
-                                <div class="course-requirements">
-                                    <h4 class="requirements-title">Output Pelatihan:</h4>
-                                    <ul class="requirements-list">
-                                        @foreach(explode("\n", $item->output_pelatihan) as $output)
-                                            @if(trim($output))
-                                                <li>{{ trim($output) }}</li>
-                                            @endif
-                                        @endforeach
-                                    </ul>
+                                
+                                <!-- Level Badge -->
+                                <div class="course-badge level-badge 
+                                    @if($item->tingkat_kesulitan == 'pemula') level-pemula
+                                    @elseif($item->tingkat_kesulitan == 'menengah') level-menengah
+                                    @else level-lanjutan @endif">
+                                    {{ $item->tingkat_kesulitan }}
                                 </div>
-                                @endif
                             </div>
-                        </div>
 
-                        @if($item->persyaratan)
-                        <div class="course-requirements">
-                            <h4 class="requirements-title">Persyaratan:</h4>
-                            <ul class="requirements-list">
-                                @foreach(explode("\n", $item->persyaratan) as $syarat)
-                                    @if(trim($syarat))
-                                        <li>{{ trim($syarat) }}</li>
-                                    @endif
-                                @endforeach
-                            </ul>
-                        </div>
-                        @endif
-
-                        @if($item->fasilitas)
-                        <div class="course-requirements">
-                            <h4 class="requirements-title">Fasilitas:</h4>
-                            <ul class="requirements-list">
-                                @foreach(explode("\n", $item->fasilitas) as $fasilitas)
-                                    @if(trim($fasilitas))
-                                        <li>{{ trim($fasilitas) }}</li>
-                                    @endif
-                                @endforeach
-                            </ul>
-                        </div>
-                        @endif
-
-                        <div class="course-action">
-                            <div class="progress-container">
-                                <div class="progress-label">
-                                    <span>Kuota Tersedia</span>
-                                    <span>
-                                        @if($item->kuota_peserta)
-                                            {{ $item->kuota_peserta - $item->peserta_terdaftar }} / {{ $item->kuota_peserta }}
-                                        @else
-                                            Tidak Terbatas
-                                        @endif
-                                    </span>
-                                </div>
-                                <div class="progress-bar">
-                                    @if($item->kuota_peserta)
-                                        <div class="progress-fill" 
-                                             style="width: {{ ($item->peserta_terdaftar / $item->kuota_peserta) * 100 }}%">
-                                        </div>
+                            <div class="course-content-wrapper">
+                                <!-- Date -->
+                                <div class="course-date">
+                                    @if($item->tanggal_mulai)
+                                        {{ \Carbon\Carbon::parse($item->tanggal_mulai)->format('d M Y') }}
                                     @else
-                                        <div class="progress-fill" style="width: 100%"></div>
+                                        {{ \Carbon\Carbon::parse($item->created_at)->format('d M Y') }}
                                     @endif
                                 </div>
+
+                                <!-- Title -->
+                                <h3 class="course-main-title">{{ $item->judul_kursus }}</h3>
+
+                                <!-- Category/Publisher -->
+                                <div class="course-category">
+                                    {{ $item->penerbit }}
+                                </div>
+
+                                <!-- Description -->
+                                <p class="course-description">
+                                    {{ Str::limit($item->deskripsi_kursus, 120) }}
+                                </p>
+
+                                <!-- Meta Information -->
+                                <div class="course-meta-grid">
+                                    <div class="meta-card">
+                                        <div class="meta-value">{{ $item->durasi_jam }}h</div>
+                                        <div class="meta-label">Durasi</div>
+                                    </div>
+                                    <div class="meta-card">
+                                        <div class="meta-value">{{ $item->peserta_terdaftar }}</div>
+                                        <div class="meta-label">Peserta</div>
+                                    </div>
+                                </div>
+
+                                <!-- Action Row -->
+                                <div class="course-action-row">
+                                <form action="{{ route('mitra.kursus.enroll', $item->id) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="btn-follow-course">
+                                        <i class="fas fa-play-circle"></i>
+                                        Ikuti Kursus
+                                    </button>
+                                </form>
+                                <form action="{{ route('mitra.kursus.enroll', $item->id) }}" method="GET" class="d-inline">
+                                    <button type="submit" class="btn-view-course-white">
+                                        <i class="fas fa-eye"></i>
+                                        Lihat Kursus
+                                    </button>
+                                </form>
                             </div>
-                            <!-- Di file mitra/kursus.blade.php -->
-                            <form action="{{ route('mitra.kursus.enroll', $item->id) }}" method="POST" class="d-inline">
-                                @csrf
-                                <button type="submit" class="btn-ikuti">
+
+                            </div>
+                        </div>
+                        @endif
+                    @endforeach
+                @else
+                    <!-- Fallback demo courses if no data from database -->
+                    <div class="modern-course-card">
+                        <div class="course-image-wrapper">
+                            <div class="course-main-image" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem;">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="course-badge level-badge level-pemula">Pemula</div>
+                        </div>
+                        <div class="course-content-wrapper">
+                            <div class="course-date">03 Nov 2025</div>
+                            <h3 class="course-main-title">WEB PERFORMANCE OPTIMIZATION</h3>
+                            <div class="course-category">Knowledge Center</div>
+                            <p class="course-description">
+                                Knowledge Sharing Web Performance Analysis dan Optimasi untuk meningkatkan kecepatan website.
+                            </p>
+                            <div class="course-meta-grid">
+                                <div class="meta-card">
+                                    <div class="meta-value">4h</div>
+                                    <div class="meta-label">Durasi</div>
+                                </div>
+                                <div class="meta-card">
+                                    <div class="meta-value">156</div>
+                                    <div class="meta-label">Peserta</div>
+                                </div>
+                            </div>
+                            <div class="course-action-row">
+                                <div class="lessons-info">
                                     <i class="fas fa-play-circle"></i>
-                                    Ikuti Kursus
+                                    4 lessons
+                                </div>
+                                <button class="btn-view-course">
+                                    <i class="fas fa-eye"></i>
+                                    View Course
                                 </button>
-                            </form>
+                            </div>
                         </div>
                     </div>
-                    @endif
-                @endforeach
-            @else
-                <div class="course-card text-center py-5">
-                    <i class="fas fa-book fa-3x text-muted mb-3"></i>
-                    <h3 class="text-muted">Belum Ada Kursus Tersedia</h3>
-                    <p class="text-muted">Silakan hubungi administrator untuk informasi lebih lanjut.</p>
-                </div>
-            @endif
+
+                    <!-- Additional demo courses -->
+                    <div class="modern-course-card">
+                        <div class="course-image-wrapper">
+                            <div class="course-main-image" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem;">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <div class="course-badge level-badge level-menengah">Menengah</div>
+                        </div>
+                        <div class="course-content-wrapper">
+                            <div class="course-date">05 Nov 2025</div>
+                            <h3 class="course-main-title">DATA ANALYSIS FUNDAMENTALS</h3>
+                            <div class="course-category">Statistics Department</div>
+                            <p class="course-description">
+                                Pelatihan dasar analisis data menggunakan tools statistik modern untuk pemula.
+                            </p>
+                            <div class="course-meta-grid">
+                                <div class="meta-card">
+                                    <div class="meta-value">8h</div>
+                                    <div class="meta-label">Durasi</div>
+                                </div>
+                                <div class="meta-card">
+                                    <div class="meta-value">89</div>
+                                    <div class="meta-label">Peserta</div>
+                                </div>
+                            </div>
+                            <div class="course-action-row">
+                                <div class="lessons-info">
+                                    <i class="fas fa-play-circle"></i>
+                                    8 lessons
+                                </div>
+                                <button class="btn-view-course">
+                                    <i class="fas fa-eye"></i>
+                                    View Course
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            </div>
 
             <!-- Copyright -->
             <div class="text-center mt-5 pt-4 border-top">
@@ -1215,84 +980,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Footer -->
-    <footer class="main-footer">
-        <div class="footer-container">
-            <div class="footer-content">
-                <!-- Alamat BPS + BerAKHLAK -->
-                <div class="footer-section">
-                    <div class="bps-title">BADAN PUSAT STATISTIK</div>
-                    <div class="footer-address">
-                        <p>Badan Pusat Statistik Kabupaten Tanah Laut (BPS-Statistics of Tanah Laut Regency)</p>
-                        <p>Alamat: Jalan A. Syairani No. 9 Pelaihari Kab. Tanah Laut</p>
-                        <p>Prov. Kalimantan Selatan</p>
-                        <p>76914</p>
-                        <p>Indonesia</p>
-                    </div>
-                    <div class="contact-info">
-                        <p>Telepon: +62 512 21092</p>
-                        <p>Fax: +62 512 3113</p>
-                        <p>Email: bps6301@bps.go.id</p>
-                        <p>bps6301@gmail.com</p>
-                    </div>
-                    
-                    <!-- Gambar BerAKHLAK dan Manual S&K Daftar Tarakan -->
-                    <div class="berakhlak-container">
-                        <img src="{{ asset('img/cover.jpg') }}" alt="BerAKHLAK" class="berakhlak-image">
-                        <ul class="berakhlak-links">
-                            <li><a href="#">Manual S&K Daftar Tarakan</a></li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Tentang Kami -->
-                <div class="footer-section">
-                    <h3>Tentang Kami</h3>
-                    <ul class="footer-links">
-                        <li><a href="https://ppid.bps.go.id/app/konten/6301/Profil-BPS.html?_gl=1*15t609r*_ga*MjQxOTY0MAAzLjE3NjEyNzM4MzU.*_ga_XXTTVXWHDB*czE3NjEyNzM4MzQkbzEkZzAkdTE3NjEyNzM4MzQkajYwJGwwJGgw">Profil BPS</a></li>
-                        <li><a href="#">PPID</a></li>
-                        <li><a href="#">Kebijakan Diseminasi</a></li>
-                    </ul>
-                </div>
-
-                <!-- Tautan Lainnya -->
-                <div class="footer-section">
-                    <h3>Tautan Lainnya</h3>
-                    <ul class="footer-links">
-                        <li><a href="#">ASEAN Stats</a></li>
-                        <li><a href="#">Forum Masyarakat Statistik</a></li>
-                        <li><a href="#">Reformasi Birokrasi</a></li>
-                        <li><a href="#">Layanan Pengaduan Secara Elektronik</a></li>
-                        <li><a href="#">Politeknik Statistika STIS</a></li>
-                        <li><a href="#">Pusdiklat BPS</a></li>
-                        <li><a href="#">JDIH BPS</a></li>
-                    </ul>
-                </div>
-
-                <!-- Government Public Relation -->
-                <div class="footer-section">
-                    <h3>Government Public Relation</h3>
-                    <div class="news-item">
-                        <div class="news-date">21 October 2025, 19:23 WEB</div>
-                        <div class="news-title">Sertifikasi Pemerintah Indonesia: Mendorong 18.805 UMKM dan Sektor Tenaga Kerja</div>
-                    </div>
-                    <div class="news-item">
-                        <div class="news-date">21 October 2025, 19:22 WEB</div>
-                        <div class="news-title">Sertifikasi Pemerintah Indonesia: Capai Swasembada 225 Ribu Hektar, Target 480 Ribu Hektar Tahun Depan</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="footer-divider"></div>
-
-            <div class="footer-bottom">
-                <div class="copyright">
-                    Hak Cipta © 2023 Badan Pusat Statistik
-                </div>
-            </div>
-        </div>
-    </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -1323,16 +1010,30 @@
                     }
                 });
             });
+
+            // Handle course image errors
+            document.querySelectorAll('.course-main-image[src]').forEach(img => {
+                img.addEventListener('error', function() {
+                    this.style.display = 'none';
+                    const placeholder = this.nextElementSibling;
+                    if (placeholder && placeholder.classList.contains('course-main-image')) {
+                        placeholder.style.display = 'flex';
+                    }
+                });
+            });
         });
 
-        // Ikuti kursus button
-        document.querySelectorAll('.btn-ikuti').forEach(button => {
+        // View course button interactions
+        document.querySelectorAll('.btn-view-course').forEach(button => {
             button.addEventListener('click', function(e) {
-                e.preventDefault();
-                const courseTitle = this.closest('.course-card').querySelector('.course-title').textContent;
-                if (confirm(`Apakah Anda yakin ingin mengikuti kursus "${courseTitle}"?`)) {
-                    this.closest('form').submit();a
+                if (this.closest('form')) {
+                    // If it's inside a form, let the form submit normally
+                    return;
                 }
+                
+                e.preventDefault();
+                const courseTitle = this.closest('.modern-course-card').querySelector('.course-main-title').textContent;
+                alert(`Membuka kursus: ${courseTitle}`);
             });
         });
     </script>
