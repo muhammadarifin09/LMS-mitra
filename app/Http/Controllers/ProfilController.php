@@ -36,6 +36,7 @@ class ProfilController extends Controller
         'alamat' => 'required|string',
         'no_telepon' => 'required|string|max:15',
         'foto_profil' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        'username_sobat' => 'required|string|max:255',
     ]);
 
     $biodata = Biodata::where('user_id', $user->id)->first();
@@ -43,6 +44,7 @@ class ProfilController extends Controller
     if (!$biodata) {
         $biodata = new Biodata();
         $biodata->user_id = $user->id;
+        $biodata->id_sobat = 'SOBAT-' . time() . '-' . rand(1000, 9999);
     }
 
     // Update data
@@ -51,7 +53,8 @@ class ProfilController extends Controller
     $biodata->desa = $request->desa;
     $biodata->alamat = $request->alamat;
     $biodata->no_telepon = $request->no_telepon;
-
+    $biodata->username_sobat = $request->username_sobat;
+    
     // Handle upload foto profil
     if ($request->hasFile('foto_profil')) {
         // Hapus foto lama jika ada

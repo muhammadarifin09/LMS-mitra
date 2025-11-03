@@ -10,115 +10,129 @@
         <p class="kursus-subtitle">Perbarui informasi profil Anda</p>
     </div>
 
-    <div class="row justify-content-center">
-        <div class="col-lg-8 col-md-10">
-            <div class="card shadow-sm border-0">
-                <div class="card-body p-4">
-                    <form action="{{ route('profil.update') }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        @method('PUT')
+        <div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <form action="{{ route('profil.update') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    @method('PUT')
 
-                        <!-- Foto Profil Section -->
-                        <div class="row mb-4">
-                            <div class="col-12 text-center">
-                                <div class="position-relative d-inline-block mb-2">
-                                    <img src="{{ $biodata && $biodata->foto_profil ? asset('storage/' . $biodata->foto_profil) : asset('img/default-avatar.png') }}" 
-                                         alt="Foto Profil" 
-                                         class="rounded-circle shadow-sm"
-                                         id="profile-preview"
-                                         style="width: 180px; height: 180px; object-fit: cover; border: 2px solid #1e3c72;">
-                                    <label for="foto_profil" class="btn btn-primary btn-sm rounded-circle position-absolute" 
-                                           style="bottom: 0; right: 0; width: 24px; height: 24px; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center;">
-                                        <i class="fas fa-camera" style="font-size: 0.6rem;"></i>
-                                    </label>
-                                    <input type="file" name="foto_profil" id="foto_profil" class="d-none" accept="image/*">
-                                </div>
-                                <div class="mt-1">
-                                    <small class="text-muted">Klik ikon kamera untuk mengubah foto</small><br>
-                                    <small class="text-muted">Format: JPG, PNG, GIF (Maks: 2MB)</small>
-                                </div>
-                                @error('foto_profil')
-                                    <div class="text-danger small mt-1">{{ $message }}</div>
-                                @enderror
+                    <!-- Tambahkan field hidden untuk username_sobat -->
+                    <input type="hidden" name="username_sobat" value="{{ old('username_sobat', $biodata->username_sobat ?? $user->username ?? '') }}">
+
+                    <!-- Foto Profil Section -->
+                    <div class="row mb-4">
+                        <div class="col-12 text-center">
+                            <div class="position-relative d-inline-block mb-2">
+                                <img src="{{ $biodata && $biodata->foto_profil ? asset('storage/' . $biodata->foto_profil) : asset('img/default-avatar.png') }}" 
+                                     alt="Foto Profil" 
+                                     class="rounded-circle shadow-sm"
+                                     id="profile-preview"
+                                     style="width: 180px; height: 180px; object-fit: cover; border: 2px solid #1e3c72;">
+                                <label for="foto_profil" class="btn btn-primary btn-sm rounded-circle position-absolute" 
+                                       style="bottom: 0; right: 0; width: 24px; height: 24px; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-camera" style="font-size: 0.6rem;"></i>
+                                </label>
+                                <input type="file" name="foto_profil" id="foto_profil" class="d-none" accept="image/*">
                             </div>
+                            <div class="mt-1">
+                                <small class="text-muted">Klik ikon kamera untuk mengubah foto</small><br>
+                                <small class="text-muted">Format: JPG, PNG, GIF (Maks: 2MB)</small>
+                            </div>
+                            @error('foto_profil')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <!-- Informasi Pribadi -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
+                            <input type="text" name="nama_lengkap" class="form-control" 
+                                   value="{{ old('nama_lengkap', $biodata->nama_lengkap ?? '') }}" 
+                                   placeholder="Masukkan nama lengkap" required>
+                            @error('nama_lengkap')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
                         </div>
 
-                        <!-- Informasi Pribadi -->
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
-                                <input type="text" name="nama_lengkap" class="form-control" 
-                                       value="{{ old('nama_lengkap', $biodata->nama_lengkap ?? '') }}" 
-                                       placeholder="Masukkan nama lengkap" required>
-                                @error('nama_lengkap')
-                                    <div class="text-danger small mt-1">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Email</label>
-                                <input type="email" class="form-control" value="{{ $user->username }}" disabled>
-                                <small class="text-muted">Email tidak dapat diubah</small>
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Kecamatan <span class="text-danger">*</span></label>
-                                <input type="text" name="kecamatan" class="form-control" 
-                                       value="{{ old('kecamatan', $biodata->kecamatan ?? '') }}" 
-                                       placeholder="Masukkan kecamatan" required>
-                                @error('kecamatan')
-                                    <div class="text-danger small mt-1">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Desa/Kelurahan <span class="text-danger">*</span></label>
-                                <input type="text" name="desa" class="form-control" 
-                                       value="{{ old('desa', $biodata->desa ?? '') }}" 
-                                       placeholder="Masukkan desa/kelurahan" required>
-                                @error('desa')
-                                    <div class="text-danger small mt-1">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">No. Telepon <span class="text-danger">*</span></label>
-                                <input type="text" name="no_telepon" class="form-control" 
-                                       value="{{ old('no_telepon', $biodata->no_telepon ?? '') }}" 
-                                       placeholder="Contoh: 081234567890" required>
-                                @error('no_telepon')
-                                    <div class="text-danger small mt-1">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="col-12 mb-3">
-                                <label class="form-label">Alamat Lengkap <span class="text-danger">*</span></label>
-                                <textarea name="alamat" class="form-control" rows="3" 
-                                          placeholder="Masukkan alamat lengkap" required>{{ old('alamat', $biodata->alamat ?? '') }}</textarea>
-                                @error('alamat')
-                                    <div class="text-danger small mt-1">{{ $message }}</div>
-                                @enderror
-                            </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" value="{{ $user->username }}" disabled>
+                            <small class="text-muted">Email tidak dapat diubah</small>
                         </div>
 
-                        <!-- Action Buttons -->
-                        <div class="row mt-4">
-                            <div class="col-12">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <a href="{{ route('profil.index') }}" class="btn btn-outline-secondary">
-                                        <i class="fas fa-arrow-left me-2"></i>Kembali
-                                    </a>
-                                    <button type="submit" class="btn btn-primary px-4">
-                                        <i class="fas fa-save me-2"></i>Simpan
-                                    </button>
-                                </div>
+                        <!-- Tambahkan field untuk username_sobat jika ingin bisa diubah -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Username Sobat <span class="text-danger">*</span></label>
+                            <input type="text" name="username_sobat" class="form-control" 
+                                   value="{{ old('username_sobat', $biodata->username_sobat ?? $user->username ?? '') }}" 
+                                   placeholder="Masukkan username" required>
+                            @error('username_sobat')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Kecamatan <span class="text-danger">*</span></label>
+                            <input type="text" name="kecamatan" class="form-control" 
+                                   value="{{ old('kecamatan', $biodata->kecamatan ?? '') }}" 
+                                   placeholder="Masukkan kecamatan" required>
+                            @error('kecamatan')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Desa/Kelurahan <span class="text-danger">*</span></label>
+                            <input type="text" name="desa" class="form-control" 
+                                   value="{{ old('desa', $biodata->desa ?? '') }}" 
+                                   placeholder="Masukkan desa/kelurahan" required>
+                            @error('desa')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">No. Telepon <span class="text-danger">*</span></label>
+                            <input type="text" name="no_telepon" class="form-control" 
+                                   value="{{ old('no_telepon', $biodata->no_telepon ?? '') }}" 
+                                   placeholder="Contoh: 081234567890" required>
+                            @error('no_telepon')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Alamat Lengkap <span class="text-danger">*</span></label>
+                            <textarea name="alamat" class="form-control" rows="3" 
+                                      placeholder="Masukkan alamat lengkap" required>{{ old('alamat', $biodata->alamat ?? '') }}</textarea>
+                            @error('alamat')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="{{ route('profil.index') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>Kembali
+                                </a>
+                                <button type="submit" class="btn btn-primary px-4">
+                                    <i class="fas fa-save me-2"></i>Simpan
+                                </button>
                             </div>
                         </div>
-                    </form>
-                </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
+</div>
 </div>
 
 <style>
