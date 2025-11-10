@@ -179,7 +179,7 @@
             </div>
         @endif
 
-                    <form action="{{ route('users.store') }}" method="POST" id="createUserForm">
+                    <form action="{{ route('admin.users.store') }}" method="POST" id="createUserForm">
                         @csrf
                         
                         <div class="row">
