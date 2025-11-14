@@ -8,6 +8,7 @@
                 <a href="{{ route('admin.dashboard') }}" class="nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">Dashboard</a>
                 <a href="{{ route('admin.users.index') }}" class="nav-item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">Manajemen User</a>
                 <a href="{{ route('admin.kursus.index') }}" class="nav-item {{ request()->routeIs('admin.kursus.*') ? 'active' : '' }}">Manajemen Kursus</a>
+                <a href="{{ route('admin.biodata.index') }}" class="nav-item {{ request()->routeIs('admin.biodata.*') ? 'active' : '' }}">Manajemen Biodata</a>
             </div>
         </div>
         
@@ -27,19 +28,19 @@
                     @auth
                         @php
                             $user = Auth::user();
-                            // Ambil nama dari biodata jika ada, atau dari user name
-                            $displayName = $user->biodata->nama_lengkap ?? $user->name;
+                            // Ambil nama dari biodata jika ada, atau dari user nama
+                            $displayNama = $user->biodata->nama_lengkap ?? $user->nama;
                             
                             // Generate inisial dari nama
-                            $nameParts = explode(' ', $displayName);
+                            $namaParts = explode(' ', $displayNama);
                             $initials = '';
                             
-                            if (count($nameParts) >= 2) {
+                            if (count($namaParts) >= 2) {
                                 // Ambil huruf pertama dari kata pertama dan kedua
-                                $initials = strtoupper(substr($nameParts[0], 0, 1) . substr($nameParts[1], 0, 1));
+                                $initials = strtoupper(substr($namaParts[0], 0, 1) . substr($namaParts[1], 0, 1));
                             } else {
                                 // Jika hanya satu kata, ambil 2 huruf pertama
-                                $initials = strtoupper(substr($displayName, 0, 2));
+                                $initials = strtoupper(substr($displayNama, 0, 2));
                             }
                         @endphp
                         
@@ -48,8 +49,8 @@
                     @endauth
                 </div>
                 <div class="user-info">
-                    <div class="user-name">
-                        {{ Auth::user()->biodata->nama_lengkap ?? Auth::user()->name }}
+                    <div class="user-nama">
+                        {{ Auth::user()->biodata->nama_lengkap ?? Auth::user()->nama }}
                     </div>
                     <div class="user-status">
                         <span class="status-dot"></span>
@@ -67,16 +68,16 @@
                             @auth
                                 @php
                                     $user = Auth::user();
-                                    $displayName = $user->biodata->nama_lengkap ?? $user->name;
+                                    $displayNama = $user->biodata->nama_lengkap ?? $user->nama;
                                     
                                     // Generate inisial yang sama untuk dropdown
-                                    $nameParts = explode(' ', $displayName);
+                                    $namaParts = explode(' ', $displayNama);
                                     $initials = '';
                                     
-                                    if (count($nameParts) >= 2) {
-                                        $initials = strtoupper(substr($nameParts[0], 0, 1) . substr($nameParts[1], 0, 1));
+                                    if (count($namaParts) >= 2) {
+                                        $initials = strtoupper(substr($namaParts[0], 0, 1) . substr($namaParts[1], 0, 1));
                                     } else {
-                                        $initials = strtoupper(substr($displayName, 0, 2));
+                                        $initials = strtoupper(substr($displayNama, 0, 2));
                                     }
                                 @endphp
                                 
@@ -85,7 +86,7 @@
                             @endauth
                         </div>
                         <div class="dropdown-user-details">
-                            <div class="dropdown-user-name">{{ Auth::user()->biodata->nama_lengkap ?? Auth::user()->name }}</div>
+                            <div class="dropdown-user-nama">{{ Auth::user()->biodata->nama_lengkap ?? Auth::user()->nama }}</div>
                             <div class="dropdown-user-email">{{ Auth::user()->email }}</div>
                             <div class="dropdown-user-role">{{ ucfirst(Auth::user()->role) }}</div>
                         </div>
@@ -93,21 +94,6 @@
                 </div>
                 
                 <div class="dropdown-divider"></div>
-                
-                <a href="{{ route('admin.users.index') }}" class="dropdown-item">
-                    <i class="fas fa-user-cog"></i>
-                    <span>Profil Saya</span>
-                </a>
-                
-                <a href="{{ route('admin.users.index') }}" class="dropdown-item">
-                    <i class="fas fa-cog"></i>
-                    <span>Pengaturan</span>
-                </a>
-                
-                <a href="{{ route('admin.users.index') }}" class="dropdown-item">
-                    <i class="fas fa-question-circle"></i>
-                    <span>Bantuan</span>
-                </a>
                 
                 <div class="dropdown-divider"></div>
                 
@@ -197,7 +183,7 @@
         min-width: 0;
     }
 
-    .dropdown-user-name {
+    .dropdown-user-nama {
         font-weight: 700;
         color: #1e3c72;
         font-size: 1rem;

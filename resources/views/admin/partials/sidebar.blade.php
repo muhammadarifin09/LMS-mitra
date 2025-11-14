@@ -24,10 +24,6 @@
 
     <!-- Account Section -->    
     <div class="sidebar-section">
-        <a href="{{ route('admin.users.index') }}" class="sidebar-item {{ request()->routeIs('admin.users.index') ? 'active' : '' }}">
-            <i class="fas fa-user-cog"></i>
-            <span>Profil Admin</span>
-        </a>
         <a href="#" class="sidebar-item text-danger" onclick="confirmLogout()">
             <i class="fas fa-sign-out-alt"></i>
             <span>Keluar</span>
