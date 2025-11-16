@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Mitra;
 
 use App\Http\Controllers\Controller;
 use App\Models\Kursus;
+use App\Models\Enrollment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class KursusController extends Controller
 {
@@ -35,13 +37,26 @@ class KursusController extends Controller
     }
 
     /**
-     * Enroll to course
+     * Enroll to course - VERSI LEBIH AMAN
      */
+    
     public function enroll(Request $request, $id)
     {
         $kursus = Kursus::where('status', 'aktif')
                         ->where('id', $id)
                         ->firstOrFail();
+
+        $user = Auth::user();
+        
+        // Cara lebih aman: Cek langsung di tabel enrollments
+        $alreadyEnrolled = Enrollment::where('user_id', $user->id)
+                                   ->where('kursus_id', $id)
+                                   ->exists();
+
+        if ($alreadyEnrolled) {
+            return redirect()->back()
+                           ->with('error', 'Anda sudah mengikuti kursus ini.');
+        }
 
         // Cek kuota jika ada
         if ($kursus->kuota_peserta && 
@@ -50,27 +65,40 @@ class KursusController extends Controller
                            ->with('error', 'Maaf, kuota kursus sudah penuh.');
         }
 
-        // Logic enroll disini
-        // Contoh: tambah ke tabel enrollments
-        // Enrollment::create([...]);
+        try {
+            // Create enrollment
+            Enrollment::create([
+                'user_id' => $user->id,
+                'kursus_id' => $id,
+                'total_activities' => 3, // Default value
+                'enrolled_at' => now()
+            ]);
 
-        // Update jumlah peserta
-        $kursus->increment('peserta_terdaftar');
+            // Update jumlah peserta
+            $kursus->increment('peserta_terdaftar');
 
-        return redirect()->route('mitra.kursus.show', $id)
-                        ->with('success', 'Berhasil mengikuti kursus!');
+            return redirect()->route('mitra.kursus.saya')
+                            ->with('success', 'Berhasil mengikuti kursus!');
+
+        } catch (\Exception $e) {
+            return redirect()->back()
+                           ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
     }
 
     /**
-     * My courses
+     * My courses - VERSI LEBIH AMAN
      */
     public function myCourses()
     {
-        // Ambil kursus yang diikuti user
-        // $enrolledCourses = Auth::user()->enrollments()->with('kursus')->get();
+        $user = Auth::user();
         
-        return view('mitra.kursus-saya', [
-            // 'enrolledCourses' => $enrolledCourses
-        ]);
+        // Ambil enrollments dengan data kursus
+        $enrolledCourses = Enrollment::with('kursus')
+            ->where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('mitra.kursus-saya', compact('enrolledCourses'));
     }
 }

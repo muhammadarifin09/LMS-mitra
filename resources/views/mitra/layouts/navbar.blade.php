@@ -1,71 +1,8 @@
-<nav class="main-nav">
-    <div class="d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center">
-            <!-- Logo MOCC BPS sebagai gambar -->
-            <a href="#" class="nav-brand">
-                <img src="{{ asset('img/Logo_E-Learning.png') }}" alt="MOCC BPS Logo" class="logo-image">
-            </a>
-            <div class="nav-menu ms-5">
-                <a href="/beranda" class="nav-item {{ request()->is('beranda') || request()->routeIs('beranda') ? 'active' : '' }}">Beranda</a>
-                <a href="/dashboard" class="nav-item {{ request()->is('dashboard') || request()->routeIs('dashboard') ? 'active' : '' }}">Dashboard</a>
-                <a href="/mitra/kursus" class="nav-item {{ request()->is('mitra/kursus') || request()->routeIs('mitra.kursus*') ? 'active' : '' }}">Kursus</a>
-                <a href="/kursus-saya" class="nav-item {{ request()->is('kursus-saya') || request()->routeIs('kursus-saya*') ? 'active' : '' }}">Kursus Saya</a>
-            </div>
-        </div>
-        
-        <!-- Tambahkan bagian ikon di sini -->
-        <div class="d-flex align-items-center">
-            <!-- Ikon Bahasa -->
-            <div class="nav-icon me-3">
-                <i class="fas fa-globe"></i>
-            </div>
-            
-            <!-- Ikon Notifikasi -->
-            <div class="nav-icon me-4">
-                <i class="fas fa-bell"></i>
-                <span class="notification-badge">3</span>
-            </div>
-            
-            <!-- User Profile dengan Foto - SESUAI REFERENSI -->
-            <div class="user-profile">
-                <div class="user-avatar">
-                    @auth
-                        @php
-                            $user = Auth::user();
-                            $biodata = $user->biodata ?? null;
-                            $initials = strtoupper(substr($user->name, 0, 2));
-                        @endphp
-                        
-                        @if($biodata && $biodata->foto_profil)
-                            <img src="{{ asset('storage/' . $biodata->foto_profil) }}" 
-                                 alt="Foto Profil" 
-                                 class="avatar-image"
-                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                            <div class="avatar-initials" style="display: none;">{{ $initials }}</div>
-                        @else
-                            <div class="avatar-initials">{{ $initials }}</div>
-                        @endif
-                    @endauth
-                </div>
-                <div class="user-info">
-                    <div class="user-name">
-                        {{ Auth::user()->biodata->nama_lengkap ?? Auth::user()->name }}
-                    </div>
-                    <div class="user-status">
-                        <span class="status-dot"></span>
-                        Online
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</nav>
-
 <style>
     /* Navigation - Sticky dengan teks besar */
     .main-nav {
         background: rgba(255, 255, 255, 0.98);
-        padding: 20px 60px;
+        padding: 15px 60px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         border-bottom: 3px solid #1e3c72;
         position: sticky;
@@ -119,14 +56,14 @@
     /* Style untuk ikon navigasi */
     .nav-icon {
         position: relative;
-        width: 45px;
-        height: 45px;
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         color: #1e3c72;
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         cursor: pointer;
         transition: all 0.3s ease;
         background: rgba(30, 60, 114, 0.1);
@@ -157,13 +94,13 @@
     
     /* Perbesar ukuran teks navigasi */
     .nav-item {
-        padding: 12px 25px;
-        border-radius: 25px;
+        padding: 10px 20px;
+        border-radius: 20px;
         font-weight: 600;
         color: #1e3c72;
         text-decoration: none;
         transition: all 0.3s ease;
-        font-size: 1.1rem;
+        font-size: 1rem;
     }
     
     .nav-item:hover, .nav-item.active {
@@ -171,26 +108,29 @@
         color: white;
         transform: translateY(-2px);
     }
-    
-    /* User Profile & Avatar Styles - PERBAIKAN */
+
+    /* User Profile & Avatar Styles - DIPERBAIKI */
     .user-profile {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 8px 15px;
-        border-radius: 25px;
+        gap: 10px;
+        padding: 6px 12px;
+        border-radius: 20px;
         background: rgba(30, 60, 114, 0.05);
         transition: all 0.3s ease;
-        margin-left: 20px;
+        margin-left: 15px;
+        text-decoration: none;
+        border: 1px solid rgba(30, 60, 114, 0.1);
     }
 
     .user-profile:hover {
         background: rgba(30, 60, 114, 0.1);
+        text-decoration: none;
     }
 
     .user-avatar {
-        width: 45px;
-        height: 45px;
+        width: 38px;
+        height: 38px;
         border-radius: 50%;
         background: linear-gradient(135deg, #1e3c72, #2a5298);
         display: flex;
@@ -200,7 +140,7 @@
         overflow: hidden;
         flex-shrink: 0;
         border: 2px solid white;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     }
 
     .avatar-image {
@@ -212,10 +152,9 @@
 
     .avatar-initials {
         color: white;
-        font-weight: 700;
-        font-size: 16px;
+        font-weight: 600;
+        font-size: 0.8rem;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
     }
 
     .user-info {
@@ -225,21 +164,23 @@
     }
 
     .user-name {
-        font-weight: 700;
+        font-weight: 600;
         color: #1e3c72;
-        font-size: 0.95rem;
+        font-size: 0.85rem;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 150px;
+        max-width: 120px;
+        line-height: 1.2;
     }
 
     .user-status {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         color: #5a6c7d;
         display: flex;
         align-items: center;
         gap: 4px;
+        line-height: 1.2;
     }
 
     .status-dot {
@@ -261,47 +202,44 @@
         display: flex !important;
     }
 
-    /* Responsif */
+    /* Responsif untuk User Profile */
     @media (max-width: 768px) {
         .main-nav {
             padding: 12px 20px;
         }
         
-        .nav-menu {
-            gap: 5px;
-        }
-        
-        .nav-item {
-            padding: 8px 15px;
-            font-size: 1rem;
-        }
-        
-        .logo-image {
-            height: 60px;
-        }
-
-        /* Responsif untuk User Profile */
         .user-profile {
             margin-left: 10px;
-            padding: 6px 12px;
+            padding: 5px 10px;
         }
         
         .user-avatar {
-            width: 40px;
-            height: 40px;
+            width: 35px;
+            height: 35px;
         }
         
         .avatar-initials {
-            font-size: 14px;
+            font-size: 0.75rem;
         }
         
         .user-name {
-            font-size: 0.85rem;
-            max-width: 120px;
+            font-size: 0.8rem;
+            max-width: 100px;
         }
         
         .user-status {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
+        }
+
+        .nav-item {
+            padding: 8px 15px;
+            font-size: 0.9rem;
+        }
+
+        .nav-icon {
+            width: 35px;
+            height: 35px;
+            font-size: 1rem;
         }
     }
 
@@ -311,8 +249,9 @@
         }
         
         .user-profile {
-            padding: 8px;
+            padding: 6px;
             background: transparent;
+            border: none;
         }
         
         .user-profile:hover {
@@ -325,3 +264,79 @@
         }
     }
 </style>
+
+<!-- Navigation - Sticky -->
+<nav class="main-nav">
+    <div class="d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <!-- Logo MOCC BPS sebagai gambar -->
+            <a href="#" class="nav-brand">
+                <img src="{{ asset('img/Logo_E-Learning.png') }}" alt="MOCC BPS Logo" class="logo-image">
+            </a>
+            <div class="nav-menu ms-5">
+                <a href="{{ route('mitra.beranda') }}" 
+                class="nav-item {{ request()->routeIs('mitra.beranda') ? 'active' : '' }}">
+                    Beranda
+                </a>
+                <a href="{{ route('mitra.dashboard') }}" 
+                class="nav-item {{ request()->routeIs('mitra.dashboard') ? 'active' : '' }}">
+                    Dashboard
+                </a>
+                <a href="{{ route('mitra.kursus.index') }}" 
+                class="nav-item {{ request()->routeIs('mitra.kursus.index') ? 'active' : '' }}">
+                    Kursus
+                </a>
+                <a href="{{ route('mitra.kursus.saya') }}" 
+                class="nav-item {{ request()->routeIs('mitra.kursus.saya') ? 'active' : '' }}">
+                    Kursus Saya
+                </a>
+            </div>
+        </div>
+        
+        <!-- Tambahkan bagian ikon di sini -->
+        <div class="d-flex align-items-center">
+            <!-- Ikon Bahasa -->
+            <div class="nav-icon me-3">
+                <i class="fas fa-globe"></i>
+            </div>
+            
+            <!-- Ikon Notifikasi -->
+            <div class="nav-icon me-3">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge">3</span>
+            </div>
+            
+            <!-- User Profile dengan Foto - VERSI DIPERBAIKI -->
+            <a href="{{ route('profil.index') }}" class="user-profile">
+                <div class="user-avatar">
+                    @auth
+                        @php
+                            $user = Auth::user();
+                            $biodata = $user->biodata ?? null;
+                            $initials = strtoupper(substr($user->name, 0, 2));
+                        @endphp
+                        
+                        @if($biodata && $biodata->foto_profil)
+                            <img src="{{ asset('storage/' . $biodata->foto_profil) }}" 
+                                    alt="Foto Profil" 
+                                    class="avatar-image"
+                                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="avatar-initials" style="display: none;">{{ $initials }}</div>
+                        @else
+                            <div class="avatar-initials">{{ $initials }}</div>
+                        @endif
+                    @endauth
+                </div>
+                <div class="user-info">
+                    <div class="user-name">
+                        {{ Auth::user()->biodata->nama_lengkap ?? Auth::user()->name }}
+                    </div>
+                    <div class="user-status">
+                        <span class="status-dot"></span>
+                        Online
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</nav>

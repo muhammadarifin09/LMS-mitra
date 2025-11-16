@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\KursusController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\Mitra\KursusController as MitraKursusController;
+use App\Models\Enrollment;
 
 // Login
 Route::get('/', fn() => view('login'))->name('login.page');

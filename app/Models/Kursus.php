@@ -64,6 +64,18 @@ class Kursus extends Model
                ($this->kuota_peserta === null || $this->peserta_terdaftar < $this->kuota_peserta);
     }
 
-   
+   // Tambahkan di dalam class Kursus
+    public function enrollments()
+    {
+        return $this->hasMany(Enrollment::class, 'kursus_id');
+    }
+
+    // Scope untuk kursus yang di-enroll oleh user tertentu
+    public function scopeEnrolledBy($query, $user_id)
+    {
+        return $query->whereHas('enrollments', function($q) use ($user_id) {
+            $q->where('user_id', $user_id);
+        });
+    }
 
 }
