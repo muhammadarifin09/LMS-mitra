@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Admin\BiodataController;
 use App\Http\Controllers\Admin\KursusController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\Mitra\KursusController as MitraKursusController;
 
@@ -37,6 +38,8 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
     Route::prefix('admin')->name('admin.')->group(function () {
     Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
+    Route::prefix('admin/notifications')->name('admin.notifications.')->group(function () {
+});
     // Route Biodata khusus Admin dengan prefix admin
         Route::get('/biodata', [\App\Http\Controllers\Admin\BiodataController::class, 'index'])->name('biodata.index');
         Route::get('/biodata/create', [\App\Http\Controllers\Admin\BiodataController::class, 'create'])->name('biodata.create');

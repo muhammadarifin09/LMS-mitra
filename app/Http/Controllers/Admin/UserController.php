@@ -6,17 +6,16 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\M_User;
 use App\Models\Biodata;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-   // app/Http\Controllers/Admin\UserController.php
-public function index()
-{
-    // PASTIKAN MENGGUNAKAN paginate() BUKAN get() atau all()
-    $users = \App\Models\M_User::paginate(10);
-    return view('admin.users.index', compact('users'));
-}
+    public function index()
+    {
+        $users = M_User::with('biodata')->get();
+        return view('admin.users.index', ['users' => $users]);
+    }
 
     public function create()
     {
@@ -41,7 +40,7 @@ public function index()
             'role' => $request->role,
         ]);
 
-        return redirect()->route('admin.users.index')->with('success', 'User berhasil ditambahkan!');
+        return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan!');
     }
 
     public function edit($id)
@@ -77,12 +76,12 @@ public function index()
     }
     public function destroy($id)
 {
-    $currentUser = auth()->user();
+    $currentUser = Auth::user();
     $userToDelete = M_User::findOrFail($id);
 
     // Cek jika user yang akan dihapus adalah user yang sedang login
     if ($currentUser->id == $userToDelete->id) {
-        return redirect()->route('users.index')->with('error', 'Tidak dapat menghapus akun sendiri!');
+        return redirect()->route('admin.users.index')->with('error', 'Tidak dapat menghapus akun sendiri!');
     }
 
     try {

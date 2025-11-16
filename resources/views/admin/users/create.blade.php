@@ -179,7 +179,7 @@
             </div>
         @endif
 
-                    <form action="{{ route('users.store') }}" method="POST" id="createUserForm">
+                    <form action="{{ route('admin.users.store') }}" method="POST" id="createUserForm">
                         @csrf
                         
                         <div class="row">
@@ -195,7 +195,7 @@
                                         @endforeach
                                     </select>
                                     <div class="form-text">Pilih biodata yang sudah terdaftar untuk dikaitkan dengan user ini</div>
-                                    @error('biodata_id')
+                                    @error('user_id')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -214,71 +214,71 @@
                             </div>
                         </div>
 
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="username" class="form-label">Username (Email) *</label>
-                        <input type="email" class="form-control" id="username" name="username" 
-                               value="{{ old('username') }}" required>
-                        @error('username')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
-                
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="role" class="form-label">Role *</label>
-                        <select class="form-control" id="role" name="role" required>
-                            <option value="">Pilih Role</option>
-                            <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
-                            <option value="mitra" {{ old('role') == 'mitra' ? 'selected' : '' }}>Mitra</option>
-                            <option value="instruktur" {{ old('role') == 'instruktur' ? 'selected' : '' }}>Instruktur</option>
-                            <option value="moderator" {{ old('role') == 'moderator' ? 'selected' : '' }}>Moderator</option>
-                        </select>
-                        @error('role')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
-            </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="username" class="form-label">Username (Email) *</label>
+                                    <input type="email" class="form-control" id="username" name="username" 
+                                           value="{{ old('username') }}" required>
+                                    @error('username')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="role" class="form-label">Role *</label>
+                                    <select class="form-control" id="role" name="role" required>
+                                        <option value="">Pilih Role</option>
+                                        <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
+                                        <option value="mitra" {{ old('role') == 'mitra' ? 'selected' : '' }}>Mitra</option>
+                                        <option value="instruktur" {{ old('role') == 'instruktur' ? 'selected' : '' }}>Instruktur</option>
+                                        <option value="moderator" {{ old('role') == 'moderator' ? 'selected' : '' }}>Moderator</option>
+                                    </select>
+                                    @error('role')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
 
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="password" class="form-label">Password *</label>
-                        <div class="password-input-group">
-                            <input type="password" class="form-control" id="password" name="password" required>
-                            <button type="button" class="password-toggle" onclick="togglePassword('password')">
-                                <i class="fas fa-eye"></i>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="password" class="form-label">Password *</label>
+                                    <div class="password-input-group">
+                                        <input type="password" class="form-control" id="password" name="password" required>
+                                        <button type="button" class="password-toggle" onclick="togglePassword('password')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    @error('password')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="password_confirmation" class="form-label">Konfirmasi Password *</label>
+                                    <div class="password-input-group">
+                                        <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" required>
+                                        <button type="button" class="password-toggle" onclick="togglePassword('password_confirmation')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn-save">
+                                <i class="fas fa-save"></i>
+                                Simpan User
                             </button>
                         </div>
-                        @error('password')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
-                
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="password_confirmation" class="form-label">Konfirmasi Password *</label>
-                        <div class="password-input-group">
-                            <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" required>
-                            <button type="button" class="password-toggle" onclick="togglePassword('password_confirmation')">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-group mt-4">
-                <button type="submit" class="btn-save">
-                    <i class="fas fa-save"></i>
-                    Simpan User
-                </button>
-            </div>
-        </form>
+                    </form>
     </div>
 </div>
 @endsection
