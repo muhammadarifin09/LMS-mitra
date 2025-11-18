@@ -6,6 +6,8 @@ namespace App\Http\Controllers\Mitra;
 use App\Http\Controllers\Controller;
 use App\Models\Kursus;
 use App\Models\Enrollment;
+use App\Models\Materials;
+use App\Models\MaterialProgress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -31,9 +33,78 @@ class KursusController extends Controller
     {
         $kursus = Kursus::where('status', 'aktif')
                         ->where('id', $id)
+                        ->with(['materials'])
                         ->firstOrFail();
+
+        $user = Auth::user();
         
-        return view('mitra.kursus-detail', compact('kursus'));
+        // Cek enrollment
+        $enrollment = Enrollment::where('user_id', $user->id)
+                            ->where('kursus_id', $id)
+                            ->firstOrFail();
+
+        // Process materials dengan status
+        $materials = $this->getMaterialsWithStatus($kursus->materials, $user);
+        
+        // Calculate progress
+        $totalMaterials = $kursus->materials->count();
+        $completedMaterials = collect($materials)->where('status', 'completed')->count();
+        $progressPercentage = $totalMaterials > 0 ? round(($completedMaterials / $totalMaterials) * 100) : 0;
+
+        return view('mitra.kursus-detail', compact(
+            'kursus',
+            'enrollment', 
+            'materials',
+            'progressPercentage',
+            'completedMaterials',
+            'totalMaterials'
+        ));
+    }
+
+    private function getMaterialsWithStatus($materials, $user)
+    {
+        $processedMaterials = [];
+        $foundCurrent = false;
+        
+        foreach ($materials->sortBy('order') as $material) {
+            $progress = MaterialProgress::where('user_id', $user->id)
+                                    ->where('material_id', $material->id)
+                                    ->first();
+            
+            // Determine status
+            if ($progress && $this->isMaterialCompleted($progress)) {
+                $status = 'completed';
+                $statusClass = 'completed';
+            } elseif (!$foundCurrent) {
+                $status = 'current';
+                $statusClass = 'current';
+                $foundCurrent = true;
+            } else {
+                $status = 'locked';
+                $statusClass = 'locked';
+            }
+            
+            $processedMaterials[] = [
+                'id' => $material->id,
+                'title' => $material->title,
+                'type' => $material->type,
+                'order' => $material->order,
+                'status' => $status,
+                'status_class' => $statusClass,
+                'attendance_status' => $progress->attendance_status ?? 'pending',
+                'material_status' => $progress->material_status ?? 'pending',
+                'video_status' => $progress->video_status ?? 'pending',
+            ];
+        }
+        
+        return $processedMaterials;
+    }
+
+    private function isMaterialCompleted($progress)
+    {
+        return $progress->attendance_status == 'completed' &&
+            $progress->material_status == 'completed' &&
+            $progress->video_status == 'completed';
     }
 
     /**
@@ -100,5 +171,51 @@ class KursusController extends Controller
             ->get();
 
         return view('mitra.kursus-saya', compact('enrolledCourses'));
+    }
+
+    public function markAttendance($materialId)
+    {
+        $user = Auth::user();
+        $material = Materials::findOrFail($materialId);
+        
+        // Pastikan user enrolled di kursus ini
+        $enrollment = Enrollment::where('user_id', $user->id)
+                            ->where('kursus_id', $material->course_id)
+                            ->firstOrFail();
+
+        MaterialProgress::updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'material_id' => $materialId
+            ],
+            [
+                'attendance_status' => 'completed'
+            ]
+        );
+        
+        return response()->json(['success' => true]);
+    }
+
+    public function markMaterialDownloaded($materialId)
+    {
+        $user = Auth::user();
+        $material = Materials::findOrFail($materialId);
+        
+        // Pastikan user enrolled di kursus ini
+        $enrollment = Enrollment::where('user_id', $user->id)
+                            ->where('kursus_id', $material->course_id)
+                            ->firstOrFail();
+
+        MaterialProgress::updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'material_id' => $materialId
+            ],
+            [
+                'material_status' => 'completed'
+            ]
+        );
+        
+        return response()->json(['success' => true]);
     }
 }
