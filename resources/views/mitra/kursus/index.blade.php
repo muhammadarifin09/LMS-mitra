@@ -1201,11 +1201,7 @@
             @endif
 
             <!-- Copyright -->
-            <div class="text-center mt-5 pt-4 border-top">
-                <p style="color: #5a6c7d; font-size: 0.9rem;">
-                    Copyright © 2024 | Kementerian Komunikasi dan Informatika
-                </p>
-            </div>
+   
         </div>
     </div>
 

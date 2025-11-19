@@ -34,4 +34,21 @@ class M_User extends Authenticatable
     {
         return $this->hasOne(Biodata::class, 'user_id');
     }
+
+    // Tambahkan di dalam class M_User
+    public function enrollments()
+    {
+        return $this->hasMany(Enrollment::class, 'user_id');
+    }
+
+    public function enrolledCourses()
+    {
+        return $this->hasManyThrough(Kursus::class, Enrollment::class, 'user_id', 'id', 'id', 'kursus_id');
+    }
+
+    // Cek apakah user sudah enroll ke kursus tertentu
+    public function hasEnrolled($kursus_id)
+    {
+        return $this->enrollments()->where('kursus_id', $kursus_id)->exists();
+    }
 }

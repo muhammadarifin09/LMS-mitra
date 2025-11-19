@@ -13,111 +13,111 @@
             overflow: hidden;
         }
 
-        .form-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 25px;
-            border-bottom: 1px solid #e9ecef;
-            background: #f8f9fa;
-        }
+    .form-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 25px;
+        border-bottom: 1px solid #e9ecef;
+        background: #f8f9fa;
+    }
 
-        .form-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #1e3c72;
-            margin: 0;
-        }
+    .form-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e3c72;
+        margin: 0;
+    }
 
-        .btn-back {
-            background: #6c757d;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
+    .btn-back {
+        background: #6c757d;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
 
-        .btn-back:hover {
-            background: #5a6268;
-            color: white;
-            transform: translateY(-2px);
-        }
+    .btn-back:hover {
+        background: #5a6268;
+        color: white;
+        transform: translateY(-2px);
+    }
 
-        .btn-save {
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
+    .btn-save {
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
 
-        .btn-save:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(30, 60, 114, 0.3);
-            color: white;
-        }
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(30, 60, 114, 0.3);
+        color: white;
+    }
 
-        .form-body {
-            padding: 30px;
-        }
+    .form-body {
+        padding: 30px;
+    }
 
-        .form-group {
-            margin-bottom: 25px;
-        }
+    .form-group {
+        margin-bottom: 25px;
+    }
 
-        .form-label {
-            font-weight: 600;
-            color: #1e3c72;
-            margin-bottom: 8px;
-            display: block;
-        }
+    .form-label {
+        font-weight: 600;
+        color: #1e3c72;
+        margin-bottom: 8px;
+        display: block;
+    }
 
-        .form-control {
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            padding: 12px 15px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
+    .form-control {
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 12px 15px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
 
-        .form-control:focus {
-            border-color: #1e3c72;
-            box-shadow: 0 0 0 0.2rem rgba(30, 60, 114, 0.25);
-        }
+    .form-control:focus {
+        border-color: #1e3c72;
+        box-shadow: 0 0 0 0.2rem rgba(30, 60, 114, 0.25);
+    }
 
-        .form-text {
-            font-size: 0.875rem;
-            color: #6c757d;
-            margin-top: 5px;
-        }
+    .form-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 5px;
+    }
 
-        .password-toggle {
-            cursor: pointer;
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #6c757d;
-            background: none;
-            border: none;
-            z-index: 5;
-        }
+    .password-toggle {
+        cursor: pointer;
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        background: none;
+        border: none;
+        z-index: 5;
+    }
 
-        .password-toggle:hover {
-            color: #1e3c72;
-        }
+    .password-toggle:hover {
+        color: #1e3c72;
+    }
 
         .password-input-group {
             position: relative;
@@ -128,11 +128,11 @@
                 padding: 20px;
             }
 
-            .form-header {
-                flex-direction: column;
-                gap: 15px;
-                align-items: flex-start;
-            }
+        .form-header {
+            flex-direction: column;
+            gap: 15px;
+            align-items: flex-start;
+        }
 
             .form-header .d-flex {
                 width: 100%;
@@ -153,7 +153,7 @@
                 </p>
             </div>
 
-            <!-- FORM SECTION -->
+<!-- FORM SECTION -->
 <div class="form-container">
     <div class="form-header">
         <h2 class="form-title">Form Edit User</h2>
