@@ -243,7 +243,7 @@
     <!-- Progress Bar -->
     <div class="progress-section">
         <div class="progress-info">
-            <span><?= $completedMaterials ?> out of <?= $totalMaterials ?> materials completed</span>
+            <span><?= $completedMaterials ?> out of <?= $totalMaterials ?> activities completed</span>
             <span><?= $progressPercentage ?>%</span>
         </div>
         <div class="progress-bar">

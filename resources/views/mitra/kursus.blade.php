@@ -180,6 +180,46 @@
         cursor: pointer;
     }
 
+    /* Modal Styles */
+    .modal-image-container {
+        text-align: center;
+    }
+
+    .modal-course-image {
+        max-width: 100%;
+        max-height: 300px;
+        border-radius: 8px;
+        object-fit: cover;
+    }
+
+    .modal-image-placeholder {
+        height: 200px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 3rem;
+    }
+
+    .info-item {
+        margin-bottom: 10px;
+        padding: 8px 0;
+        border-bottom: 1px solid #f1f3f4;
+    }
+
+    .info-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+
+    .info-item strong {
+        color: #1e3c72;
+        min-width: 150px;
+        display: inline-block;
+    }
+
     /* Tombol Lihat Kursus - Warna putih dengan border biru */
     .btn-view-course-white {
         background: white;
@@ -368,170 +408,199 @@
                                 Ikuti Kursus
                             </button>
                         </form>
-                        <a href="{{ route('mitra.kursus', $item->id) }}" class="btn-view-course-white">
+                        <button type="button" class="btn-view-course-white" data-bs-toggle="modal" data-bs-target="#detailModal{{ $item->id }}">
                             <i class="fas fa-eye"></i>
                             Lihat Kursus
-                        </a>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal untuk Detail Kursus -->
+            <div class="modal fade" id="detailModal{{ $item->id }}" tabindex="-1" aria-labelledby="detailModalLabel{{ $item->id }}" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header" style="margin-right: 20px; margin-left: 20px;">
+                            <h5 class="modal-title" id="detailModalLabel{{ $item->id }}">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Detail Kursus: {{ $item->judul_kursus }}
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body" style="margin-right: 20px; margin-left: 20px;">
+                            <!-- Gambar Kursus jika ada -->
+                            @if($item->gambar_kursus)
+                            <div class="modal-image-container mb-4">
+                                <img src="{{ asset('storage/' . $item->gambar_kursus) }}" 
+                                    alt="{{ $item->judul_kursus }}" 
+                                    class="modal-course-image"
+                                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div class="modal-image-placeholder" style="display: none;">
+                                    <i class="fas fa-book-open"></i>
+                                </div>
+                            </div>
+                            @endif
+                            
+                            <!-- Informasi Utama -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="info-item">
+                                        <strong><i class="fas fa-user-tie me-2"></i>Penerbit:</strong>
+                                        <span>{{ $item->penerbit }}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <strong><i class="fas fa-clock me-2"></i>Durasi:</strong>
+                                        <span>{{ $item->durasi_jam }} jam</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <strong><i class="fas fa-users me-2"></i>Peserta:</strong>
+                                        <span>{{ $item->peserta_terdaftar }} / 
+                                            @if($item->kuota_peserta)
+                                                {{ $item->kuota_peserta }}
+                                            @else
+                                                Tidak Terbatas
+                                            @endif
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="info-item">
+                                        <strong><i class="fas fa-chart-line me-2"></i>Tingkat Kesulitan:</strong>
+                                        <span>
+                                            @if($item->tingkat_kesulitan == 'pemula')
+                                                <span class="badge bg-primary">Pemula</span>
+                                            @elseif($item->tingkat_kesulitan == 'menengah')
+                                                <span class="badge bg-warning">Menengah</span>
+                                            @else
+                                                <span class="badge bg-danger">Lanjutan</span>
+                                            @endif
+                                        </span>
+                                    </div>
+                                    <div class="info-item">
+                                        <strong><i class="fas fa-toggle-on me-2"></i>Status:</strong>
+                                        <span>
+                                            @if($item->status == 'aktif')
+                                                <span class="badge bg-success">Aktif</span>
+                                            @elseif($item->status == 'draft')
+                                                <span class="badge bg-secondary">Draft</span>
+                                            @else
+                                                <span class="badge bg-danger">Nonaktif</span>
+                                            @endif
+                                        </span>
+                                    </div>
+                                    @if($item->tanggal_mulai && $item->tanggal_selesai)
+                                    <div class="info-item">
+                                        <strong><i class="fas fa-calendar me-2"></i>Periode:</strong>
+                                        <span>{{ \Carbon\Carbon::parse($item->tanggal_mulai)->format('d M Y') }} - {{ \Carbon\Carbon::parse($item->tanggal_selesai)->format('d M Y') }}</span>
+                                    </div>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <!-- Deskripsi Kursus -->
+                            <div class="course-info mb-4">
+                                <h6 class="fw-bold text-primary mb-3">
+                                    <i class="fas fa-align-left me-2"></i>Deskripsi Kursus:
+                                </h6>
+                                <div class="card">
+                                    <div class="card-body">
+                                        <p class="card-text">{{ $item->deskripsi_kursus }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Informasi Tambahan -->
+                            <div class="row">
+                                @if($item->output_pelatihan)
+                                <div class="col-md-6 mb-3">
+                                    <h6 class="fw-bold text-primary mb-3">
+                                        <i class="fas fa-bullseye me-2"></i>Output Pelatihan:
+                                    </h6>
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <ul class="mb-0 ps-3">
+                                                @php
+                                                    $outputs = array_filter(array_map('trim', explode("\n", $item->output_pelatihan)));
+                                                @endphp
+                                                @foreach($outputs as $output)
+                                                    <li>{{ $output }}</li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                @endif
+
+                                @if($item->persyaratan)
+                                <div class="col-md-6 mb-3">
+                                    <h6 class="fw-bold text-primary mb-3">
+                                        <i class="fas fa-clipboard-list me-2"></i>Persyaratan:
+                                    </h6>
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <ul class="mb-0 ps-3">
+                                                @php
+                                                    $outputs = array_filter(array_map('trim', explode("\n", $item->persyaratan)));
+                                                @endphp
+                                                @foreach($outputs as $output)
+                                                    <li>{{ $output }}</li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                @endif
+                            </div>
+
+                            @if($item->fasilitas)
+                            <div class="mb-3">
+                                <h6 class="fw-bold text-primary mb-3">
+                                    <i class="fas fa-gift me-2"></i>Fasilitas:
+                                </h6>
+                                <div class="card">
+                                    <div class="card-body">
+                                        <ul class="mb-0 ps-3">
+                                            @php
+                                                $outputs = array_filter(array_map('trim', explode("\n", $item->fasilitas)));
+                                            @endphp
+                                            @foreach($outputs as $output)
+                                                <li>{{ $output }}</li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <i class="fas fa-times me-2"></i>Tutup
+                            </button>
+                            <form action="{{ route('mitra.kursus.enroll', $item->id) }}" method="POST" class="d-inline">
+                                @csrf
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-play-circle me-2"></i>Ikuti Kursus
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
             @endif
         @endforeach
     @else
-        <!-- Fallback demo courses if no data from database -->
-        <div class="modern-course-card">
-            <div class="course-image-wrapper">
-                <div class="course-main-image" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem;">
-                    <i class="fas fa-code"></i>
-                </div>
-                <div class="course-badge level-badge level-pemula">Pemula</div>
-            </div>
-            <div class="course-content-wrapper">
-                <div class="course-date">01 Nov 2025</div>
-                <h3 class="course-main-title">Kursus PYTHON</h3>
-                <div class="course-category">Python Engineer</div>
-                <p class="course-description">
-                    Kursus Python tersedia secara online dan tatap muka dari berbagai platform seperti Udemy, DataCamp, Superprof, dan Agenta...
-                </p>
-                <div class="course-meta-grid">
-                    <div class="meta-card">
-                        <div class="meta-value">17h</div>
-                        <div class="meta-label">Durasi</div>
-                    </div>
-                    <div class="meta-card">
-                        <div class="meta-value">3</div>
-                        <div class="meta-label">Peserta</div>
-                    </div>
-                </div>
-                <div class="course-action-row">
-                    <button type="button" class="btn-follow-course">
-                        <i class="fas fa-play-circle"></i>
-                        Ikuti Kursus
-                    </button>
-                    <a href="#" class="btn-view-course-white">
-                        <i class="fas fa-eye"></i>
-                        Lihat Kursus
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Additional demo courses -->
-        <div class="modern-course-card">
-            <div class="course-image-wrapper">
-                <div class="course-main-image" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem;">
-                    <i class="fas fa-terminal"></i>
-                </div>
-                <div class="course-badge level-badge level-menengah">Menengah</div>
-            </div>
-            <div class="course-content-wrapper">
-                <div class="course-date">30 Oct 2025</div>
-                <h3 class="course-main-title">Pengenalan Linux</h3>
-                <div class="course-category">Tim Digital</div>
-                <p class="course-description">
-                    Associate Data Scientist menggunakan salah satu program pelatihan Vocational School Graduate Academy Digital Talent...
-                </p>
-                <div class="course-meta-grid">
-                    <div class="meta-card">
-                        <div class="meta-value">8h</div>
-                        <div class="meta-label">Durasi</div>
-                    </div>
-                    <div class="meta-card">
-                        <div class="meta-value">3</div>
-                        <div class="meta-label">Peserta</div>
-                    </div>
-                </div>
-                <div class="course-action-row">
-                    <button type="button" class="btn-follow-course">
-                        <i class="fas fa-play-circle"></i>
-                        Ikuti Kursus
-                    </button>
-                    <a href="#" class="btn-view-course-white">
-                        <i class="fas fa-eye"></i>
-                        Lihat Kursus
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <div class="modern-course-card">
-            <div class="course-image-wrapper">
-                <div class="course-main-image" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem;">
-                    <i class="fas fa-chart-bar"></i>
-                </div>
-                <div class="course-badge level-badge level-lanjutan">Lanjutan</div>
-            </div>
-            <div class="course-content-wrapper">
-                <div class="course-date">30 Oct 2025</div>
-                <h3 class="course-main-title">Data Sains</h3>
-                <div class="course-category">Tim Digital</div>
-                <p class="course-description">
-                    Sangat bagus untuk pemula yang ingin mempelajari data science dari dasar hingga tingkat lanjut.
-                </p>
-                <div class="course-meta-grid">
-                    <div class="meta-card">
-                        <div class="meta-value">30h</div>
-                        <div class="meta-label">Durasi</div>
-                    </div>
-                    <div class="meta-card">
-                        <div class="meta-value">5</div>
-                        <div class="meta-label">Peserta</div>
-                    </div>
-                </div>
-                <div class="course-action-row">
-                    <button type="button" class="btn-follow-course">
-                        <i class="fas fa-play-circle"></i>
-                        Ikuti Kursus
-                    </button>
-                    <a href="#" class="btn-view-course-white">
-                        <i class="fas fa-eye"></i>
-                        Lihat Kursus
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <div class="modern-course-card">
-            <div class="course-image-wrapper">
-                <div class="course-main-image" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem;">
-                    <i class="fas fa-robot"></i>
-                </div>
-                <div class="course-badge level-badge level-menengah">Menengah</div>
-            </div>
-            <div class="course-content-wrapper">
-                <div class="course-date">30 Oct 2025</div>
-                <h3 class="course-main-title">Artificial Intelligence</h3>
-                <div class="course-category">BPS Talasarabilah</div>
-                <p class="course-description">
-                    Associate Data Scientist menggunakan salah satu program pelatihan Vocational School Graduate Academy Digital Talent...
-                </p>
-                <div class="course-meta-grid">
-                    <div class="meta-card">
-                        <div class="meta-value">8h</div>
-                        <div class="meta-label">Durasi</div>
-                    </div>
-                    <div class="meta-card">
-                        <div class="meta-value">4</div>
-                        <div class="meta-label">Peserta</div>
-                    </div>
-                </div>
-                <div class="course-action-row">
-                    <button type="button" class="btn-follow-course">
-                        <i class="fas fa-play-circle"></i>
-                        Ikuti Kursus
-                    </button>
-                    <a href="#" class="btn-view-course-white">
-                        <i class="fas fa-eye"></i>
-                        Lihat Kursus
-                    </a>
-                </div>
-            </div>
-        </div>
+        <tr>
+            <td colspan="8" class="text-center py-4">
+                <i class="fas fa-book me-2"></i>
+                Tidak ada data kursus
+            </td>
+        </tr>
     @endif
 </div>
 
 <!-- Copyright -->
-
+<!-- Di file layout app.blade.php -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
     // JavaScript khusus untuk halaman kursus
@@ -560,6 +629,49 @@
             button.addEventListener('click', function(e) {
                 const courseTitle = this.closest('.modern-course-card').querySelector('.course-main-title').textContent;
                 console.log(`Melihat detail kursus: ${courseTitle}`);
+            });
+        });
+    });
+</script>
+
+<script>
+    // JavaScript khusus untuk halaman kursus
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle course image errors
+        document.querySelectorAll('.course-main-image[src]').forEach(img => {
+            img.addEventListener('error', function() {
+                this.style.display = 'none';
+                const placeholder = this.nextElementSibling;
+                if (placeholder && placeholder.classList.contains('course-main-image')) {
+                    placeholder.style.display = 'flex';
+                }
+            });
+        });
+
+        // Course button interactions
+        document.querySelectorAll('.btn-follow-course').forEach(button => {
+            button.addEventListener('click', function(e) {
+                const courseTitle = this.closest('.modern-course-card').querySelector('.course-main-title').textContent;
+                console.log(`Mengikuti kursus: ${courseTitle}`);
+            });
+        });
+
+        // View course button interactions - MODAL
+        document.querySelectorAll('.btn-view-course-white').forEach(button => {
+            button.addEventListener('click', function(e) {
+                const courseTitle = this.closest('.modern-course-card').querySelector('.course-main-title').textContent;
+                console.log(`Membuka modal detail kursus: ${courseTitle}`);
+            });
+        });
+
+        // Handle modal image errors
+        document.querySelectorAll('.modal-course-image[src]').forEach(img => {
+            img.addEventListener('error', function() {
+                this.style.display = 'none';
+                const placeholder = this.nextElementSibling;
+                if (placeholder && placeholder.classList.contains('modal-image-placeholder')) {
+                    placeholder.style.display = 'flex';
+                }
             });
         });
     });

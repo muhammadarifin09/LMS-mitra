@@ -138,10 +138,14 @@ class KursusController extends Controller
 
         try {
             // Create enrollment
+
+            // Hitung real total materials dari kursus ini
+            $totalMaterials = Materials::where('course_id', $id)->count();
+            
             Enrollment::create([
                 'user_id' => $user->id,
                 'kursus_id' => $id,
-                'total_activities' => 3, // Default value
+                'total_activities' => $totalMaterials, // ← PAKAI REAL COUNT
                 'enrolled_at' => now()
             ]);
 
