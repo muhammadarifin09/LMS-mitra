@@ -40,7 +40,7 @@ class UserController extends Controller
             'role' => $request->role,
         ]);
 
-        return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan!');
+        return redirect()->route('admin.users.index')->with('success', 'User berhasil ditambahkan!');
     }
 
     public function edit($id)
