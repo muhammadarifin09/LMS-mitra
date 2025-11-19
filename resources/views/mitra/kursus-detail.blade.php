@@ -44,14 +44,31 @@
     .flow-step.locked {
         border-left-color: #6c757d;
         background: #f8f9fa;
-        opacity: 0.6;
     }
 
     .step-header {
         display: flex;
         justify-content: between;
         align-items: center;
-        margin-bottom: 1rem;
+        margin-bottom: 0; /* Hapus margin bottom karena ada toggle */
+        cursor: pointer; /* Tambah cursor pointer */
+        padding: 10px;
+        border-radius: 8px;
+        transition: background-color 0.3s;
+    }
+
+    .step-header:hover {
+    background-color: rgba(30, 60, 114, 0.05);
+    }
+
+    .step-toggle {
+        margin-left: 15px;
+        color: #5a6c7d;
+        transition: transform 0.3s ease;
+    }
+
+    .step-toggle.rotated {
+        transform: rotate(180deg);
     }
 
     .step-title {
@@ -87,8 +104,16 @@
     .sub-tasks {
         background: white;
         border-radius: 8px;
-        padding: 1rem;
+        padding: 0; /* Ubah padding jadi 0 dulu */
         border: 1px solid #e9ecef;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease, padding 0.3s ease;
+    }
+
+    .sub-tasks.expanded {
+        max-height: 500px; /* Sesuaikan dengan konten */
+        padding: 1rem; /* Tambah padding saat expanded */
     }
 
     .sub-task {
@@ -230,21 +255,34 @@
     <div class="sequential-flow">
         @foreach($materials as $material)
         <div class="flow-step {{ $material['status_class'] }}">
-            <div class="step-header">
+            <!-- Header yang bisa diklik -->
+            <div class="step-header" onclick="toggleSubTasks(<?= $material['id'] ?>)">
                 <h3 class="step-title">
                     {{ $loop->iteration }}. {{ $material['title'] }}
                 </h3>
                 <span class="step-status status-{{ $material['status'] }}">
-                    @if($material['status'] == 'locked') Terkunci
-                    @elseif($material['status'] == 'current') Sedang Berjalan
-                    @elseif($material['status'] == 'completed') Selesai
+                    @if($material['status'] == 'locked') 
+                        <span style="font-size: 14px;">
+                            <i class="fas fa-lock"></i> Terkunci
+                        </span>
+                    @elseif($material['status'] == 'current') 
+                        Sedang Berjalan
+                    @elseif($material['status'] == 'completed') 
+                        Selesai
                     @endif
                 </span>
+                
+                <!-- Toggle Icon - selalu show untuk material type -->
+                @if($material['type'] == 'material')
+                <div class="step-toggle" id="toggle{{ $material['id'] }}">
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                @endif
             </div>
 
             @if($material['type'] == 'material')
-            <!-- Sub-tasks untuk materi pembelajaran -->
-            <div class="sub-tasks">
+            <!-- Sub-tasks - hidden by default -->
+            <div class="sub-tasks {{ $material['status'] == 'locked' ? 'locked-content' : '' }}" id="subTasks{{ $material['id'] }}">
                 <!-- Kehadiran -->
                 <div class="sub-task">
                     <div class="task-icon" style="background: <?= $material['attendance_status'] == 'completed' ? '#28a745' : '#e9ecef' ?>; color: <?= $material['attendance_status'] == 'completed' ? 'white' : '#6c757d' ?>;">
@@ -329,25 +367,7 @@
                     </div>
                 </div>
             </div>
-            @else
-            <!-- Untuk pre-test, post-test, recap -->
-            <div class="text-center">
-                @if($material['status'] == 'completed')
-                <span class="btn-simple btn-success">
-                    <i class="fas fa-check"></i> Sudah Diselesaikan
-                </span>
-                @elseif($material['status'] == 'current')
-                <button class="btn-simple btn-primary">
-                    <i class="fas fa-play"></i> Mulai {{ $material['type'] == 'pre_test' ? 'Pre Test' : ($material['type'] == 'post_test' ? 'Post Test' : 'Rekap Nilai') }}
-                </button>
-                @else
-                <button class="btn-simple btn-secondary" disabled>
-                    <span style="font-size: 14px;">
-                        <i class="fas fa-lock"></i>
-                    </span>
-                </button>
-                @endif
-            </div>
+            @else 
             @endif
         </div>
         @endforeach
@@ -394,5 +414,79 @@ function startVideo(materialId) {
     alert('Video player akan dibuka untuk material ID: ' + materialId);
     // Implement video player dengan quiz nanti
 }
+
+// Update function toggleSubTasks - hanya toggle, tidak navigate otomatis
+function toggleSubTasks(materialId) {
+    const subTasks = document.getElementById('subTasks' + materialId);
+    const toggleIcon = document.getElementById('toggle' + materialId);
+    
+    if (subTasks && toggleIcon) {
+        // SELALU allow toggle untuk material type, regardless of status
+        subTasks.classList.toggle('expanded');
+        toggleIcon.classList.toggle('rotated');
+    }
+    // HAPUS bagian else-nya yang navigate otomatis
+}
+
+// Function untuk navigate ke halaman material (hanya dipanggil manual)
+function navigateToMaterial(materialId) {
+    // Cari material berdasarkan ID
+    const material = <?= json_encode($materials) ?>.find(m => m.id == materialId);
+    
+    if (material && material.status !== 'locked') {
+        switch(material.type) {
+            case 'pre_test':
+                window.location.href = '/mitra/pre-test/' + materialId;
+                break;
+            case 'post_test':
+                window.location.href = '/mitra/post-test/' + materialId;
+                break;
+            case 'recap':
+                window.location.href = '/mitra/rekap-nilai/' + materialId;
+                break;
+            default:
+                console.log('Navigating to material:', materialId);
+        }
+    } else {
+        alert('Materi ini masih terkunci. Selesaikan materi sebelumnya terlebih dahulu.');
+    }
+}
+
+// HAPUS atau COMMENT bagian auto-expand ini:
+/*
+// Optional: Auto-expand current material
+document.addEventListener('DOMContentLoaded', function() {
+    // Cari material yang statusnya 'current' dan auto expand
+    const currentMaterials = document.querySelectorAll('.flow-step.current');
+    currentMaterials.forEach(step => {
+        const header = step.querySelector('.step-header');
+        if (header) {
+            const onclickAttr = header.getAttribute('onclick');
+            if (onclickAttr && onclickAttr.includes('toggleSubTasks')) {
+                // Execute the toggle function
+                const materialId = onclickAttr.match(/toggleSubTasks\((\d+)\)/)[1];
+                toggleSubTasks(materialId);
+            }
+        }
+    });
+});
+*/
+
+// Optional: Auto-expand current material
+document.addEventListener('DOMContentLoaded', function() {
+    // Cari material yang statusnya 'current' dan auto expand
+    const currentMaterials = document.querySelectorAll('.flow-step.current');
+    currentMaterials.forEach(step => {
+        const header = step.querySelector('.step-header');
+        if (header) {
+            const onclickAttr = header.getAttribute('onclick');
+            if (onclickAttr && onclickAttr.includes('toggleSubTasks')) {
+                // Execute the toggle function
+                const materialId = onclickAttr.match(/toggleSubTasks\((\d+)\)/)[1];
+                toggleSubTasks(materialId);
+            }
+        }
+    });
+});
 </script>
 @endsection
