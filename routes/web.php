@@ -83,6 +83,8 @@ Route::prefix('mitra')->name('mitra.')->middleware(['auth', 'role:mitra'])->grou
     Route::get('/kursus/{id}/edit', [MitraKursusController::class, 'edit'])->name('kursus.edit');
     Route::post('/kursus/{id}/enroll', [MitraKursusController::class, 'enroll'])->name('kursus.enroll');
     Route::get('/kursus-saya', [MitraKursusController::class, 'myCourses'])->name('kursus.saya');
+    Route::post('/material/{materialId}/attendance', [MitraKursusController::class, 'markAttendance'])->name('mitra.material.attendance');
+    Route::post('/material/{materialId}/download', [MitraKursusController::class, 'markMaterialDownloaded'])->name('mitra.material.download');
 });
 
 // Profil Routes

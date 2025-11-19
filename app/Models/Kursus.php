@@ -64,7 +64,14 @@ class Kursus extends Model
                ($this->kuota_peserta === null || $this->peserta_terdaftar < $this->kuota_peserta);
     }
 
+    // ✅ TAMBAHKAN RELASI INI
+    public function materials()
+    {
+        return $this->hasMany(Materials::class, 'course_id'); // ← Materials (plural)
+    }
+    
    // Tambahkan di dalam class Kursus
+   
     public function enrollments()
     {
         return $this->hasMany(Enrollment::class, 'kursus_id');
