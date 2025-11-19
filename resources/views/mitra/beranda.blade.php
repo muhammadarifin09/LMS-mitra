@@ -847,7 +847,7 @@
                     <a href="#" class="nav-item active">Beranda</a>
                     <a href="{{ route('mitra.dashboard') }}" class="nav-item">Dashboard</a>
                     <a href="{{ route('mitra.kursus.index') }}" class="nav-item">Kursus</a>
-                    <a href="#" class="nav-item">Kursus Saya</a>
+                    <a href="{{ route('mitra.kursus.saya') }}" class="nav-item">Kursus Saya</a>
                 </div>
             </div>
             
