@@ -86,7 +86,7 @@ Route::middleware(['auth', 'role:mitra'])->group(function () {
         Route::get('/kursus/{id}', [MitraKursusController::class, 'show'])->name('kursus.show');
         Route::post('/kursus/{id}/enroll', [MitraKursusController::class, 'enroll'])->name('kursus.enroll');
         Route::post('/kursus/{kursus}/unenroll', [MitraKursusController::class, 'unenroll'])->name('kursus.unenroll');
-        Route::get('/kursus-saya', [MitraKursusController::class, 'myCourses'])->name('kursus.saya');
+        Route::get('/kursus-saya', [MitraKursusController::class, 'kursusSaya'])->name('kursus.saya');
         
         // Material Routes
         Route::get('/kursus/{kursus}/material/{material}/view', [MitraKursusController::class, 'showMaterial'])

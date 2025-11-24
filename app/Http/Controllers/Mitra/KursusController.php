@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Mitra;
 
-use DB;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use App\Models\Kursus;
-use ValidationException;
 use App\Models\Materials;
 use App\Models\Enrollment;
 use Illuminate\Http\Request;
@@ -18,7 +18,7 @@ class KursusController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $kursus = Kursus::where('status', 'aktif')
                         ->orderBy('created_at', 'desc')
@@ -64,85 +64,117 @@ class KursusController extends Controller
         ));
     }
 
-    private function getMaterialsWithStatus($materials, $user)
-{
-    $processedMaterials = [];
-    $previousCompleted = true; // First material is always accessible
-    
-    foreach ($materials->sortBy('order') as $material) {
-        $progress = MaterialProgress::where('user_id', $user->id)
-                                ->where('material_id', $material->id)
-                                ->first();
-        
-        // Determine if material is accessible
-        $isAccessible = $previousCompleted;
-        
-        // Determine status
-        if ($progress && $this->isMaterialCompleted($progress, $material)) {
-            $status = 'completed';
-            $statusClass = 'completed';
-            $previousCompleted = true;
-        } elseif ($isAccessible) {
-            $status = 'current';
-            $statusClass = 'current';
-            $previousCompleted = false;
-        } else {
-            $status = 'locked';
-            $statusClass = 'locked';
-            $previousCompleted = false;
+    // Untuk halaman kursus saya (yang sudah di-enroll) + FILTER
+    public function kursusSaya(Request $request)
+    {
+        $filter = $request->get('filter', 'all');
+        $userId = Auth::id();
+
+        // Query enrollments, bukan kursus
+        $enrollments = Enrollment::where('user_id', $userId)
+            ->with(['kursus' => function($query) {
+                $query->where('status', 'aktif');
+            }])
+            ->whereHas('kursus', function($query) {
+                $query->where('status', 'aktif');
+            });
+
+        // Apply filter
+        if ($filter === 'in_progress') {
+            $enrollments->where('status', 'in_progress')
+                    ->where('progress_percentage', '<', 100);
         }
-        
-        // Get specific status for each task
-        $attendanceStatus = $progress->attendance_status ?? 'pending';
-        $materialStatus = $progress->material_status ?? 'pending';
-        $videoStatus = $progress->video_status ?? 'pending';
-        
-        // For test types, check if completed
-        $isTestCompleted = false;
-        $testScore = null;
-        
-        if ($material->type === 'pre_test' && $progress && $progress->pretest_score !== null) {
-            $isTestCompleted = true;
-            $testScore = $progress->pretest_score;
-        } elseif ($material->type === 'post_test' && $progress && $progress->posttest_score !== null) {
-            $isTestCompleted = true;
-            $testScore = $progress->posttest_score;
+
+        if ($filter === 'completed') {
+            $enrollments->where('status', 'completed')
+                    ->orWhere('progress_percentage', 100);
         }
-        
-        // Determine available content types
-        $hasAttendance = $material->attendance_required ?? true;
-        $hasMaterial = !empty($material->file_path);
-        $hasVideo = !empty($material->video_url);
-        
-        $processedMaterials[] = [
-            'id' => $material->id,
-            'title' => $material->title,
-            'type' => $material->type,
-            'order' => $material->order,
-            'status' => $status,
-            'status_class' => $statusClass,
-            'attendance_status' => $attendanceStatus,
-            'material_status' => $materialStatus,
-            'video_status' => $videoStatus,
-            'is_test_completed' => $isTestCompleted,
-            'test_score' => $testScore,
-            'soal_pretest' => $material->soal_pretest,
-            'soal_posttest' => $material->soal_posttest,
-            'durasi_pretest' => $material->durasi_pretest,
-            'durasi_posttest' => $material->durasi_posttest,
-            'passing_grade' => $material->passing_grade,
-            'file_path' => $material->file_path,
-            'video_url' => $material->video_url,
-            'description' => $material->description,
-            // Tambahan untuk menentukan konten yang tersedia
-            'attendance_required' => $hasAttendance,
-            'has_material' => $hasMaterial,
-            'has_video' => $hasVideo
-        ];
+
+        $enrollments = $enrollments->orderBy('updated_at', 'desc')
+                                ->get();
+
+        return view('mitra.kursus-saya', compact('enrollments', 'filter'));
     }
-    
-    return $processedMaterials;
-}
+
+    private function getMaterialsWithStatus($materials, $user)
+    {
+        $processedMaterials = [];
+        $previousCompleted = true; // First material is always accessible
+        
+        foreach ($materials->sortBy('order') as $material) {
+            $progress = MaterialProgress::where('user_id', $user->id)
+                                    ->where('material_id', $material->id)
+                                    ->first();
+            
+            // Determine if material is accessible
+            $isAccessible = $previousCompleted;
+            
+            // Determine status
+            if ($progress && $this->isMaterialCompleted($progress, $material)) {
+                $status = 'completed';
+                $statusClass = 'completed';
+                $previousCompleted = true;
+            } elseif ($isAccessible) {
+                $status = 'current';
+                $statusClass = 'current';
+                $previousCompleted = false;
+            } else {
+                $status = 'locked';
+                $statusClass = 'locked';
+                $previousCompleted = false;
+            }
+            
+            // Get specific status for each task
+            $attendanceStatus = $progress->attendance_status ?? 'pending';
+            $materialStatus = $progress->material_status ?? 'pending';
+            $videoStatus = $progress->video_status ?? 'pending';
+            
+            // For test types, check if completed
+            $isTestCompleted = false;
+            $testScore = null;
+            
+            if ($material->type === 'pre_test' && $progress && $progress->pretest_score !== null) {
+                $isTestCompleted = true;
+                $testScore = $progress->pretest_score;
+            } elseif ($material->type === 'post_test' && $progress && $progress->posttest_score !== null) {
+                $isTestCompleted = true;
+                $testScore = $progress->posttest_score;
+            }
+            
+            // Determine available content types
+            $hasAttendance = $material->attendance_required ?? true;
+            $hasMaterial = !empty($material->file_path);
+            $hasVideo = !empty($material->video_url);
+            
+            $processedMaterials[] = [
+                'id' => $material->id,
+                'title' => $material->title,
+                'type' => $material->type,
+                'order' => $material->order,
+                'status' => $status,
+                'status_class' => $statusClass,
+                'attendance_status' => $attendanceStatus,
+                'material_status' => $materialStatus,
+                'video_status' => $videoStatus,
+                'is_test_completed' => $isTestCompleted,
+                'test_score' => $testScore,
+                'soal_pretest' => $material->soal_pretest,
+                'soal_posttest' => $material->soal_posttest,
+                'durasi_pretest' => $material->durasi_pretest,
+                'durasi_posttest' => $material->durasi_posttest,
+                'passing_grade' => $material->passing_grade,
+                'file_path' => $material->file_path,
+                'video_url' => $material->video_url,
+                'description' => $material->description,
+                // Tambahan untuk menentukan konten yang tersedia
+                'attendance_required' => $hasAttendance,
+                'has_material' => $hasMaterial,
+                'has_video' => $hasVideo
+            ];
+        }
+        
+        return $processedMaterials;
+    }
 
     private function isMaterialCompleted($progress, $material)
     {
@@ -346,8 +378,8 @@ class KursusController extends Controller
 
     public function submitTest(Request $request, $kursusId, $materialId, $testType)
     {
-        \Log::info('=== TEST SUBMISSION START ===');
-        \Log::info('Request Data:', $request->all());
+        Log::info('=== TEST SUBMISSION START ===');
+        Log::info('Request Data:', $request->all());
 
         try {
             $material = Materials::findOrFail($materialId);
@@ -378,7 +410,7 @@ class KursusController extends Controller
                 $totalQuestions = count($material->soal_posttest ?? []);
             }
 
-            \Log::info('Processing answers:', [
+            Log::info('Processing answers:', [
                 'test_type' => $testType,
                 'total_questions' => $totalQuestions,
                 'user_answers_count' => count($userAnswers)
@@ -426,7 +458,7 @@ class KursusController extends Controller
                 $progressData
             );
 
-            \Log::info('Test saved successfully:', [
+            Log::info('Test saved successfully:', [
                 'test_type' => $testType,
                 'score' => $finalScore,
                 'is_passed' => $isPassed,
@@ -445,7 +477,7 @@ class KursusController extends Controller
             ]);
 
         } catch (ValidationException $e) {
-            \Log::error('Validation error:', ['errors' => $e->errors()]);
+            Log::error('Validation error:', ['errors' => $e->errors()]);
             
             return response()->json([
                 'success' => false,
@@ -453,7 +485,7 @@ class KursusController extends Controller
             ], 422);
             
         } catch (\Exception $e) {
-            \Log::error('Test Submission Error:', [
+            Log::error('Test Submission Error:', [
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine()

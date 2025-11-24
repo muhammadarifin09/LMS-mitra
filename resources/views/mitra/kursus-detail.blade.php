@@ -294,7 +294,7 @@
             <span><?= $progressPercentage ?>%</span>
         </div>
         <div class="progress-bar">
-            <div class="progress-fill" style="width: {{ $progressPercentage }}%"></div>
+            <div class="progress-fill" style="width: <?= $progressPercentage ?>%"></div>
         </div>
     </div>
 
@@ -305,7 +305,7 @@
             <!-- Header dengan kondisi yang berbeda -->
             @if($material['type'] == 'material')
             <!-- Header yang bisa diklik untuk material -->
-            <div class="step-header" onclick="toggleSubTasks({{ $material['id'] }})">
+            <div class="step-header" onclick="toggleSubTasks(<?= $material['id'] ?>)">
                 <div class="header-content">
                     <h3 class="step-title">
                         {{ $loop->iteration }}. {{ $material['title'] }}
@@ -347,8 +347,8 @@
                 @if($material['attendance_required'] ?? true)
                     @php $hasContent = true; @endphp
                     <div class="sub-task">
-                        <div class="task-icon" style="background: {{ $material['attendance_status'] == 'completed' ? '#28a745' : '#e9ecef' }}; color: {{ $material['attendance_status'] == 'completed' ? 'white' : '#6c757d' }};">
-                            <i class="fas fa-calendar-check"></i>
+                        <div class="task-icon" style="background: <?= (($material['attendance_status'] ?? 'pending') == 'completed') ? '#28a745' : '#e9ecef' ?>; color: <?= (($material['attendance_status'] ?? 'pending') == 'completed') ? 'white' : '#6c757d' ?>;">
+                            <i class="fas fa-check-circle"></i>
                         </div>
                         <div class="task-info">
                             <div class="task-name">Kehadiran</div>
@@ -360,7 +360,7 @@
                                 <i class="fas fa-check"></i> Selesai
                             </span>
                             @elseif($material['status'] == 'current')
-                            <button class="btn-simple btn-primary" onclick="markAttendance({{ $material['id'] }})">
+                            <button class="btn-simple btn-primary" onclick="markAttendance(<?= $material['id'] ?>)">
                                 <i class="fas fa-check-circle"></i> Tandai Hadir
                             </button>
                             @else
@@ -378,7 +378,7 @@
                 @if($material['has_material'] ?? false)
                     @php $hasContent = true; @endphp
                     <div class="sub-task">
-                        <div class="task-icon" style="background: {{ $material['material_status'] == 'completed' ? '#28a745' : '#e9ecef' }}; color: {{ $material['material_status'] == 'completed' ? 'white' : '#6c757d' }};">
+                        <div class="task-icon" style="background: <?= (($material['material_status'] ?? 'pending') == 'completed') ? '#28a745' : '#e9ecef' ?>; color: <?= (($material['material_status'] ?? 'pending') == 'completed') ? 'white' : '#6c757d' ?>;">
                             <i class="fas fa-file-download"></i>
                         </div>
                         <div class="task-info">
@@ -391,7 +391,7 @@
                                 <i class="fas fa-check"></i> Selesai
                             </span>
                             @elseif(($material['attendance_status'] == 'completed' || !($material['attendance_required'] ?? true)) && $material['status'] == 'current')
-                            <button class="btn-simple btn-primary" onclick="completeMaterial({{ $material['id'] }})">
+                            <button class="btn-simple btn-primary" onclick="completeMaterial(<?= $material['id'] ?>)">
                                 <i class="fas fa-download"></i> Download & Tandai Selesai
                             </button>
                             @else
@@ -409,7 +409,7 @@
                 @if($material['has_video'] ?? false)
                     @php $hasContent = true; @endphp
                     <div class="sub-task">
-                        <div class="task-icon" style="background: {{ $material['video_status'] == 'completed' ? '#28a745' : '#e9ecef' }}; color: {{ $material['video_status'] == 'completed' ? 'white' : '#6c757d' }};">
+                        <div class="task-icon" style="background: <?= (($material['video_status'] ?? 'pending') == 'completed') ? '#28a745' : '#e9ecef' ?>; color: <?= (($material['video_status'] ?? 'pending') == 'completed') ? 'white' : '#6c757d' ?>;">
                             <i class="fas fa-play-circle"></i>
                         </div>
                         <div class="task-info">
@@ -422,7 +422,7 @@
                                 <i class="fas fa-check"></i> Selesai
                             </span>
                             @elseif(($material['material_status'] == 'completed' || !($material['has_material'] ?? false)) && $material['status'] == 'current')
-                            <button class="btn-simple btn-primary" onclick="completeVideo({{ $material['id'] }})">
+                            <button class="btn-simple btn-primary" onclick="completeVideo(<?= $material['id'] ?>)">
                                 <i class="fas fa-play"></i> Mulai Video
                             </button>
                             @else
