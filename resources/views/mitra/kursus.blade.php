@@ -368,7 +368,7 @@
                                 Ikuti Kursus
                             </button>
                         </form>
-                        <a href="{{ route('mitra.kursus', $item->id) }}" class="btn-view-course-white">
+                        <a href="{{ route('mitra.kursus.show', $item->id) }}" class="btn-view-course-white">
                             <i class="fas fa-eye"></i>
                             Lihat Kursus
                         </a>
