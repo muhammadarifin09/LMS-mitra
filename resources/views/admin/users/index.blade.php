@@ -251,8 +251,7 @@
                                     <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="d-inline">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn-action btn-delete" title="Hapus" 
-                                                onclick="return confirm('Apakah Anda yakin ingin menghapus user {{ $user->nama ?? $user->name }}?\\n\\nData biodata terkait akan tetap tersimpan.')">
+                                        <button type="submit" class="btn-action btn-delete" title="Hapus" >
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>

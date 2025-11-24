@@ -162,4 +162,8 @@ class KursusController extends Controller
             'message' => 'Status kursus berhasil diperbarui!'
         ]);
     }
+    public function materials(Kursus $kursus)
+{
+    return redirect()->route('admin.kursus.materials.index', $kursus);
+}
 }

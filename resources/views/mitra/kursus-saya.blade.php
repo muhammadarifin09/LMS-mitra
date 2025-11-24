@@ -3,6 +3,7 @@
 @section('title', 'MOCC BPS - Kursus Saya')
 
 @section('content')
+
 <style>
     /* Reset dan base styles */
     .kursus-saya-container {
@@ -247,13 +248,22 @@
         <p class="kursus-subtitle">Lihat progress dan lanjutkan belajar</p>
     </div>
 
+    @if(isset($filter))
     <!-- Filter Section -->
     <div class="filter-section">
         <div class="d-flex justify-content-between align-items-center">
             <div class="filter-buttons">
-                <button class="filter-btn active">All</button>
-                <button class="filter-btn">In progress</button>
-                <button class="filter-btn">Finished</button>
+                <a href="{{ request()->fullUrlWithQuery(['filter' => 'all']) }}" 
+                class="filter-btn {{ $filter == 'all' ? 'active' : '' }}" 
+                data-filter="all">All</a>
+
+                <a href="{{ request()->fullUrlWithQuery(['filter' => 'in_progress']) }}" 
+                class="filter-btn {{ $filter == 'in_progress' ? 'active' : '' }}" 
+                data-filter="in_progress">In progress</a>
+
+                <a href="{{ request()->fullUrlWithQuery(['filter' => 'completed']) }}" 
+                class="filter-btn {{ $filter == 'completed' ? 'active' : '' }}" 
+                data-filter="finished">Finished</a> <!-- Perhatikan: data-filter harus match dengan status di card -->
             </div>
             <div class="d-flex align-items-center gap-3">
                 <div class="search-box">
@@ -262,24 +272,25 @@
             </div>
         </div>
     </div>
+    @endif
 
     <!-- Main Content Area -->
     <div class="courses-main-content">
-        @if($enrolledCourses->count() > 0)
-        <div class="course-grid">
-            @foreach($enrolledCourses as $enrollment)
-                @php 
-                    $kursus = $enrollment->kursus;
-                    $progressWidth = $enrollment->progress_percentage . '%';
-                    // Tentukan status berdasarkan progress
-                    $status = $enrollment->progress_percentage == 100 ? 'Finished' : 'In Progress';
-                @endphp
-            <div class="modern-course-card">
-                <!-- Course Image -->
-                <div class="course-image-wrapper">
-                    @if($kursus->gambar_kursus)
-                        <img src="{{ asset('storage/' . $kursus->gambar_kursus) }}" 
-                            alt="{{ $kursus->judul_kursus }}" 
+        @if($enrollments->count() > 0)
+            <div class="course-grid">
+                @foreach($enrollments as $enrollment)
+                    @php 
+                        $course = $enrollment->kursus;
+                        if (!$course) continue;
+                        $progressWidth = $enrollment->progress_percentage . '%';
+                        $status = $enrollment->progress_percentage == 100 ? 'Finished' : 'In Progress';
+                    @endphp
+                <div class="modern-course-card" data-status="{{ strtolower(str_replace(' ', '_', $status)) }}" data-title="{{ strtolower($course->judul_kursus) }}">
+                    <!-- Course Image -->
+                    <div class="course-image-wrapper">
+                        @if($course->gambar_kursus)
+                            <img src="{{ asset('storage/' . $course->gambar_kursus) }}" 
+                                alt="{{ $course->judul_kursus }}" 
                             class="course-main-image"
                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                         <div class="course-main-image" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: none; align-items: center; justify-content: center; color: white; font-size: 2rem;">
@@ -302,7 +313,7 @@
                     </div>
                     
                     <!-- Title -->
-                    <h3 class="course-main-title">{{ $kursus->judul_kursus }}</h3>
+                    <h3 class="course-main-title">{{ $course->judul_kursus }}</h3>
 
                     <!-- Progress Section - VERSI PALING AMAN -->
                     <div class="progress-info" style="justify-content: flex-start; flex-direction: column; gap: 6px;">
@@ -317,7 +328,7 @@
 
                     <!-- Action Row -->
                     <div class="course-action-row">
-                        <a href="{{ route('mitra.kursus.show', $kursus->id) }}" class="btn-view-course-blue">
+                        <a href="{{ route('mitra.kursus.show', $course->id) }}" class="btn-view-course-blue">
                             <i class="fas fa-play-circle"></i>
                             {{ $status == 'Finished' ? 'Lihat Kembali' : 'Lanjutkan Belajar' }}
                         </a>
@@ -327,18 +338,19 @@
             @endforeach
         </div>
         @else
-        <!-- Empty State -->
-        <div class="empty-state-container">
-            <div class="empty-state-icon">
-                <i class="fas fa-book-open"></i>
-            </div>
-            <h2 class="empty-state-title">Belum Ada Kursus yang Diikuti</h2>
-            <p class="empty-state-description">
-                Silakan ikuti kursus terlebih dahulu untuk melihatnya di sini.
-            </p>
-            <a href="{{ route('mitra.kursus.index') }}" class="btn-ikuti">
-                <i class="fas fa-play-circle"></i>
-                Lihat Kursus Tersedia
+        <!-- Empty State Simple -->
+        <div style="text-align: center; padding: 3px 2px;">
+            <i class="fas fa-book-open" style="font-size: 3rem; color: #667eea; margin-bottom: 15px;"></i>
+            <h4 style="color: #1e3c72; margin-bottom: 10px;">Belum Ada Kursus</h4>
+            <p style="color: #6c757d; margin-bottom: 20px;">Ikuti kursus pertama Anda</p>
+            <a href="{{ route('mitra.kursus.index') }}" style="
+                background: #1e3c72; 
+                color: white; 
+                padding: 8px 20px; 
+                border-radius: 5px; 
+                text-decoration: none;
+            ">
+                Lihat Kursus
             </a>
         </div>
         @endif
@@ -366,5 +378,52 @@
             });
         });
     });
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const courseCards = document.querySelectorAll('.modern-course-card');
+    const searchInput = document.querySelector('.search-input');
+
+    // Filter by status
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Remove active class from all buttons
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            // Add active class to clicked button
+            this.classList.add('active');
+            
+            const filterValue = this.getAttribute('data-filter');
+            const url = this.getAttribute('href');
+            
+            // Redirect ke URL filter
+            window.location.href = url;
+        });
+    });
+
+    // Search functionality
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const activeFilter = document.querySelector('.filter-btn.active').getAttribute('data-filter');
+        
+        courseCards.forEach(card => {
+            const cardTitle = card.getAttribute('data-title');
+            const cardStatus = card.getAttribute('data-status');
+            
+            const matchesSearch = cardTitle.includes(searchTerm);
+            const matchesFilter = activeFilter === 'all' || cardStatus === activeFilter;
+
+            
+            if (matchesSearch && matchesFilter) {
+                card.style.display = 'flex';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    });
+});
 </script>
 @endsection

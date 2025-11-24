@@ -1,16 +1,17 @@
 @extends('layouts.admin')
 
-@section('title', 'Edit User - MOCC BPS')
+@section('title', 'Tambah User - MOCC BPS')
 
 @section('styles')
-<style>
-    .form-container {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-        border: 1px solid #e9ecef;
-        overflow: hidden;
-    }
+    <style>
+        /* Form Styles */
+        .form-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e9ecef;
+            overflow: hidden;
+        }
 
     .form-header {
         display: flex;
@@ -118,15 +119,14 @@
         color: #1e3c72;
     }
 
-    .password-input-group {
-        position: relative;
-    }
-
-    /* Responsif */
-    @media (max-width: 768px) {
-        .form-body {
-            padding: 20px;
+        .password-input-group {
+            position: relative;
         }
+        
+        @media (max-width: 576px) {
+            .form-body {
+                padding: 20px;
+            }
 
         .form-header {
             flex-direction: column;
@@ -134,22 +134,24 @@
             align-items: flex-start;
         }
 
-        .form-header .d-flex {
-            width: 100%;
-            justify-content: space-between;
+            .form-header .d-flex {
+                width: 100%;
+                justify-content: space-between;
+            }
         }
-    }
-</style>
+    </style>
 @endsection
 
 @section('content')
-<!-- WELCOME SECTION -->
-<div class="welcome-section">
-    <h1 class="welcome-title">Edit User</h1>
-    <p class="welcome-subtitle">
-        Ubah data user sesuai kebutuhan. Password hanya perlu diisi jika ingin mengubah password.
-    </p>
-</div>
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- WELCOME SECTION -->
+            <div class="welcome-section">
+                <h1 class="welcome-title">Edit User</h1>
+                <p class="welcome-subtitle">
+                    Ubah data user sesuai kebutuhan. Password hanya perlu diisi jika ingin mengubah password.
+                </p>
+            </div>
 
 <!-- FORM SECTION -->
 <div class="form-container">
@@ -260,48 +262,52 @@
         </form>
     </div>
 </div>
-@endsection
+        </div>
+    </div>
 
-@section('scripts')
-<script>
-    // Password Toggle Function
-    function togglePassword(fieldId) {
-        const passwordField = document.getElementById(fieldId);
-        const toggleButton = passwordField.nextElementSibling;
-        const toggleIcon = toggleButton.querySelector('i');
-        
-        if (passwordField.type === 'password') {
-            passwordField.type = 'text';
-            toggleIcon.classList.remove('fa-eye');
-            toggleIcon.classList.add('fa-eye-slash');
-        } else {
-            passwordField.type = 'password';
-            toggleIcon.classList.remove('fa-eye-slash');
-            toggleIcon.classList.add('fa-eye');
-        }
-    }
 
-    document.addEventListener('DOMContentLoaded', function() {
-        const form = document.getElementById('editUserForm');
-        const password = document.getElementById('password');
-        const confirmPassword = document.getElementById('password_confirmation');
-        
-        // Check if there's a success message and redirect after 2 seconds
-        const successAlert = document.querySelector('.alert-success');
-        if (successAlert) {
-            setTimeout(() => {
-                window.location.href = '{{ route("admin.users.index") }}';
-            }, 2000);
-        }
-        
-        // Form validation
-        form.addEventListener('submit', function(e) {
-            if (password.value !== confirmPassword.value) {
-                e.preventDefault();
-                alert('Password dan Konfirmasi Password tidak cocok!');
-                confirmPassword.focus();
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+
+        // Password Toggle Function - Fixed
+        function togglePassword(fieldId) {
+            const passwordField = document.getElementById(fieldId);
+            const toggleButton = passwordField.nextElementSibling;
+            const toggleIcon = toggleButton.querySelector('i');
+            
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordField.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
             }
+        }
+
+        // Form Validation and Success Handling
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('editUserForm');
+            const password = document.getElementById('password');
+            const confirmPassword = document.getElementById('password_confirmation');
+            
+            // Check if there's a success message and redirect after 2 seconds
+            const successAlert = document.querySelector('.alert-success');
+            if (successAlert) {
+                setTimeout(() => {
+                    window.location.href = '/users';
+                }, 2000);
+            }
+            
+            // Form validation
+            form.addEventListener('submit', function(e) {
+                if (password.value !== confirmPassword.value) {
+                    e.preventDefault();
+                    alert('Password dan Konfirmasi Password tidak cocok!');
+                    confirmPassword.focus();
+                }
+            });
         });
-    });
-</script>
+    </script>
 @endsection

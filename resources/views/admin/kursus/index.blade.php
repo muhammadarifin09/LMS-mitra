@@ -91,6 +91,17 @@
         color: #9b59b6;
     }
 
+    .btn-materi {
+    background: rgba(46, 204, 113, 0.1);
+    color: #27ae60;
+}
+
+.btn-materi:hover {
+    background: #27ae60;
+    color: white;
+    transform: translateY(-2px);
+}
+
     .btn-view:hover {
         background: #9b59b6;
         color: white;
@@ -372,26 +383,34 @@
                             </small>
                         </td>
                         <td>
-                            <div class="action-buttons">
-                                <!-- Tombol Detail - Selalu Tampil -->
-                                <button type="button" class="btn-action btn-detail" title="Detail Kursus" 
-                                        data-bs-toggle="modal" data-bs-target="#detailModal{{ $item->id }}">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                
-                                <a href="{{ route('admin.kursus.edit', $item->id) }}" class="btn-action btn-edit" title="Edit">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <form action="{{ route('admin.kursus.destroy', $item->id) }}" method="POST" class="d-inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn-action btn-delete" title="Hapus" 
-                                            onclick="confirmDelete(event, this.closest('form'))">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
+    <div class="action-buttons">
+        <!-- Tombol Detail - Selalu Tampil -->
+        <button type="button" class="btn-action btn-detail" title="Detail Kursus" 
+                data-bs-toggle="modal" data-bs-target="#detailModal{{ $item->id }}">
+            <i class="fas fa-eye"></i>
+        </button>
+        
+        <!-- TAMBAH TOMBOL INI: Tombol Materi -->
+        <a href="{{ route('admin.kursus.materials.index', $item) }}" class="btn-action btn-view" title="Kelola Materi">
+            <i class="fas fa-book-open"></i>
+        </a>
+
+        <!-- Tombol Edit -->
+        <a href="{{ route('admin.kursus.edit', $item->id) }}" class="btn-action btn-edit" title="Edit">
+            <i class="fas fa-edit"></i>
+        </a>
+        
+        <!-- Tombol Hapus -->
+        <form action="{{ route('admin.kursus.destroy', $item->id) }}" method="POST" class="d-inline">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="btn-action btn-delete" title="Hapus" 
+                    onclick="confirmDelete(event, this.closest('form'))">
+                <i class="fas fa-trash"></i>
+            </button>
+        </form>
+    </div>
+</td>
                     </tr>
 
                     <!-- Modal untuk Detail Kursus -->

@@ -1,5 +1,4 @@
 <?php
-// app/Models/MaterialProgress.php
 
 namespace App\Models;
 
@@ -19,17 +18,27 @@ class MaterialProgress extends Model
         'material_status', 
         'video_status',
         'quiz_answers',
-        'completed_at'
+        'completed_at',
+        // Tambahan field baru
+        'pretest_score',
+        'posttest_score',
+        'pretest_completed_at',
+        'posttest_completed_at',
+        'attempts',
+        'is_completed'
     ];
 
     protected $casts = [
         'quiz_answers' => 'array',
-        'completed_at' => 'datetime'
+        'completed_at' => 'datetime',
+        'pretest_completed_at' => 'datetime',
+        'posttest_completed_at' => 'datetime',
+        'is_completed' => 'boolean'
     ];
 
     public function user()
     {
-        return $this->belongsTo(M_User::class, 'user_id'); // Ganti M_User jika perlu
+        return $this->belongsTo(M_User::class, 'user_id');
     }
 
     public function material()
@@ -43,11 +52,6 @@ class MaterialProgress extends Model
         $this->update(['attendance_status' => 'completed']);
     }
 
-    public function markMaterialDownloaded()
-    {
-        $this->update(['material_status' => 'downloaded']);
-    }
-
     public function markMaterialCompleted()
     {
         $this->update(['material_status' => 'completed']);
@@ -55,16 +59,40 @@ class MaterialProgress extends Model
 
     public function markVideoCompleted()
     {
+        $this->update(['video_status' => 'completed']);
+    }
+
+    public function markPretestCompleted($score)
+    {
         $this->update([
-            'video_status' => 'completed',
-            'completed_at' => now()
+            'pretest_score' => $score,
+            'pretest_completed_at' => now(),
+            'is_completed' => true
+        ]);
+    }
+
+    public function markPosttestCompleted($score)
+    {
+        $this->update([
+            'posttest_score' => $score,
+            'posttest_completed_at' => now(),
+            'is_completed' => true
         ]);
     }
 
     public function isCompleted()
     {
-        return $this->attendance_status === 'completed' &&
-               $this->material_status === 'completed' &&
-               $this->video_status === 'completed';
+        return $this->is_completed || (
+            $this->attendance_status === 'completed' &&
+            $this->material_status === 'completed' &&
+            $this->video_status === 'completed'
+        );
+    }
+
+    // Check if user passed the test
+    public function isTestPassed($passingGrade)
+    {
+        $score = $this->pretest_score ?? $this->posttest_score;
+        return $score >= $passingGrade;
     }
 }

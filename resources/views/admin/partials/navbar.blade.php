@@ -17,10 +17,8 @@
                 <i class="fas fa-globe"></i>
             </div>
             
-            <div class="nav-icon me-4">
-                <i class="fas fa-bell"></i>
-                <span class="notification-badge">3</span>
-            </div>
+            <!-- Include Notifikasi Dropdown -->
+           @include('admin.partials.notification-dropdown')
             
             <!-- User Profile dengan Dropdown -->
             <div class="user-profile" id="userProfileDropdown">

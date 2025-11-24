@@ -50,8 +50,8 @@
         display: flex;
         justify-content: between;
         align-items: center;
-        margin-bottom: 0; /* Hapus margin bottom karena ada toggle */
-        cursor: pointer; /* Tambah cursor pointer */
+        margin-bottom: 0;
+        cursor: pointer;
         padding: 10px;
         border-radius: 8px;
         transition: background-color 0.3s;
@@ -104,7 +104,7 @@
     .sub-tasks {
         background: white;
         border-radius: 8px;
-        padding: 0; /* Ubah padding jadi 0 dulu */
+        padding: 0;
         border: 1px solid #e9ecef;
         max-height: 0;
         overflow: hidden;
@@ -112,8 +112,8 @@
     }
 
     .sub-tasks.expanded {
-        max-height: 500px; /* Sesuaikan dengan konten */
-        padding: 1rem; /* Tambah padding saat expanded */
+        max-height: 500px;
+        padding: 1rem;
     }
 
     .sub-task {
@@ -173,11 +173,17 @@
         text-decoration: none;
         display: inline-block;
         text-align: center;
+        font-size: 0.85rem;
     }
 
     .btn-primary {
         background: #1e3c72;
         color: white;
+    }
+
+    .btn-primary:hover {
+        background: #2a5298;
+        transform: translateY(-2px);
     }
 
     .btn-success {
@@ -225,6 +231,47 @@
         background: linear-gradient(135deg, #1e3c72, #2a5298);
         border-radius: 4px;
     }
+
+    /* Test info badges */
+    .test-info {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+    }
+
+    .info-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .badge-warning {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+
+    .badge-info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+    }
+
+    .badge-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    /* Material description */
+    .material-description {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-top: 5px;
+        line-height: 1.4;
+    }
 </style>
 
 <div class="container-fluid py-4">
@@ -247,7 +294,7 @@
             <span><?= $progressPercentage ?>%</span>
         </div>
         <div class="progress-bar">
-            <div class="progress-fill" style="width: <?= $progressPercentage ?>%"></div>
+            <div class="progress-fill" style="width: {{ $progressPercentage }}%"></div>
         </div>
     </div>
 
@@ -255,11 +302,23 @@
     <div class="sequential-flow">
         @foreach($materials as $material)
         <div class="flow-step {{ $material['status_class'] }}">
-            <!-- Header yang bisa diklik -->
-            <div class="step-header" onclick="toggleSubTasks(<?= $material['id'] ?>)">
-                <h3 class="step-title">
-                    {{ $loop->iteration }}. {{ $material['title'] }}
-                </h3>
+            <!-- Header dengan kondisi yang berbeda -->
+            @if($material['type'] == 'material')
+            <!-- Header yang bisa diklik untuk material -->
+            <div class="step-header" onclick="toggleSubTasks({{ $material['id'] }})">
+                <div class="header-content">
+                    <h3 class="step-title">
+                        {{ $loop->iteration }}. {{ $material['title'] }}
+                    </h3>
+                    
+                    <!-- Tampilkan deskripsi jika ada -->
+                    @if($material['description'])
+                    <div class="material-description">
+                        {{ $material['description'] }}
+                    </div>
+                    @endif
+                </div>
+
                 <span class="step-status status-{{ $material['status'] }}">
                     @if($material['status'] == 'locked') 
                         <span style="font-size: 14px;">
@@ -272,102 +331,198 @@
                     @endif
                 </span>
                 
-                <!-- Toggle Icon - selalu show untuk material type -->
-                @if($material['type'] == 'material')
+                <!-- Toggle Icon - hanya untuk material type -->
                 <div class="step-toggle" id="toggle{{ $material['id'] }}">
                     <i class="fas fa-chevron-down"></i>
                 </div>
+            </div>
+
+            <!-- Sub-tasks untuk material regular -->
+            <div class="sub-tasks {{ $material['status'] == 'locked' ? 'locked-content' : '' }}" id="subTasks{{ $material['id'] }}">
+                @php
+                    $hasContent = false;
+                @endphp
+
+                <!-- Kehadiran - hanya tampilkan jika diperlukan -->
+                @if($material['attendance_required'] ?? true)
+                    @php $hasContent = true; @endphp
+                    <div class="sub-task">
+                        <div class="task-icon" style="background: {{ $material['attendance_status'] == 'completed' ? '#28a745' : '#e9ecef' }}; color: {{ $material['attendance_status'] == 'completed' ? 'white' : '#6c757d' }};">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div class="task-info">
+                            <div class="task-name">Kehadiran</div>
+                            <div class="task-description">Konfirmasi kehadiran untuk materi ini</div>
+                        </div>
+                        <div class="task-action">
+                            @if($material['attendance_status'] == 'completed')
+                            <span class="btn-simple btn-success">
+                                <i class="fas fa-check"></i> Selesai
+                            </span>
+                            @elseif($material['status'] == 'current')
+                            <button class="btn-simple btn-primary" onclick="markAttendance({{ $material['id'] }})">
+                                <i class="fas fa-check-circle"></i> Tandai Hadir
+                            </button>
+                            @else
+                            <button class="btn-simple btn-secondary" disabled>
+                                <span style="font-size: 14px;">
+                                    <i class="fas fa-lock"></i>
+                                </span>
+                            </button>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Materi Pelatihan - hanya tampilkan jika ada file -->
+                @if($material['has_material'] ?? false)
+                    @php $hasContent = true; @endphp
+                    <div class="sub-task">
+                        <div class="task-icon" style="background: {{ $material['material_status'] == 'completed' ? '#28a745' : '#e9ecef' }}; color: {{ $material['material_status'] == 'completed' ? 'white' : '#6c757d' }};">
+                            <i class="fas fa-file-download"></i>
+                        </div>
+                        <div class="task-info">
+                            <div class="task-name">Materi Pelatihan</div>
+                            <div class="task-description">Download dan pelajari materi PDF/PPT</div>
+                        </div>
+                        <div class="task-action">
+                            @if($material['material_status'] == 'completed')
+                            <span class="btn-simple btn-success">
+                                <i class="fas fa-check"></i> Selesai
+                            </span>
+                            @elseif(($material['attendance_status'] == 'completed' || !($material['attendance_required'] ?? true)) && $material['status'] == 'current')
+                            <button class="btn-simple btn-primary" onclick="completeMaterial({{ $material['id'] }})">
+                                <i class="fas fa-download"></i> Download & Tandai Selesai
+                            </button>
+                            @else
+                            <button class="btn-simple btn-secondary" disabled>
+                                <span style="font-size: 14px;">
+                                    <i class="fas fa-lock"></i>
+                                </span>
+                            </button>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Video Pelatihan - hanya tampilkan jika ada video -->
+                @if($material['has_video'] ?? false)
+                    @php $hasContent = true; @endphp
+                    <div class="sub-task">
+                        <div class="task-icon" style="background: {{ $material['video_status'] == 'completed' ? '#28a745' : '#e9ecef' }}; color: {{ $material['video_status'] == 'completed' ? 'white' : '#6c757d' }};">
+                            <i class="fas fa-play-circle"></i>
+                        </div>
+                        <div class="task-info">
+                            <div class="task-name">Video Pelatihan</div>
+                            <div class="task-description">Tonton video dengan quiz interaktif</div>
+                        </div>
+                        <div class="task-action">
+                            @if($material['video_status'] == 'completed')
+                            <span class="btn-simple btn-success">
+                                <i class="fas fa-check"></i> Selesai
+                            </span>
+                            @elseif(($material['material_status'] == 'completed' || !($material['has_material'] ?? false)) && $material['status'] == 'current')
+                            <button class="btn-simple btn-primary" onclick="completeVideo({{ $material['id'] }})">
+                                <i class="fas fa-play"></i> Mulai Video
+                            </button>
+                            @else
+                            <button class="btn-simple btn-secondary" disabled>
+                                <span style="font-size: 14px;">
+                                    <i class="fas fa-lock"></i>
+                                </span>
+                            </button>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Pesan jika tidak ada konten sama sekali -->
+                @if(!$hasContent)
+                    <div class="no-content-message">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Tidak ada aktivitas yang tersedia untuk materi ini.
+                    </div>
                 @endif
             </div>
 
-            @if($material['type'] == 'material')
-            <!-- Sub-tasks - hidden by default -->
-            <div class="sub-tasks {{ $material['status'] == 'locked' ? 'locked-content' : '' }}" id="subTasks{{ $material['id'] }}">
-                <!-- Kehadiran -->
-                <div class="sub-task">
-                    <div class="task-icon" style="background: <?= $material['attendance_status'] == 'completed' ? '#28a745' : '#e9ecef' ?>; color: <?= $material['attendance_status'] == 'completed' ? 'white' : '#6c757d' ?>;">
-                        <i class="fas fa-calendar-check"></i>
-                    </div>
-                    <div class="task-info">
-                        <div class="task-name">Kehadiran</div>
-                        <div class="task-description">Konfirmasi kehadiran untuk materi ini</div>
-                    </div>
-                    <div class="task-action">
-                        <?php if($material['attendance_status'] == 'completed'): ?>
-                        <span class="btn-simple btn-success">
-                            <i class="fas fa-check"></i> Selesai
+            @else
+            <!-- Header untuk pretest, posttest, dan recap (TIDAK bisa diklik) -->
+            <div class="step-header no-toggle">
+                <div class="header-content">
+                    <h3 class="step-title">
+                        {{ $loop->iteration }}. {{ $material['title'] }}
+                    </h3>
+                    
+                    <!-- Tampilkan info test untuk pretest dan posttest -->
+                    @if(in_array($material['type'], ['pre_test', 'post_test']))
+                    <div class="test-info">
+                        <span class="info-badge badge-warning">
+                            <i class="fas fa-clock me-1"></i>
+                            {{ $material['type'] == 'pre_test' ? $material['durasi_pretest'] : $material['durasi_posttest'] }} menit
                         </span>
-                        <?php elseif($material['status'] == 'current'): ?>
-                        <button class="btn-simple btn-primary" onclick="markAttendance(<?= $material['id'] ?>)">
-                            <i class="fas fa-check-circle"></i> Tandai Hadir
-                        </button>
-                        <?php else: ?>
-                        <button class="btn-simple btn-secondary" disabled>
-                            <span style="font-size: 14px;">
-                                <i class="fas fa-lock"></i>
-                            </span>
-                        </button>
-                        <?php endif; ?>
+                        <span class="info-badge badge-info">
+                            <i class="fas fa-trophy me-1"></i>Passing: {{ $material['passing_grade'] }}%
+                        </span>
+                        <span class="info-badge badge-success">
+                            <i class="fas fa-list-ol me-1"></i>
+                            @if($material['type'] == 'pre_test')
+                                {{ count($material['soal_pretest'] ?? []) }} soal
+                            @else
+                                {{ count($material['soal_posttest'] ?? []) }} soal
+                            @endif
+                        </span>
                     </div>
+                    @endif
                 </div>
 
-                <!-- Materi Pelatihan -->
-                <div class="sub-task">
-                    <div class="task-icon" style="background: <?= $material['material_status'] == 'completed' ? '#28a745' : '#e9ecef' ?>; color: <?= $material['material_status'] == 'completed' ? 'white' : '#6c757d' ?>;">
-                        <i class="fas fa-file-download"></i>
-                    </div>
-                    <div class="task-info">
-                        <div class="task-name">Materi Pelatihan</div>
-                        <div class="task-description">Download dan pelajari materi PDF/PPT</div>
-                    </div>
-                    <div class="task-action">
-                        <?php if($material['material_status'] == 'completed'): ?>
-                        <span class="btn-simple btn-success">
-                            <i class="fas fa-check"></i> Selesai
+                <span class="step-status status-{{ $material['status'] }}">
+                    @if($material['status'] == 'locked') 
+                        <span style="font-size: 14px;">
+                            <i class="fas fa-lock"></i> Terkunci
                         </span>
-                        <?php elseif($material['attendance_status'] == 'completed' && $material['status'] == 'current'): ?>
-                        <button class="btn-simple btn-primary" onclick="downloadMaterial(<?= $material['id'] ?>)">
-                            <i class="fas fa-download"></i> Download & Tandai Selesai
-                        </button>
-                        <?php else: ?>
-                        <button class="btn-simple btn-secondary" disabled>
-                            <span style="font-size: 14px;">
-                                <i class="fas fa-lock"></i>
-                            </span>
-                        </button>
-                        <?php endif; ?>
-                    </div>
-                </div>
-
-                <!-- Video Pelatihan -->
-                <div class="sub-task">
-                    <div class="task-icon" style="background: <?= $material['video_status'] == 'completed' ? '#28a745' : '#e9ecef' ?>; color: <?= $material['video_status'] == 'completed' ? 'white' : '#6c757d' ?>;">
-                        <i class="fas fa-play-circle"></i>
-                    </div>
-                    <div class="task-info">
-                        <div class="task-name">Video Pelatihan</div>
-                        <div class="task-description">Tonton video dengan quiz interaktif</div>
-                    </div>
-                    <div class="task-action">
-                        <?php if($material['video_status'] == 'completed'): ?>
-                        <span class="btn-simple btn-success">
-                            <i class="fas fa-check"></i> Selesai
-                        </span>
-                        <?php elseif($material['material_status'] == 'completed' && $material['status'] == 'current'): ?>
-                        <button class="btn-simple btn-primary" onclick="startVideo(<?= $material['id'] ?>)">
-                            <i class="fas fa-play"></i> Mulai Video
-                        </button>
-                        <?php else: ?>
-                        <button class="btn-simple btn-secondary" disabled>
-                            <span style="font-size: 14px;">
-                                <i class="fas fa-lock"></i>
-                            </span>
-                        </button>
-                        <?php endif; ?>
-                    </div>
-                </div>
+                    @elseif($material['status'] == 'current') 
+                        Sedang Berjalan
+                    @elseif($material['status'] == 'completed') 
+                        Selesai
+                    @endif
+                </span>
             </div>
-            @else 
+
+            <!-- Tombol aksi untuk pretest, posttest, dan recap -->
+            <div class="task-action" style="padding: 15px 0 0 0; border-top: 1px solid #f1f3f4; margin-top: 15px;">
+                @if($material['type'] == 'pre_test' || $material['type'] == 'post_test')
+                    @if($material['status'] == 'locked')
+                        <button class="btn-simple btn-secondary" disabled>
+                            <span style="font-size: 14px;">
+                                <i class="fas fa-lock"></i> Materi Terkunci
+                            </span>
+                        </button>
+                    @elseif($material['is_test_completed'])
+                        <span class="btn-simple btn-success">
+                            <i class="fas fa-check"></i> Selesai (Nilai: {{ $material['test_score'] }}%)
+                        </span>
+                    @else
+                        <a href="{{ route('mitra.kursus.test.show', [$kursus->id, $material['id'], $material['type']]) }}" 
+                           class="btn-simple btn-primary">
+                            <i class="fas fa-play"></i> Mulai {{ $material['type'] == 'pre_test' ? 'Pre Test' : 'Post Test' }}
+                        </a>
+                    @endif
+
+                @elseif($material['type'] == 'recap')
+                    @if($material['status'] == 'locked')
+                        <button class="btn-simple btn-secondary" disabled>
+                            <span style="font-size: 14px;">
+                                <i class="fas fa-lock"></i> Materi Terkunci
+                            </span>
+                        </button>
+                    @else
+                        <a href="{{ route('mitra.kursus.recap.show', [$kursus->id, $material['id']]) }}" 
+                           class="btn-simple btn-primary">
+                            <i class="fas fa-chart-bar"></i> Lihat Rekap Nilai
+                        </a>
+                    @endif
+                @endif
+            </div>
             @endif
         </div>
         @endforeach
@@ -376,116 +531,126 @@
 
 <script>
 function markAttendance(materialId) {
-    fetch(`/mitra/material/${materialId}/attendance`, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        }
-    });
+    if(confirm('Apakah Anda yakin ingin menandai kehadiran?')) {
+        fetch(`/mitra/material/${materialId}/attendance`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Gagal menandai kehadiran: ' + (data.message || 'Terjadi kesalahan'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat menandai kehadiran.');
+        });
+    }
 }
 
-function downloadMaterial(materialId) {
-    // Simulasi download
-    alert('Materi akan didownload...');
-    
-    fetch(`/mitra/material/${materialId}/download`, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        }
-    });
+function completeMaterial(materialId) {
+    if(confirm('Apakah Anda yakin telah mendownload dan mempelajari materi?')) {
+        fetch(`/mitra/material/${materialId}/complete-material`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Gagal menyelesaikan materi: ' + (data.message || 'Terjadi kesalahan'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat menyelesaikan materi.');
+        });
+    }
 }
 
-function startVideo(materialId) {
-    alert('Video player akan dibuka untuk material ID: ' + materialId);
-    // Implement video player dengan quiz nanti
+function completeVideo(materialId) {
+    if(confirm('Apakah Anda yakin telah menonton video hingga selesai?')) {
+        fetch(`/mitra/material/${materialId}/complete-video`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Gagal menyelesaikan video: ' + (data.message || 'Terjadi kesalahan'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat menyelesaikan video.');
+        });
+    }
 }
 
-// Update function toggleSubTasks - hanya toggle, tidak navigate otomatis
 function toggleSubTasks(materialId) {
     const subTasks = document.getElementById('subTasks' + materialId);
     const toggleIcon = document.getElementById('toggle' + materialId);
     
     if (subTasks && toggleIcon) {
-        // SELALU allow toggle untuk material type, regardless of status
+        // Tutup semua sub-tasks lainnya
+        document.querySelectorAll('.sub-tasks').forEach(task => {
+            if (task.id !== 'subTasks' + materialId) {
+                task.classList.remove('expanded');
+            }
+        });
+        
+        // Reset semua toggle icon lainnya
+        document.querySelectorAll('.step-toggle').forEach(icon => {
+            if (icon.id !== 'toggle' + materialId) {
+                icon.classList.remove('rotated');
+            }
+        });
+        
+        // Toggle yang diklik
         subTasks.classList.toggle('expanded');
         toggleIcon.classList.toggle('rotated');
     }
-    // HAPUS bagian else-nya yang navigate otomatis
 }
 
-// Function untuk navigate ke halaman material (hanya dipanggil manual)
-function navigateToMaterial(materialId) {
-    // Cari material berdasarkan ID
-    const material = <?= json_encode($materials) ?>.find(m => m.id == materialId);
-    
-    if (material && material.status !== 'locked') {
-        switch(material.type) {
-            case 'pre_test':
-                window.location.href = '/mitra/pre-test/' + materialId;
-                break;
-            case 'post_test':
-                window.location.href = '/mitra/post-test/' + materialId;
-                break;
-            case 'recap':
-                window.location.href = '/mitra/rekap-nilai/' + materialId;
-                break;
-            default:
-                console.log('Navigating to material:', materialId);
-        }
-    } else {
-        alert('Materi ini masih terkunci. Selesaikan materi sebelumnya terlebih dahulu.');
-    }
-}
-
-// HAPUS atau COMMENT bagian auto-expand ini:
-/*
-// Optional: Auto-expand current material
+// Auto-expand current material saat halaman dimuat
 document.addEventListener('DOMContentLoaded', function() {
     // Cari material yang statusnya 'current' dan auto expand
     const currentMaterials = document.querySelectorAll('.flow-step.current');
     currentMaterials.forEach(step => {
         const header = step.querySelector('.step-header');
-        if (header) {
+        // Hanya expand jika ini material regular (bukan test/recap)
+        if (header && !header.classList.contains('no-toggle')) {
             const onclickAttr = header.getAttribute('onclick');
             if (onclickAttr && onclickAttr.includes('toggleSubTasks')) {
-                // Execute the toggle function
                 const materialId = onclickAttr.match(/toggleSubTasks\((\d+)\)/)[1];
-                toggleSubTasks(materialId);
+                // Tunggu sebentar agar animasi smooth
+                setTimeout(() => {
+                    toggleSubTasks(materialId);
+                }, 300);
             }
         }
     });
 });
-*/
 
-// Optional: Auto-expand current material
-document.addEventListener('DOMContentLoaded', function() {
-    // Cari material yang statusnya 'current' dan auto expand
-    const currentMaterials = document.querySelectorAll('.flow-step.current');
-    currentMaterials.forEach(step => {
-        const header = step.querySelector('.step-header');
-        if (header) {
-            const onclickAttr = header.getAttribute('onclick');
-            if (onclickAttr && onclickAttr.includes('toggleSubTasks')) {
-                // Execute the toggle function
-                const materialId = onclickAttr.match(/toggleSubTasks\((\d+)\)/)[1];
-                toggleSubTasks(materialId);
-            }
-        }
+// Prevent event bubbling untuk semua link dan button dalam task-action
+document.querySelectorAll('.task-action a, .task-action button').forEach(element => {
+    element.addEventListener('click', function(e) {
+        e.stopPropagation();
     });
 });
 </script>
