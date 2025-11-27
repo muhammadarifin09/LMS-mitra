@@ -21,7 +21,7 @@
             flex-direction: column;
         }
         
-        /* Navigation - Sticky dengan teks besar */
+        /* ===== FIXED NAVBAR STYLES ===== */
         .main-nav {
             background: rgba(255, 255, 255, 0.98);
             padding: 15px 60px;
@@ -114,7 +114,6 @@
             font-weight: bold;
         }
         
-        /* Perbesar ukuran teks navigasi */
         .nav-item {
             padding: 10px 20px;
             border-radius: 20px;
@@ -129,6 +128,18 @@
             background: linear-gradient(135deg, #1e3c72, #2a5298);
             color: white;
             transform: translateY(-2px);
+        }
+
+        /* Mobile Menu Button - Hidden by default */
+        .mobile-menu-btn {
+            display: none !important;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #1e3c72;
+            padding: 5px 10px;
+            cursor: pointer;
+            z-index: 1001;
         }
 
         /* User Profile & Avatar Styles - DIPERBAIKI */
@@ -223,68 +234,6 @@
         .avatar-image[src=""] + .avatar-initials {
             display: flex !important;
         }
-
-        /* Responsif untuk User Profile */
-        @media (max-width: 768px) {
-            .main-nav {
-                padding: 12px 20px;
-            }
-            
-            .user-profile {
-                margin-left: 10px;
-                padding: 5px 10px;
-            }
-            
-            .user-avatar {
-                width: 35px;
-                height: 35px;
-            }
-            
-            .avatar-initials {
-                font-size: 0.75rem;
-            }
-            
-            .user-name {
-                font-size: 0.8rem;
-                max-width: 100px;
-            }
-            
-            .user-status {
-                font-size: 0.65rem;
-            }
-
-            .nav-item {
-                padding: 8px 15px;
-                font-size: 0.9rem;
-            }
-
-            .nav-icon {
-                width: 35px;
-                height: 35px;
-                font-size: 1rem;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .user-info {
-                display: none;
-            }
-            
-            .user-profile {
-                padding: 6px;
-                background: transparent;
-                border: none;
-            }
-            
-            .user-profile:hover {
-                background: rgba(30, 60, 114, 0.1);
-            }
-
-            .nav-menu {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-        }
         
         /* Slider Styles - Tanpa Border Kotak */
         .slider-container {
@@ -300,12 +249,20 @@
             display: flex;
             transition: transform 0.5s ease-in-out;
         }
+
+        .slider-arrow.prev {
+            left: 25px;
+        }
+        
+        .slider-arrow.next {
+            right: 25px;
+        }
         
         .slide {
             min-width: 100%;
             display: flex;
             flex-direction: column;
-            padding: 60px 80px;
+            padding: 60px 90px;
             background: transparent;
         }
         
@@ -318,16 +275,18 @@
         
         .text-content {
             text-align: left;
-            padding-top: 50px;
+            padding-top: 20px;
         }
         
         .image-content {
             text-align: right;
             position: relative;
+            margin-right: 50px;
+            margin-top: 10px;
         }
         
         .welcome-title {
-            font-size: 3.5rem;
+            font-size: 3.4rem;
             font-weight: 800;
             color: white;
             margin-bottom: 30px;
@@ -348,12 +307,6 @@
             max-width: 180px;
         }
         
-        .signature {
-            font-style: italic;
-            color: rgba(255, 255, 255, 0.8);
-            font-weight: 500;
-            font-size: 1.3rem;
-        }
         
         .mocc-badge {
             background: rgba(255, 255, 255, 0.2);
@@ -449,11 +402,11 @@
         }
         
         .slider-arrow.prev {
-            left: 250px;
+            left: 25px;
         }
         
         .slider-arrow.next {
-            right: 250px;
+            right: 25px;
         }
         
         /* Stats Mini */
@@ -549,15 +502,16 @@
         /* Additional Content untuk Scroll */
         .additional-content {
             max-width: 1900px;
-            margin: 0 auto;
             color: white;
         }
         
         .content-grid {
+            margin-left: 30px;
+            margin-right: 30px;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 30px;
-            margin-bottom: 80px;
+            margin-bottom: 20px;
         }
         
         .content-card {
@@ -671,23 +625,6 @@
             text-decoration: underline;
         }
 
-        .news-item {
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .news-date {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 5px;
-        }
-
-        .news-title {
-            font-weight: 500;
-            line-height: 1.4;
-        }
-
         .footer-divider {
             height: 1px;
             background: rgba(255, 255, 255, 0.2);
@@ -727,7 +664,6 @@
 
         .berakhlak-image {
             max-width: 200px;
-            margin-bottom: 15px;
         }
 
         .berakhlak-links {
@@ -751,8 +687,21 @@
             text-decoration: underline;
         }
 
-        /* Responsif lainnya */
+        /* ===== RESPONSIVE FIXES ===== */
         @media (max-width: 1200px) {
+            .main-nav {
+                padding: 12px 20px;
+            }
+            
+            .nav-menu {
+                gap: 8px;
+            }
+            
+            .nav-item {
+                padding: 4px 7px;
+                font-size: 0.9rem;
+            }
+            
             .slide-content {
                 grid-template-columns: 1fr;
                 gap: 50px;
@@ -765,7 +714,7 @@
             }
             
             .image-content {
-                text-align: center;
+                text-align: center !important;
             }
             
             .profile-image {
@@ -788,48 +737,414 @@
             }
         }
 
+        @media (max-width: 992px) {
+            .nav-menu {
+                display: none !important;
+                position: absolute;
+                top: 100%;
+                left: -48px;
+                right: 0;
+                width: 100%; /* Pastikan full width */
+                max-width: 100%; /* Pastikan tidak dibatasi */
+                background: rgba(255, 255, 255, 0.98);
+                flex-direction: column;
+                padding: 20px;
+                gap: 10px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+                border-top: 1px solid rgba(30, 60, 114, 0.1);
+                
+                /* TAMBAHKAN INI: */
+                align-items: flex-start !important; /* Pastikan item rata kiri */
+            }
+            
+            .nav-menu.show {
+                display: flex !important;
+            }
+            
+            .mobile-menu-btn {
+                display: block !important;
+            }
+            
+            .nav-item {
+                text-align: left;
+                padding: 12px 20px;
+                border-radius: 10px;
+                justify-content: flex-start;
+                width: 100%; /* Pastikan item memenuhi lebar */
+            }
+        }
+
         @media (max-width: 768px) {
             .nav-menu {
                 gap: 5px;
             }
             
             .logo-image {
-                height: 60px;
+                height: 45px;
+            }
+            
+            .user-profile {
+                margin-left: 10px;
+                padding: 5px 10px;
+            }
+            
+            .user-avatar {
+                width: 35px;
+                height: 35px;
+            }
+            
+            .avatar-initials {
+                font-size: 0.75rem;
+            }
+            
+            .user-name {
+                font-size: 0.8rem;
+                max-width: 100px;
+            }
+            
+            .user-status {
+                font-size: 0.65rem;
+            }
+
+            .nav-item {
+                padding: 8px 15px;
+                font-size: 0.9rem;
+            }
+
+            .nav-icon {
+                width: 35px;
+                height: 35px;
+                font-size: 1rem;
+            }
+
+            .slider-container {
+                margin-bottom: 50px;
             }
             
             .slide {
-                padding: 40px 30px;
+                padding: 30px 20px !important;
+                min-height: auto;
+            }
+            
+            .slide-content {
+                grid-template-columns: 1fr !important;
+                gap: 30px !important;
+                text-align: center;
+            }
+            
+            .text-content {
+                padding-top: 0 !important;
+                order: 2;
+            }
+            
+            .image-content {
+                text-align: center;
+            }
+            
+            .profile-image-container {
+                margin-right: 0 !important;
+                display: flex;
+                justify-content: center;
             }
             
             .profile-image {
-                width: 300px;
-                height: 400px;
+                width: 280px !important;
+                height: 350px !important;
+                max-width: 100%;
+            }
+            
+            .image-decoration {
+                display: none;
             }
             
             .welcome-title {
-                font-size: 2.5rem;
+                font-size: 2rem !important;
+                margin-bottom: 20px !important;
+            }
+            
+            .welcome-subtitle {
+                font-size: 1rem !important;
+                margin-bottom: 25px !important;
+            }
+            
+            .mocc-badge {
+                font-size: 0.9rem !important;
+                padding: 10px 20px !important;
             }
             
             .stats-mini {
-                flex-direction: column;
+                display: flex;
+                justify-content: center;
                 align-items: center;
+                gap: clamp(8px, 3vw, 15px); /* Gap responsif */
+                margin-top: 25px !important;
+                flex-wrap: wrap;
             }
-            
+
             .stat-mini-item {
-                width: 200px;
+                flex: 0 0 auto;
+                width: min(100px, 30vw); /* Lebar responsif */
+                padding: clamp(12px, 3vw, 15px) clamp(15px, 4vw, 20px) !important;
+                text-align: center;
             }
             
+            .slider-arrow {
+                width: 40px !important;
+                height: 40px !important;
+                font-size: 1.2rem !important;
+            }
+            
+            .slider-arrow.prev {
+                left: 10px !important;
+            }
+            
+            .slider-arrow.next {
+                right: 10px !important;
+            }
+            
+            .slider-nav {
+                bottom: 15px !important;
+            }
+
+            .content-grid {
+                grid-template-columns: 1fr !important;
+                gap: 20px;
+                margin: 0 15px 50px 15px !important;
+            }
+            
+            .content-card {
+                padding: 25px 20px !important;
+            }
+            
+            .content-icon {
+                font-size: 2.5rem !important;
+            }
+            
+            .content-title {
+                font-size: 1.2rem !important;
+            }
+            
+            .section-title {
+                font-size: 1.8rem !important;
+                margin-bottom: 30px !important;
+                padding: 0 20px;
+            }
+
             .footer-content {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr !important;
                 gap: 30px;
             }
             
-            .footer-container {
-                padding: 0 15px;
+            .footer-section {
+                text-align: left !important; /* Ubah dari center ke left */
+                order: 0; /* Reset order */
+            }
+            
+            /* Urutkan section sesuai kebutuhan */
+            .footer-section:first-child {
+                order: 1; /* bps-title + footer-address + berakhlak-container */
+            }
+            
+            .footer-section:nth-child(3) {
+                order: 2; /* Tentang Kami */
+            }
+            
+            .footer-section:nth-child(2) {
+                order: 3; /* Kontak Kami */
+            }
+            
+            /* Style untuk elemen dalam section pertama */
+            .bps-title {
+                text-align: left;
+                margin-bottom: 15px;
+            }
+            
+            .footer-address {
+                text-align: left;
+                margin-bottom: 20px;
+            }
+            
+            .berakhlak-container {
+                text-align: left;
+                margin-top: 20px;
             }
             
             .berakhlak-image {
-                max-width: 150px;
+                max-width: 150px !important;
+                margin: 0 !important; /* Hilangkan margin center */
+            }
+            
+            /* Style untuk section lainnya */
+            .footer-section h3 {
+                text-align: left;
+                margin-bottom: 15px;
+            }
+            
+            .contact-info {
+                text-align: left;
+            }
+            
+            .footer-links {
+                text-align: left;
+                padding-left: 0;
+                list-style-position: inside;
+            }
+            
+            .footer-links li {
+                margin-bottom: 8px;
+            }
+            
+            .footer-links a {
+                text-align: left;
+                justify-content: flex-start !important;
+            }
+            
+            .main-footer {
+                margin-top: 50px !important;
+                padding: 30px 0 15px !important;
+            }
+            
+            .footer-bottom {
+                text-align: left !important;
+                margin-top: 30px;
+            }
+            
+            .copyright {
+                text-align: left;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .user-info {
+                display: none;
+            }
+            
+            .user-profile {
+                padding: 6px;
+                background: transparent;
+                border: none;
+            }
+            
+            .user-profile:hover {
+                background: rgba(30, 60, 114, 0.1);
+            }
+
+            .main-nav {
+                padding: 10px 15px !important;
+            }
+            
+            .logo-image {
+                height: 40px !important;
+            }
+            
+            .slide {
+                padding: 20px 15px !important;
+            }
+            
+            .profile-image {
+                width: 250px !important;
+                height: 300px !important;
+            }
+            
+            .welcome-title {
+                font-size: 1.8rem !important;
+            }
+            
+            .stat-mini-number {
+                font-size: 1.5rem !important;
+            }
+            
+            .content-card {
+                padding: 20px 15px !important;
+            }
+        }
+
+        /* Touch-friendly improvements */
+        @media (max-width: 768px) {
+            .nav-icon, 
+            .slider-arrow, 
+            .slider-dot,
+            .content-card,
+            .stat-mini-item {
+                cursor: pointer;
+                -webkit-tap-highlight-color: transparent;
+            }
+            
+            .nav-icon,
+            .slider-arrow {
+                min-width: 44px;
+                min-height: 44px;
+            }
+            
+            button, 
+            .btn-simple {
+                min-height: 44px;
+                padding: 12px 20px;
+            }
+        }
+
+        /* Prevent horizontal scroll */
+        html, body {
+            overflow-x: hidden;
+            max-width: 100%;
+        }
+
+        /* Improve text readability on mobile */
+        @media (max-width: 768px) {
+            body {
+                font-size: 14px;
+                line-height: 1.5;
+            }
+            
+            .welcome-subtitle,
+            .content-description {
+                line-height: 1.6;
+            }
+        }
+
+        @media (max-width: 1000px) {
+            /* ATUR URUTAN ELEMEN SPECIFIC */
+            .slide-content {
+                display: grid !important;
+                grid-template-columns: 1fr !important;
+                text-align: left !important;
+                gap: 15px !important;
+                margin:auto;
+            }
+            
+            /* URUTAN SESUAI KEINGINAN ANDA */
+            .mocc-badge {
+                order: 1 !important;
+                grid-row: 1 !important;
+            }
+            
+            .welcome-title {
+                order: 2 !important;
+                grid-row: 2 !important;
+            }
+            
+            .welcome-subtitle {
+                order: 3 !important;
+                grid-row: 3 !important;
+            }
+            
+            .image-content {
+                order: 4 !important;
+                grid-row: 4 !important;
+                text-align: center !important;
+                margin-right: 0px;
+                margin-top: 3px;
+            }
+            
+            .divider {
+                order: 5 !important;
+                grid-row: 5 !important;
+                margin-left: 195px !important;
+            }
+            
+            .stats-mini {
+                order: 6 !important;
+                grid-row: 6 !important;
             }
         }
     </style>
@@ -849,6 +1164,11 @@
                     <a href="{{ route('mitra.kursus.index') }}" class="nav-item">Kursus</a>
                     <a href="{{ route('mitra.kursus.saya') }}" class="nav-item">Kursus Saya</a>
                 </div>
+
+                <!-- Mobile Menu Button -->
+                <button class="mobile-menu-btn">
+                    <i class="fas fa-bars"></i>
+                </button>
             </div>
             
             <!-- Tambahkan bagian ikon di sini -->
@@ -926,7 +1246,7 @@
                             </h1>
                             
                             <p class="welcome-subtitle">
-                                Dengan Memadukan Media Digital Dan Teknologi Daring, Keterbatasan Mitra BPS Dalam Mengembangkan Kompetensi Statistik Karena Jarak Dan Waktu Dapat Diminimalkan.
+                                Platform pembelajaran mandiri bagi Mitra Statistik untuk mempersiapkan diri sebelum pelatihan tatap muka dan penugasan di lapangan dengan sistem belajar adaptif.
                             </p>
                             
                             <div class="divider"></div>
@@ -935,16 +1255,16 @@
                             <!-- Mini Stats -->
                             <div class="stats-mini">
                                 <div class="stat-mini-item">
-                                    <span class="stat-mini-number">2,847</span>
+                                    <span class="stat-mini-number">{{ $pesertaAktif }}</span>
                                     <span class="stat-mini-label">Peserta Aktif</span>
                                 </div>
                                 <div class="stat-mini-item">
-                                    <span class="stat-mini-number">15+</span>
+                                    <span class="stat-mini-number">{{ $kursusTersedia }}</span>
                                     <span class="stat-mini-label">Kursus Tersedia</span>
                                 </div>
                                 <div class="stat-mini-item">
-                                    <span class="stat-mini-number">98%</span>
-                                    <span class="stat-mini-label">Tingkat Kepuasan</span>
+                                    <span class="stat-mini-number">{{ $materiOnline }}</span>
+                                    <span class="stat-mini-label">Materi Online</span>
                                 </div>
                             </div>
                         </div>
@@ -970,32 +1290,29 @@
                             </div>
                             
                             <h1 class="welcome-title">
-                                Pengalaman Belajar Terbaik
+                                Pembelajaran Terstruktur
                             </h1>
                             
                             <p class="welcome-subtitle">
-                                MOCC BPS menyediakan berbagai fitur unggulan yang dirancang khusus untuk memberikan pengalaman belajar terbaik bagi mitra BPS di seluruh Indonesia.
+                                Seluruh materi disusun berdasarkan kebutuhan kompetensi mitra, mulai dari konsep dasar hingga prosedur pendataan di lapangan yang relevan dan terstruktur.
                             </p>
                             
                             <div class="divider"></div>
-                            
-                            <div class="signature">
-                                Tim Pengembangan MOCC BPS
-                            </div>
+                        
 
                             <!-- Mini Stats -->
                             <div class="stats-mini">
                                 <div class="stat-mini-item">
-                                    <span class="stat-mini-number">24/7</span>
-                                    <span class="stat-mini-label">Akses Materi</span>
+                                    <span class="stat-mini-number">{{ $pesertaAktif }}</span>
+                                    <span class="stat-mini-label">Peserta Aktif</span>
                                 </div>
                                 <div class="stat-mini-item">
-                                    <span class="stat-mini-number">50+</span>
-                                    <span class="stat-mini-label">Mentor Ahli</span>
+                                    <span class="stat-mini-number">{{ $kursusTersedia }}</span>
+                                    <span class="stat-mini-label">Kursus Tersedia</span>
                                 </div>
                                 <div class="stat-mini-item">
-                                    <span class="stat-mini-number">100%</span>
-                                    <span class="stat-mini-label">Online</span>
+                                    <span class="stat-mini-number">{{ $materiOnline }}</span>
+                                    <span class="stat-mini-label">Materi Online</span>
                                 </div>
                             </div>
                         </div>
@@ -1017,36 +1334,33 @@
                         <!-- Text Content -->
                         <div class="text-content">
                             <div class="mocc-badge">
-                                Komunitas MOCC BPS
+                                Progress Pembelajaran
                             </div>
                             
                             <h1 class="welcome-title">
-                                Bergabung dengan Komunitas
+                                Pantau Progress Kursus Anda
                             </h1>
                             
                             <p class="welcome-subtitle">
-                                Dapatkan manfaat maksimal dengan bergabung dalam komunitas MOCC BPS yang aktif dan saling mendukung dalam pengembangan kompetensi statistik.
+                                Setiap mitra dapat memantau progres belajar dan menyelesaikan evaluasi sebagai syarat sebelum mengikuti pelatihan dan bertugas sebagai mitra yang baik.
                             </p>
                             
                             <div class="divider"></div>
-                            
-                            <div class="signature">
-                                Komunitas MOCC BPS
-                            </div>
+                        
 
                             <!-- Mini Stats -->
                             <div class="stats-mini">
                                 <div class="stat-mini-item">
-                                    <span class="stat-mini-number">5,000+</span>
-                                    <span class="stat-mini-label">Anggota</span>
+                                    <span class="stat-mini-number">{{ $pesertaAktif }}</span>
+                                    <span class="stat-mini-label">Peserta Aktif</span>
                                 </div>
                                 <div class="stat-mini-item">
-                                    <span class="stat-mini-number">100+</span>
-                                    <span class="stat-mini-label">Diskusi/Minggu</span>
+                                    <span class="stat-mini-number">{{ $kursusTersedia }}</span>
+                                    <span class="stat-mini-label">Kursus Tersedia</span>
                                 </div>
                                 <div class="stat-mini-item">
-                                    <span class="stat-mini-number">95%</span>
-                                    <span class="stat-mini-label">Respon Cepat</span>
+                                    <span class="stat-mini-number">{{ $materiOnline }}</span>
+                                    <span class="stat-mini-label">Materi Online</span>
                                 </div>
                             </div>
                         </div>
@@ -1080,16 +1394,16 @@
 
         <!-- Additional Content untuk Scroll -->
         <div class="additional-content">
-            <h2 class="section-title">Mengapa Memilih MOCC BPS?</h2>
+            <h2 class="section-title">Apa Yang Mitra Dapatkan?</h2>
             
             <div class="content-grid">
                 <div class="content-card">
                     <div class="content-icon">
                         <i class="fas fa-chalkboard-teacher"></i>
                     </div>
-                    <h3 class="content-title">Coach Berpengalaman</h3>
+                    <h3 class="content-title">Materi Terarah</h3>
                     <p class="content-description">
-                        Dibimbing oleh mentor dan coach yang berpengalaman di bidang statistik dan data analysis dari BPS.
+                        Akses materi pembelajaran yang dirancang sesuai kebutuhan kompetensi mitra sebelum turun ke lapangan.
                     </p>
                 </div>
                 
@@ -1097,9 +1411,9 @@
                     <div class="content-icon">
                         <i class="fas fa-certificate"></i>
                     </div>
-                    <h3 class="content-title">Sertifikat Resmi</h3>
+                    <h3 class="content-title">Evaluasi Terstandar</h3>
                     <p class="content-description">
-                        Dapatkan sertifikat resmi yang diakui secara nasional setelah menyelesaikan program pelatihan.
+                        Selesaikan evaluasi terstruktur sebagai prasyarat resmi mengikuti pelatihan dan penugasan berikutnya.
                     </p>
                 </div>
                 
@@ -1107,9 +1421,9 @@
                     <div class="content-icon">
                         <i class="fas fa-users"></i>
                     </div>
-                    <h3 class="content-title">Komunitas Aktif</h3>
+                    <h3 class="content-title">Progress Terpantau</h3>
                     <p class="content-description">
-                        Bergabung dengan komunitas mitra BPS untuk berdiskusi dan berkolaborasi dalam proyek statistik.
+                        Setiap mitra dapat memantau perkembangan belajar secara mandiri dari kursus yang diikuti melalui menu Kursus Saya.
                     </p>
                 </div>
             </div>
@@ -1130,19 +1444,22 @@
                         <p>76914</p>
                         <p>Indonesia</p>
                     </div>
+                    
+                    <!-- Gambar BerAKHLAK -->
+                    <div class="berakhlak-container">
+                        <img src="{{ asset('img/cover.jpg') }}" alt="BerAKHLAK" class="berakhlak-image">
+                        <ul class="berakhlak-links">
+                    </div>
+                </div>
+
+                <!-- Kontak Kami -->
+                <div class="footer-section">
+                    <h3>Kontak Kami</h3>
                     <div class="contact-info">
                         <p>Telepon: +62 512 21092</p>
                         <p>Fax: +62 512 3113</p>
                         <p>Email: bps6301@bps.go.id</p>
                         <p>bps6301@gmail.com</p>
-                    </div>
-                    
-                    <!-- Gambar BerAKHLAK dan Manual S&K Daftar Tarakan -->
-                    <div class="berakhlak-container">
-                        <img src="{{ asset('img/cover.jpg') }}" alt="BerAKHLAK" class="berakhlak-image">
-                        <ul class="berakhlak-links">
-                            <li><a href="#">Manual S&K Daftar Tarakan</a></li>
-                        </ul>
                     </div>
                 </div>
 
@@ -1151,40 +1468,12 @@
                     <h3>Tentang Kami</h3>
                     <ul class="footer-links">
                         <li><a href="https://ppid.bps.go.id/app/konten/6301/Profil-BPS.html?_gl=1*15t609r*_ga*MjQxOTY0MDAzLjE3NjEyNzM4MzU.*_ga_XXTTVXWHDB*czE3NjEyNzM4MzQkbzEkZzAkdTE3NjEyNzM4MzQkajYwJGwwJGgw">Profil BPS</a></li>
-                        <li><a href="#">PPID</a></li>
-                        <li><a href="#">Kebijakan Diseminasi</a></li>
+                        <li><a href="https://ppid.bps.go.id/?mfd=6301&_gl=1*1yli45g*_ga*MTQyMzAzNDgwMC4xNzQwMjk0NzU4*_ga_XXTTVXWHDB*czE3NjQyMDY0ODIkbzEwJGcwJHQxNzY0MjA2NDkyJGo1MCRsMCRoMA..">PPID</a></li>
+                        <li><a href="https://ppid.bps.go.id/app/konten/0000/Layanan-BPS.html?_gl=1*8lxw4a*_ga*MTQyMzAzNDgwMC4xNzQwMjk0NzU4*_ga_XXTTVXWHDB*czE3NjQyMDY0ODIkbzEwJGcwJHQxNzY0MjA2NDkyJGo1MCRsMCRoMA..#pills-3">Kebijakan Diseminasi</a></li>
                     </ul>
                 </div>
 
-                <!-- Tautan Lainnya -->
-                <div class="footer-section">
-                    <h3>Tautan Lainnya</h3>
-                    <ul class="footer-links">
-                        <li><a href="#">ASEAN Stats</a></li>
-                        <li><a href="#">Forum Masyarakat Statistik</a></li>
-                        <li><a href="#">Reformasi Birokrasi</a></li>
-                        <li><a href="#">Layanan Pengaduan Secara Elektronik</a></li>
-                        <li><a href="#">Politeknik Statistika STIS</a></li>
-                        <li><a href="#">Pusdiklat BPS</a></li>
-                        <li><a href="#">JDIH BPS</a></li>
-                    </ul>
-                </div>
-
-                <!-- Government Public Relation -->
-                <div class="footer-section">
-                    <h3>Government Public Relation</h3>
-                    <div class="news-item">
-                        <div class="news-date">21 October 2025, 19:23 WEB</div>
-                        <div class="news-title">Sertifikasi Pemerintah Indonesia: Mendorong 18.805 UMKM dan Sektor Tenaga Kerja</div>
-                    </div>
-                    <div class="news-item">
-                        <div class="news-date">21 October 2025, 19:22 WEB</div>
-                        <div class="news-title">Sertifikasi Pemerintah Indonesia: Capai Swasembada 225 Ribu Hektar, Target 480 Ribu Hektar Tahun Depan</div>
-                    </div>
-                </div>
             </div>
-
-            <div class="footer-divider"></div>
 
             <div class="footer-bottom">
                 <div class="copyright">
@@ -1195,8 +1484,26 @@
     </footer>
 
     <script>
-        // Slider functionality
+        // Mobile Menu Functionality
         document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+            const navMenu = document.querySelector('.nav-menu');
+            
+            if (mobileMenuBtn && navMenu) {
+                mobileMenuBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    navMenu.classList.toggle('show');
+                });
+                
+                // Close menu when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!navMenu.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
+                        navMenu.classList.remove('show');
+                    }
+                });
+            }
+            
+            // Slider functionality
             const slider = document.querySelector('.slider');
             const slides = document.querySelectorAll('.slide');
             const dots = document.querySelectorAll('.slider-dot');
@@ -1229,8 +1536,8 @@
             }
             
             // Event listeners
-            nextBtn.addEventListener('click', nextSlide);
-            prevBtn.addEventListener('click', prevSlide);
+            if (nextBtn) nextBtn.addEventListener('click', nextSlide);
+            if (prevBtn) prevBtn.addEventListener('click', prevSlide);
             
             // Dot navigation
             dots.forEach((dot, index) => {
@@ -1242,10 +1549,8 @@
             
             // Auto slide (optional)
             // setInterval(nextSlide, 5000);
-        });
 
-        // Handle image loading errors
-        document.addEventListener('DOMContentLoaded', function() {
+            // Handle image loading errors
             document.querySelectorAll('.avatar-image').forEach(img => {
                 img.addEventListener('error', function() {
                     this.style.display = 'none';

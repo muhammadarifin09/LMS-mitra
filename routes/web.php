@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\BiodataController;
 use App\Http\Controllers\Admin\MaterialController;
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Mitra\BerandaController;
 use App\Http\Controllers\Mitra\KursusController as MitraKursusController;
 
 // Login
@@ -76,7 +77,8 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 // Routes untuk Mitra - DUA VERSI UNTUK FLEKSIBILITAS
 Route::middleware(['auth', 'role:mitra'])->group(function () {
     // Route tanpa prefix (untuk kompatibilitas)
-    Route::get('/beranda', fn() => view('mitra.beranda'))->name('mitra.beranda');
+    // Ganti route yang ada dengan:
+    Route::get('/beranda', [BerandaController::class, 'index'])->name('mitra.beranda');
     Route::get('/dashboard', fn() => view('mitra.dashboard'))->name('mitra.dashboard');
     
     // Route dengan prefix mitra (untuk organisasi yang lebih baik)
