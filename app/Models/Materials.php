@@ -12,37 +12,38 @@ class Materials extends Model
     protected $fillable = [
         'course_id',
         'title', 
-        'order',
         'type',
+        'order',
+        'material_type', // Gunakan material_type saja
         'description',
         'file_path',
         'video_url',
         'duration',
+        'duration_video',
         'is_active',
-        // FIELD UNTUK PRETEST
+        'attendance_required',
+        'learning_objectives',
         'soal_pretest',
         'durasi_pretest',
-        // FIELD UNTUK POSTTEST
+        'is_pretest',
         'soal_posttest',
         'durasi_posttest',
-        'is_pretest',
-        'attendance_required',
-        'material_type',
-        'learning_objectives', // Tambahkan ini jika diperlukan
-        'duration_video' // Tambahkan ini jika diperlukan
+        'is_posttest'
     ];
 
     protected $casts = [
         'duration' => 'integer',
+        'duration_video' => 'integer',
         'is_active' => 'boolean',
         'order' => 'integer',
         'durasi_pretest' => 'integer',
         'durasi_posttest' => 'integer',
         'is_pretest' => 'boolean',
-        'soal_pretest' => 'array', // UNTUK MENYIMPAN SOAL PRETEST DALAM JSON
-        'soal_posttest' => 'array', // UNTUK MENYIMPAN SOAL POSTTEST DALAM JSON
-        'learning_objectives' => 'array', // Tambahkan ini jika digunakan
-        'file_path' => 'array' // Tambahkan ini jika file_path disimpan sebagai array
+        'is_posttest' => 'boolean',
+        'soal_pretest' => 'array',
+        'soal_posttest' => 'array',
+        'learning_objectives' => 'array',
+        'file_path' => 'array'
     ];
 
     public function kursus()
@@ -59,6 +60,11 @@ class Materials extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    public function scopeAllStatus($query)
+    {
+        return $query; // Tidak ada filter
     }
 
     // Scope untuk urutan

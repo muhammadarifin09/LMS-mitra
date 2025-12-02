@@ -35,7 +35,9 @@ class KursusController extends Controller
         $kursus = Kursus::where('status', 'aktif')
                         ->where('id', $id)
                         ->with(['materials' => function($query) {
-                            $query->orderBy('order');
+                            // HANYA ambil materi yang AKTIF
+                            $query->where('is_active', true)
+                                  ->orderBy('order');
                         }])
                         ->firstOrFail();
 
@@ -46,7 +48,7 @@ class KursusController extends Controller
                             ->where('kursus_id', $id)
                             ->firstOrFail();
 
-        // Process materials dengan status
+        // Process materials dengan status (hanya yang aktif)
         $materials = $this->getMaterialsWithStatus($kursus->materials, $user);
         
         // Calculate progress
@@ -102,6 +104,11 @@ class KursusController extends Controller
         $previousCompleted = true; // First material is always accessible
         
         foreach ($materials->sortBy('order') as $material) {
+            // Skip jika materi tidak aktif
+            if (!$material->is_active) {
+                continue;
+            }
+            
             $progress = MaterialProgress::where('user_id', $user->id)
                                     ->where('material_id', $material->id)
                                     ->first();
@@ -222,13 +229,15 @@ class KursusController extends Controller
         try {
             // Create enrollment
 
-            // Hitung real total materials dari kursus ini
-            $totalMaterials = Materials::where('course_id', $id)->count();
+            // Hitung real total materials dari kursus ini (HANYA YANG AKTIF)
+            $totalMaterials = Materials::where('course_id', $id)
+                                        ->where('is_active', true)
+                                        ->count();
             
             Enrollment::create([
                 'user_id' => $user->id,
                 'kursus_id' => $id,
-                'total_activities' => $totalMaterials, // ← PAKAI REAL COUNT
+                'total_activities' => $totalMaterials, // ← PAKAI REAL COUNT (hanya yang aktif)
                 'enrolled_at' => now()
             ]);
 
@@ -262,7 +271,8 @@ class KursusController extends Controller
     public function markAttendance($materialId)
     {
         $user = Auth::user();
-        $material = Materials::findOrFail($materialId);
+        $material = Materials::where('is_active', true)
+                            ->findOrFail($materialId);
         
         $enrollment = Enrollment::where('user_id', $user->id)
                             ->where('kursus_id', $material->course_id)
@@ -284,7 +294,8 @@ class KursusController extends Controller
     public function markMaterialCompleted($materialId)
     {
         $user = Auth::user();
-        $material = Materials::findOrFail($materialId);
+        $material = Materials::where('is_active', true)
+                            ->findOrFail($materialId);
         
         $enrollment = Enrollment::where('user_id', $user->id)
                             ->where('kursus_id', $material->course_id)
@@ -306,7 +317,8 @@ class KursusController extends Controller
     public function markVideoCompleted($materialId)
     {
         $user = Auth::user();
-        $material = Materials::findOrFail($materialId);
+        $material = Materials::where('is_active', true)
+                            ->findOrFail($materialId);
         
         $enrollment = Enrollment::where('user_id', $user->id)
                             ->where('kursus_id', $material->course_id)
@@ -329,7 +341,12 @@ class KursusController extends Controller
     public function showTest($kursusId, $materialId, $testType)
     {
         $kursus = Kursus::findOrFail($kursusId);
-        $material = Materials::findOrFail($materialId);
+        
+        // HANYA ambil materi yang AKTIF
+        $material = Materials::where('is_active', true)
+                            ->where('id', $materialId)
+                            ->firstOrFail();
+        
         $user = Auth::user();
 
         // Validate test type
@@ -382,7 +399,9 @@ class KursusController extends Controller
         Log::info('Request Data:', $request->all());
 
         try {
-            $material = Materials::findOrFail($materialId);
+            // HANYA ambil materi yang AKTIF
+            $material = Materials::where('is_active', true)
+                                ->findOrFail($materialId);
             $user = Auth::user();
 
             if ($material->type !== $testType) {
@@ -392,13 +411,15 @@ class KursusController extends Controller
                 ], 404);
             }
 
-            // Validasi yang lebih longgar
+            // ⚠️ PERBAIKAN: Validasi lebih fleksibel untuk menerima answers kosong
             $validated = $request->validate([
-                'answers' => 'required|array',
+                'answers' => 'sometimes|array', // Gunakan sometimes agar boleh tidak ada
                 'answers.*' => 'sometimes|nullable|integer'
             ]);
 
-            $userAnswers = $validated['answers'];
+            // Default answers ke array kosong jika tidak ada
+            $userAnswers = $validated['answers'] ?? [];
+            
             $score = 0;
 
             // ⚠️ PERBAIKAN: Tentukan soal yang akan digunakan berdasarkan tipe test
@@ -413,7 +434,8 @@ class KursusController extends Controller
             Log::info('Processing answers:', [
                 'test_type' => $testType,
                 'total_questions' => $totalQuestions,
-                'user_answers_count' => count($userAnswers)
+                'user_answers_count' => count($userAnswers),
+                'user_answers' => $userAnswers
             ]);
 
             // Validasi: pastikan ada soal yang tersedia
@@ -425,9 +447,12 @@ class KursusController extends Controller
             }
 
             // ⚠️ PERBAIKAN: Hitung score berdasarkan tipe test
+            // Jika user tidak menjawab sama sekali, $userAnswers akan kosong
             foreach ($soalTest as $index => $soal) {
+                // Cek apakah user menjawab soal ini
                 if (isset($userAnswers[$index]) && 
                     $userAnswers[$index] !== null && 
+                    $userAnswers[$index] !== '' && 
                     $userAnswers[$index] == ($soal['jawaban_benar'] ?? null)) {
                     $score++;
                 }
@@ -436,10 +461,19 @@ class KursusController extends Controller
             $finalScore = $totalQuestions > 0 ? ($score / $totalQuestions) * 100 : 0;
             $isPassed = $finalScore >= $material->passing_grade;
 
+            // Log hasil test
+            Log::info('Test Results:', [
+                'score' => $score,
+                'total_questions' => $totalQuestions,
+                'final_score' => $finalScore,
+                'is_passed' => $isPassed,
+                'passing_grade' => $material->passing_grade
+            ]);
+
             // Save progress
             $progressData = [
                 'attempts' => DB::raw('COALESCE(attempts, 0) + 1'),
-                'is_completed' => $isPassed
+                'is_completed' => $isPassed ? 1 : 0
             ];
 
             if ($testType === 'pre_test') {
@@ -450,45 +484,71 @@ class KursusController extends Controller
                 $progressData['posttest_completed_at'] = now();
             }
 
-            MaterialProgress::updateOrCreate(
-                [
-                    'user_id' => $user->id,
-                    'material_id' => $materialId
-                ],
-                $progressData
-            );
+            // Gunakan transaction untuk memastikan data konsisten
+            DB::beginTransaction();
+            
+            try {
+                $progress = MaterialProgress::updateOrCreate(
+                    [
+                        'user_id' => $user->id,
+                        'material_id' => $materialId
+                    ],
+                    $progressData
+                );
 
-            Log::info('Test saved successfully:', [
-                'test_type' => $testType,
-                'score' => $finalScore,
-                'is_passed' => $isPassed,
-                'correct' => $score,
-                'total' => $totalQuestions
-            ]);
+                // Update enrollment progress
+                $this->updateEnrollmentProgress($user->id, $kursusId);
+                
+                DB::commit();
 
-            return response()->json([
-                'success' => true,
-                'score' => round($finalScore, 2),
-                'is_passed' => $isPassed,
-                'passing_grade' => $material->passing_grade,
-                'total_questions' => $totalQuestions,
-                'correct_answers' => $score,
-                'message' => 'Test berhasil disubmit'
-            ]);
+                Log::info('Test saved successfully:', [
+                    'test_type' => $testType,
+                    'score' => $finalScore,
+                    'is_passed' => $isPassed,
+                    'correct' => $score,
+                    'total' => $totalQuestions,
+                    'progress_id' => $progress->id
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'score' => round($finalScore, 2),
+                    'is_passed' => $isPassed,
+                    'passing_grade' => $material->passing_grade,
+                    'total_questions' => $totalQuestions,
+                    'correct_answers' => $score,
+                    'answered_count' => count($userAnswers),
+                    'message' => 'Test berhasil disubmit'
+                ]);
+
+            } catch (\Exception $e) {
+                DB::rollBack();
+                throw $e;
+            }
 
         } catch (ValidationException $e) {
             Log::error('Validation error:', ['errors' => $e->errors()]);
             
+            // ⚠️ PERBAIKAN: Handle array to string conversion
+            $errorMessages = [];
+            foreach ($e->errors() as $field => $messages) {
+                foreach ($messages as $message) {
+                    $errorMessages[] = "$field: $message";
+                }
+            }
+            $errorMessage = implode(', ', $errorMessages);
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Validasi gagal: ' . implode(', ', $e->errors())
+                'message' => 'Validasi gagal: ' . $errorMessage
             ], 422);
             
         } catch (\Exception $e) {
             Log::error('Test Submission Error:', [
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
-                'line' => $e->getLine()
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
             ]);
 
             return response()->json([
@@ -498,19 +558,82 @@ class KursusController extends Controller
         }
     }
 
+    private function updateEnrollmentProgress($userId, $kursusId)
+    {
+        try {
+            $enrollment = Enrollment::where('user_id', $userId)
+                ->where('kursus_id', $kursusId)
+                ->first();
+
+            if ($enrollment) {
+                // Hitung progress berdasarkan materi yang sudah diselesaikan (HANYA YANG AKTIF)
+                $totalMaterials = Materials::where('course_id', $kursusId)
+                                            ->where('is_active', true)
+                                            ->count();
+                
+                // Hitung materi yang sudah diselesaikan (dengan test atau semua status completed)
+                $completedMaterials = MaterialProgress::where('user_id', $userId)
+                    ->whereHas('material', function($query) use ($kursusId) {
+                        $query->where('course_id', $kursusId)
+                              ->where('is_active', true); // HANYA MATERI AKTIF
+                    })
+                    ->where(function($query) {
+                        $query->where('pretest_score', '>=', DB::raw('passing_grade'))
+                              ->orWhere('posttest_score', '>=', DB::raw('passing_grade'))
+                              ->orWhere(function($q) {
+                                  $q->where('attendance_status', 'completed')
+                                    ->where('material_status', 'completed')
+                                    ->where('video_status', 'completed');
+                              });
+                    })
+                    ->count();
+
+                $progressPercentage = $totalMaterials > 0 ? round(($completedMaterials / $totalMaterials) * 100) : 0;
+                
+                // Update status enrollment
+                $status = ($progressPercentage >= 100) ? 'completed' : 'in_progress';
+                
+                $enrollment->update([
+                    'progress_percentage' => $progressPercentage,
+                    'status' => $status,
+                    'completed_at' => $status === 'completed' ? now() : null
+                ]);
+
+                Log::info('Enrollment progress updated:', [
+                    'enrollment_id' => $enrollment->id,
+                    'progress_percentage' => $progressPercentage,
+                    'status' => $status,
+                    'completed_materials' => $completedMaterials,
+                    'total_materials' => $totalMaterials
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error updating enrollment progress:', [
+                'error' => $e->getMessage(),
+                'user_id' => $userId,
+                'kursus_id' => $kursusId
+            ]);
+        }
+    }
+
     public function showRecap($kursusId, $materialId)
     {
         $kursus = Kursus::findOrFail($kursusId);
-        $material = Materials::findOrFail($materialId);
+        // HANYA ambil materi yang AKTIF
+        $material = Materials::where('is_active', true)
+                            ->findOrFail($materialId);
+        
         $user = Auth::user();
 
         if ($material->type !== 'recap') {
             abort(404);
         }
 
-        // Get all progress for this course
+        // Get all progress for this course (HANYA untuk materi yang AKTIF)
         $progress = MaterialProgress::where('user_id', $user->id)
-            ->whereIn('material_id', $kursus->materials->pluck('id'))
+            ->whereIn('material_id', $kursus->materials()
+                                            ->where('is_active', true)
+                                            ->pluck('id'))
             ->with('material')
             ->get();
 
@@ -525,8 +648,9 @@ class KursusController extends Controller
             return true;
         }
 
-        // Get previous material
+        // Get previous material (HANYA YANG AKTIF)
         $previousMaterial = Materials::where('course_id', $kursusId)
+            ->where('is_active', true) // HANYA MATERI AKTIF
             ->where('order', $material->order - 1)
             ->first();
 

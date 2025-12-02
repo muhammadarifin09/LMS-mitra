@@ -575,47 +575,29 @@ function previousQuestion() {
     }
 }
 
-function validateAndSubmit() {
-    const unanswered = totalQuestions - answeredCount;
+function autoSubmitTest() {
+    clearInterval(timerInterval);
     
-    if (Object.keys(userAnswers).length === 0) {
-        Swal.fire({
-            title: 'Belum Ada Jawaban',
-            text: 'Anda belum menjawab satupun soal. Silakan jawab minimal satu soal sebelum submit.',
-            icon: 'warning',
-            confirmButtonColor: '#1e3c72'
-        });
-        return;
-    }
-
-    let confirmMessage = '';
-    if (unanswered > 0) {
-        confirmMessage = `Anda belum menjawab <strong>${unanswered} soal</strong>. Yakin ingin submit?`;
-    } else {
-        confirmMessage = 'Anda telah menjawab semua soal. Yakin ingin submit?';
-    }
-
+    // Tampilkan pesan waktu habis
     Swal.fire({
-        title: 'Submit Jawaban?',
-        html: confirmMessage,
-        icon: unanswered > 0 ? 'warning' : 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#27ae60',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Ya, Submit!',
-        cancelButtonText: 'Batal',
+        title: 'Waktu Habis!',
+        html: 'Waktu pengerjaan telah habis.<br>' + 
+              (answeredCount > 0 ? 
+               `Anda telah menjawab <strong>${answeredCount} soal</strong> dari ${totalQuestions} soal.<br>` : 
+               'Anda belum menjawab satupun soal.<br>') +
+              'Jawaban akan disubmit secara otomatis.',
+        icon: answeredCount > 0 ? 'info' : 'warning',
+        confirmButtonColor: '#1e3c72',
+        confirmButtonText: 'OK',
         allowOutsideClick: false
-    }).then((result) => {
-        if (result.isConfirmed) {
-            submitAndRedirect();
-        }
+    }).then(() => {
+        // Submit dengan data yang ada (meskipun kosong)
+        submitTest();
     });
 }
 
-function submitAndRedirect() {
-    clearInterval(timerInterval);
-    
-    // Tampilkan loading sederhana
+function submitTest() {
+    // Tampilkan loading
     Swal.fire({
         title: 'Menyimpan Jawaban...',
         text: 'Sedang menyimpan jawaban Anda',
@@ -625,69 +607,109 @@ function submitAndRedirect() {
         }
     });
 
-    // Buat form sederhana untuk submit
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = '{{ route("mitra.kursus.test.submit", [$kursus->id, $material->id, $testType]) }}';
-    form.style.display = 'none';
-
-    // CSRF Token
-    const csrfInput = document.createElement('input');
-    csrfInput.type = 'hidden';
-    csrfInput.name = '_token';
-    csrfInput.value = '{{ csrf_token() }}';
-    form.appendChild(csrfInput);
-
-    // Tambahkan semua jawaban
+    // Siapkan data untuk dikirim
+    const formData = new FormData();
+    formData.append('_token', '{{ csrf_token() }}');
+    
+    // Tambahkan semua jawaban (bisa kosong jika tidak ada yang dijawab)
     Object.keys(userAnswers).forEach(key => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = `answers[${key}]`;
-        input.value = userAnswers[key];
-        form.appendChild(input);
+        formData.append(`answers[${key}]`, userAnswers[key]);
     });
 
-    // Submit form
-    document.body.appendChild(form);
-    
-    // Coba submit dengan fetch dulu, jika gagal gunakan form submit biasa
-    const formData = new FormData(form);
-    
-    fetch(form.action, {
+    // Log data yang akan dikirim
+    console.log('Submitting test data:', {
+        answers: userAnswers,
+        answeredCount: answeredCount
+    });
+
+    // Kirim data
+    fetch('{{ route("mitra.kursus.test.submit", [$kursus->id, $material->id, $testType]) }}', {
         method: 'POST',
         body: formData,
         headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
             'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
         }
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error('Network response was not ok');
+            return response.json().then(err => { throw err; });
         }
         return response.json();
     })
     .then(data => {
         Swal.close();
-        // Redirect ke halaman kursus
-        window.location.href = '{{ url("/mitra/kursus/" . $kursus->id) }}';
+        
+        if (data.success) {
+            // Langsung redirect ke halaman kursus tanpa menampilkan notifikasi hasil
+            window.location.href = '{{ url("/mitra/kursus/" . $kursus->id) }}';
+        } else {
+            // Jika ada error, tampilkan pesan error
+            Swal.fire({
+                title: 'Gagal Submit',
+                text: data.message || 'Terjadi kesalahan saat menyimpan jawaban',
+                icon: 'error',
+                confirmButtonColor: '#e74c3c',
+                confirmButtonText: 'Kembali'
+            });
+        }
     })
     .catch(error => {
-        console.log('Fetch failed, using traditional form submit');
-        // Jika fetch gagal, gunakan form submit tradisional
-        form.submit();
+        console.error('Error submitting test:', error);
+        Swal.close();
+        
+        // Tampilkan pesan error
+        const errorMessage = error.message || 'Koneksi terputus atau server bermasalah';
+        Swal.fire({
+            title: 'Gagal Submit',
+            html: `Terjadi kesalahan: ${errorMessage}<br><br>
+                   <small>Silakan coba lagi atau hubungi admin jika masalah berlanjut</small>`,
+            icon: 'error',
+            confirmButtonColor: '#e74c3c',
+            confirmButtonText: 'Coba Lagi',
+            showCancelButton: true,
+            cancelButtonText: 'Kembali'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Coba submit lagi
+                submitTest();
+            } else {
+                // Kembali ke halaman kursus
+                window.location.href = '{{ url("/mitra/kursus/" . $kursus->id) }}';
+            }
+        });
     });
 }
 
-function autoSubmitTest() {
+// Update fungsi validateAndSubmit untuk menggunakan fungsi submitTest yang baru
+function validateAndSubmit() {
+    const unanswered = totalQuestions - answeredCount;
+    
+    let confirmMessage = '';
+    if (answeredCount === 0) {
+        confirmMessage = 'Anda belum menjawab satupun soal. Yakin ingin submit?';
+    } else if (unanswered > 0) {
+        confirmMessage = `Anda belum menjawab <strong>${unanswered} soal</strong>. Yakin ingin submit?`;
+    } else {
+        confirmMessage = 'Anda telah menjawab semua soal. Yakin ingin submit?';
+    }
+
     Swal.fire({
-        title: 'Waktu Habis!',
-        text: 'Waktu pengerjaan telah habis. Jawaban Anda akan disubmit secara otomatis.',
-        icon: 'info',
-        confirmButtonColor: '#1e3c72',
-        confirmButtonText: 'OK',
+        title: 'Submit Jawaban?',
+        html: confirmMessage,
+        icon: answeredCount === 0 ? 'warning' : (unanswered > 0 ? 'question' : 'success'),
+        showCancelButton: true,
+        confirmButtonColor: answeredCount > 0 ? '#27ae60' : '#6c757d',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Ya, Submit!',
+        cancelButtonText: 'Batal',
         allowOutsideClick: false
-    }).then(() => {
-        submitAndRedirect();
+    }).then((result) => {
+        if (result.isConfirmed) {
+            clearInterval(timerInterval);
+            submitTest();
+        }
     });
 }
 

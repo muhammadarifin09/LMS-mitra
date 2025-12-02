@@ -18,14 +18,13 @@ class MaterialProgress extends Model
         'material_status', 
         'video_status',
         'quiz_answers',
-        'completed_at',
-        // Tambahan field baru
         'pretest_score',
         'posttest_score',
         'pretest_completed_at',
         'posttest_completed_at',
         'attempts',
-        'is_completed'
+        'is_completed',
+        'completed_at'
     ];
 
     protected $casts = [
@@ -67,7 +66,8 @@ class MaterialProgress extends Model
         $this->update([
             'pretest_score' => $score,
             'pretest_completed_at' => now(),
-            'is_completed' => true
+            'is_completed' => true,
+            'attempts' => $this->attempts + 1
         ]);
     }
 
@@ -76,7 +76,8 @@ class MaterialProgress extends Model
         $this->update([
             'posttest_score' => $score,
             'posttest_completed_at' => now(),
-            'is_completed' => true
+            'is_completed' => true,
+            'attempts' => $this->attempts + 1
         ]);
     }
 
@@ -88,11 +89,6 @@ class MaterialProgress extends Model
             $this->video_status === 'completed'
         );
     }
-
-    // Check if user passed the test
-    public function isTestPassed($passingGrade)
-    {
-        $score = $this->pretest_score ?? $this->posttest_score;
-        return $score >= $passingGrade;
-    }
+    
+    // HAPUS METODE isTestPassed karena tidak ada passing grade
 }

@@ -436,6 +436,25 @@ public function update(Request $request, Kursus $kursus, Materials $material)
     }
 }
 
+public function destroy(Kursus $kursus, Materials $material)
+    {
+        try {
+            if ($material->file_path) {
+                Storage::disk('public')->delete($material->file_path);
+            }
+
+            $material->delete();
+
+            return redirect()->route('admin.kursus.materials.index', $kursus)
+                            ->with('success', 'Material berhasil dihapus!');
+        } catch (\Exception $e) {
+            Log::error('Error deleting material: ' . $e->getMessage());
+            
+            return redirect()->back()
+                            ->with('error', 'Gagal menghapus material: ' . $e->getMessage());
+        }
+    }
+
     public function updateStatus(Request $request, Kursus $kursus, Materials $material)
     {
         $request->validate([

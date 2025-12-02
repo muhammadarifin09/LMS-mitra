@@ -145,6 +145,57 @@
         background: #f8d7da;
         color: #721c24;
     }
+    /* Tambahkan style ini ke bagian styles yang sudah ada */
+    
+    .swal2-popup {
+        border-radius: 12px !important;
+        padding: 20px !important;
+    }
+    
+    .swal2-title {
+        font-size: 1.3rem !important;
+        color: #1e3c72 !important;
+    }
+    
+    .swal2-html-container {
+        font-size: 1rem !important;
+        color: #6c757d !important;
+    }
+    
+    .swal2-confirm {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
+        border: none !important;
+        padding: 10px 25px !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+    }
+    
+    .swal2-cancel {
+        background: #6c757d !important;
+        border: none !important;
+        padding: 10px 25px !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+    }
+    
+    .status-badge {
+        font-size: 0.8rem;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+    
+    .status-active {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .status-inactive {
+        background-color: #e2e3e5;
+        color: #383d41;
+        border: 1px solid #d6d8db;
+    }
 </style>
 @endsection
 
@@ -507,11 +558,12 @@
             <i class="mdi mdi-pencil me-1"></i> Edit
         </a>
         
+        <!-- Tombol Status yang sudah diperbaiki -->
         <form action="{{ route('admin.kursus.materials.status', [$kursus, $material]) }}" 
-              method="POST" class="d-inline">
+              method="POST" class="d-inline status-form">
             @csrf
             <input type="hidden" name="is_active" value="{{ $material->is_active ? 0 : 1 }}">
-            <button type="submit" class="btn btn-{{ $material->is_active ? 'secondary' : 'success' }} btn-sm">
+            <button type="submit" class="btn btn-{{ $material->is_active ? 'secondary' : 'success' }} btn-sm status-button">
                 <i class="mdi mdi-{{ $material->is_active ? 'eye-off' : 'eye' }} me-1"></i>
                 {{ $material->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
             </button>
@@ -554,6 +606,7 @@
 @endsection
 
 @section('scripts')
+@section('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     // Fungsi confirmDelete yang benar
@@ -584,24 +637,97 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        // SweetAlert for status changes
+        // SweetAlert for status changes with AJAX
         const statusForms = document.querySelectorAll('form[action*="status"]');
         statusForms.forEach(form => {
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
                 
+                const formData = new FormData(this);
+                const url = this.action;
+                const method = 'POST';
+                const button = this.querySelector('button[type="submit"]');
+                const originalText = button.innerHTML;
+                
+                // Get current status for confirmation message
+                const currentStatus = this.querySelector('input[name="is_active"]').value == 1 ? 'Aktif' : 'Nonaktif';
+                const newStatus = currentStatus === 'Aktif' ? 'Nonaktif' : 'Aktif';
+                
                 Swal.fire({
-                    title: 'Konfirmasi',
-                    text: "Apakah Anda yakin ingin mengubah status materi?",
+                    title: 'Konfirmasi Perubahan Status',
+                    html: `Apakah Anda yakin ingin mengubah status materi dari <strong>${currentStatus}</strong> menjadi <strong>${newStatus}</strong>?`,
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonColor: '#3085d6',
                     cancelButtonColor: '#d33',
                     confirmButtonText: 'Ya, Ubah!',
-                    cancelButtonText: 'Batal'
+                    cancelButtonText: 'Batal',
+                    showLoaderOnConfirm: true,
+                    preConfirm: async () => {
+                        try {
+                            const response = await fetch(url, {
+                                method: method,
+                                body: formData,
+                                headers: {
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                    'Accept': 'application/json',
+                                }
+                            });
+                            
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            
+                            return await response.json();
+                        } catch (error) {
+                            Swal.showValidationMessage(`Request failed: ${error}`);
+                        }
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
                 }).then((result) => {
-                    if (result.isConfirmed) {
-                        this.submit();
+                    if (result.isConfirmed && result.value) {
+                        const response = result.value;
+                        
+                        if (response.success) {
+                            // Tampilkan notifikasi sukses
+                            Swal.fire({
+                                title: 'Berhasil!',
+                                html: `<strong>${response.message}</strong><br>Status berhasil diubah menjadi <span class="badge bg-${response.new_status === 'Aktif' ? 'success' : 'secondary'}">${response.new_status}</span>`,
+                                icon: 'success',
+                                confirmButtonColor: '#3085d6',
+                                timer: 3000,
+                                timerProgressBar: true,
+                                didClose: () => {
+                                    // Update UI tanpa reload
+                                    const badge = form.closest('.accordion-item').querySelector('.badge.bg-success, .badge.bg-secondary');
+                                    const button = form.querySelector('button[type="submit"]');
+                                    const statusInput = form.querySelector('input[name="is_active"]');
+                                    
+                                    // Update badge
+                                    if (response.new_status === 'Aktif') {
+                                        badge.className = 'badge bg-success me-2';
+                                        badge.textContent = 'Aktif';
+                                        button.className = 'btn btn-secondary btn-sm';
+                                        button.innerHTML = '<i class="mdi mdi-eye-off me-1"></i> Nonaktifkan';
+                                        statusInput.value = 0;
+                                    } else {
+                                        badge.className = 'badge bg-secondary me-2';
+                                        badge.textContent = 'Nonaktif';
+                                        button.className = 'btn btn-success btn-sm';
+                                        button.innerHTML = '<i class="mdi mdi-eye me-1"></i> Aktifkan';
+                                        statusInput.value = 1;
+                                    }
+                                }
+                            });
+                        } else {
+                            // Tampilkan error
+                            Swal.fire({
+                                title: 'Gagal!',
+                                text: response.message || 'Terjadi kesalahan saat mengubah status',
+                                icon: 'error',
+                                confirmButtonColor: '#d33'
+                            });
+                        }
                     }
                 });
             });

@@ -1,5 +1,4 @@
 <?php
-// database/migrations/2024_..._create_material_progress_table.php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -17,10 +16,19 @@ return new class extends Migration
             $table->enum('material_status', ['pending', 'downloaded', 'completed'])->default('pending');
             $table->enum('video_status', ['pending', 'watching', 'completed'])->default('pending');
             $table->json('quiz_answers')->nullable();
+            
+            // Kolom untuk menyimpan hasil test
+            $table->decimal('pretest_score', 5, 2)->nullable();
+            $table->decimal('posttest_score', 5, 2)->nullable();
+            $table->timestamp('pretest_completed_at')->nullable();
+            $table->timestamp('posttest_completed_at')->nullable();
+            $table->integer('attempts')->default(0);
+            $table->boolean('is_completed')->default(false);
+            
             $table->timestamp('completed_at')->nullable();
             $table->timestamps();
 
-            // Satu user hanya bisa memiliki satu progress per material
+            // Unique constraint
             $table->unique(['user_id', 'material_id']);
         });
     }
