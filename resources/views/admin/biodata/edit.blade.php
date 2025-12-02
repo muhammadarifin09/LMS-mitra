@@ -319,7 +319,7 @@
         @endif
 
         @if(isset($biodata) && $biodata !== null)
-            <form action="{{ route('biodata.update', $biodata->id_sobat) }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('admin.biodata.update', $biodata->id_sobat) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
                 
@@ -402,7 +402,7 @@
 
                 <!-- Submit Button -->
                 <div class="d-flex justify-content-between align-items-center mt-4">
-                    <a href="{{ route('biodata.index') }}" class="btn-kembali">
+                    <a href="{{ route('admin.biodata.index') }}" class="btn-kembali">
                         <i class="fas fa-arrow-left"></i>
                         Kembali
                     </a>

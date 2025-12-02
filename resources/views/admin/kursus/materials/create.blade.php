@@ -94,6 +94,78 @@
         margin-bottom: 20px;
         border-left: 4px solid #1e3c72;
     }
+    
+    .order-display {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 12px 15px;
+        font-weight: 600;
+        color: #1e3c72;
+    }
+    
+    .info-icon {
+        cursor: pointer;
+        color: #6c757d;
+        transition: color 0.3s ease;
+    }
+    
+    .info-icon:hover {
+        color: #1e3c72;
+    }
+    
+    .tooltip-inner {
+        max-width: 300px;
+        padding: 12px;
+        background: #1e3c72;
+        color: white;
+        border-radius: 8px;
+        text-align: left;
+    }
+    
+    .bs-tooltip-auto[data-popper-placement^=top] .tooltip-arrow::before,
+    .bs-tooltip-top .tooltip-arrow::before {
+        border-top-color: #1e3c72;
+    }
+    
+    .form-check-label {
+        display: flex;
+        align-items: center;
+    }
+    
+    .file-preview {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 10px;
+    }
+    
+    .file-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .file-item:last-child {
+        border-bottom: none;
+    }
+    
+    .file-actions {
+        display: flex;
+        gap: 5px;
+    }
+    
+    .file-input-wrapper {
+        position: relative;
+    }
+    
+    .file-input-wrapper input[type="file"] {
+        position: absolute;
+        left: -9999px;
+    }
 </style>
 @endsection
 
@@ -163,32 +235,20 @@
                                 @enderror
                             </div>
                             <div class="col-md-4">
-                                <label for="order" class="form-label">Urutan Tampilan <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control @error('order') is-invalid @enderror" 
-                                       id="order" name="order" value="{{ old('order', $nextOrder) }}" min="1" required
-                                       onchange="updateOrderInfo()">
+                                <label class="form-label">
+                                    Urutan Tampilan 
+                                    <i class="mdi mdi-information-outline info-icon ms-1" 
+                                       data-bs-toggle="tooltip" 
+                                       data-bs-placement="top" 
+                                       title="Urutan akan disesuaikan otomatis oleh sistem. Urutan dapat diubah nanti melalui fitur sortir materi."></i>
+                                </label>
+                                <!-- Input hidden untuk order -->
+                                <input type="hidden" id="order" name="order" value="{{ $totalMaterials + 1 }}">
                                 
-                                <div class="order-info">
-                                    <small class="text-muted">
-                                        <i class="mdi mdi-information-outline me-1"></i>
-                                        <span id="order-info-text">
-                                            @if($nextOrder == 1)
-                                                Ini akan menjadi materi pertama
-                                            @else
-                                                Urutan saat ini: {{ $nextOrder }} dari {{ $totalMaterials + 1 }} materi
-                                            @endif
-                                        </span>
-                                    </small>
-                                    <br>
-                                    <small class="text-muted">
-                                        <i class="mdi mdi-lightbulb-on-outline me-1"></i>
-                                        Urutan akan disesuaikan otomatis
-                                    </small>
+                                <div class="order-display">
+                                    <i class="mdi mdi-sort-numeric-asc me-2"></i>
+                                    Urutan ke-{{ $totalMaterials + 1 }}
                                 </div>
-                                
-                                @error('order')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
                             </div>
                         </div>
 
@@ -223,7 +283,7 @@
                                                     Materi PDF/PPT
                                                 </label>
                                             </div>
-                                            <small class="text-muted">Upload file materi dalam format PDF, PPT, atau dokumen</small>
+                                            <small class="text-muted">Upload file materi dalam format PDF, PPT, atau dokumen (dapat menambahkan file satu per satu atau multiple)</small>
                                         </div>
                                     </div>
 
@@ -284,7 +344,13 @@
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" id="attendance_required" 
                                            name="attendance_required" value="1" {{ old('attendance_required') ? 'checked' : '' }}>
-                                    <label class="form-check-label fw-bold" for="attendance_required">Wajib Kehadiran</label>
+                                    <label class="form-check-label fw-bold" for="attendance_required">
+                                        Wajib Kehadiran
+                                        <i class="mdi mdi-information-outline info-icon ms-1" 
+                                           data-bs-toggle="tooltip" 
+                                           data-bs-placement="top" 
+                                           title="Jika diaktifkan, peserta wajib mengkonfirmasi kehadiran untuk materi ini sebelum dapat melanjutkan ke materi berikutnya."></i>
+                                    </label>
                                 </div>
                                 <small class="text-muted">Centang jika peserta wajib mengkonfirmasi kehadiran untuk materi ini</small>
                             </div>
@@ -297,24 +363,37 @@
                                     <div class="card-body">
                                         <h6 class="card-title"><i class="mdi mdi-file-pdf-box text-danger me-2"></i>Materi File</h6>
                                         <div class="row">
-                                            <div class="col-md-6">
-                                                <label for="file_path" class="form-label">Upload File Materi</label>
-                                                <input type="file" class="form-control @error('file_path') is-invalid @enderror" 
-                                                       id="file_path" name="file_path" accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png">
-                                                <small class="text-muted">Format: PDF, DOC, PPT, atau gambar. Maksimal 10MB</small>
-                                                @error('file_path')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label for="duration_file" class="form-label">Durasi Belajar File (menit)</label>
-                                                <input type="number" class="form-control @error('duration_file') is-invalid @enderror" 
-                                                       id="duration_file" name="duration_file" value="{{ old('duration_file') }}" min="1"
-                                                       placeholder="Contoh: 30">
-                                                <small class="text-muted">Perkiraan waktu menyelesaikan materi file</small>
-                                                @error('duration_file')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
+                                            <div class="col-12">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Tambah File Materi</label>
+                                                    <div class="file-input-wrapper">
+                                                        <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('file_input').click()">
+                                                            <i class="mdi mdi-plus me-2"></i> Tambah File
+                                                        </button>
+                                                        <input type="file" id="file_input" 
+                                                               accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png" 
+                                                               style="display: none;" multiple
+                                                               onchange="handleFileSelection(this.files)">
+                                                    </div>
+                                                    <small class="text-muted">
+                                                        Format: PDF, DOC, PPT, atau gambar. Maksimal 10MB per file. 
+                                                        Dapat menambahkan file satu per satu atau multiple.
+                                                    </small>
+                                                    @error('file_path')
+                                                        <div class="invalid-feedback">{{ $message }}</div>
+                                                    @enderror
+                                                </div>
+                                                
+                                                <!-- File Preview Area -->
+                                                <div id="file-preview" class="file-preview mt-3" style="display: none;">
+                                                    <h6 class="mb-3">File yang akan diupload:</h6>
+                                                    <div id="file-list"></div>
+                                                </div>
+
+                                                <!-- Hidden input untuk menyimpan file paths -->
+                                                <div id="file-inputs-container">
+                                                    <!-- File inputs akan ditambahkan di sini via JavaScript -->
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -360,7 +439,7 @@
                             <h5 class="mb-3 text-warning"><i class="mdi mdi-clipboard-text me-2"></i>Pengaturan Pretest</h5>
                             
                             <div class="row mb-3">
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <label for="durasi_pretest" class="form-label">Durasi Pretest (menit)</label>
                                     <input type="number" class="form-control @error('durasi_pretest') is-invalid @enderror" 
                                            id="durasi_pretest" name="durasi_pretest" 
@@ -369,17 +448,7 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-                                <div class="col-md-4">
-                                    <label for="passing_grade_pretest" class="form-label">Passing Grade (%)</label>
-                                    <input type="number" class="form-control @error('passing_grade_pretest') is-invalid @enderror" 
-                                           id="passing_grade_pretest" name="passing_grade_pretest" 
-                                           value="{{ old('passing_grade_pretest', 70) }}" min="1" max="100">
-                                    <small class="text-muted">Nilai minimal untuk lulus pretest</small>
-                                    @error('passing_grade_pretest')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <div class="form-check mt-4">
                                         <input type="checkbox" class="form-check-input" id="is_pretest" 
                                                name="is_pretest" value="1" {{ old('is_pretest', true) ? 'checked' : '' }}>
@@ -408,7 +477,7 @@
                             <h5 class="mb-3 text-success"><i class="mdi mdi-clipboard-check me-2"></i>Pengaturan Posttest</h5>
                             
                             <div class="row mb-3">
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <label for="durasi_posttest" class="form-label">Durasi Posttest (menit)</label>
                                     <input type="number" class="form-control @error('durasi_posttest') is-invalid @enderror" 
                                            id="durasi_posttest" name="durasi_posttest" 
@@ -417,17 +486,7 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-                                <div class="col-md-4">
-                                    <label for="passing_grade_posttest" class="form-label">Passing Grade (%)</label>
-                                    <input type="number" class="form-control @error('passing_grade_posttest') is-invalid @enderror" 
-                                           id="passing_grade_posttest" name="passing_grade_posttest" 
-                                           value="{{ old('passing_grade_posttest', 70) }}" min="1" max="100">
-                                    <small class="text-muted">Nilai minimal untuk lulus posttest</small>
-                                    @error('passing_grade_posttest')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <div class="form-check mt-4">
                                         <input type="checkbox" class="form-check-input" id="is_posttest" 
                                                name="is_posttest" value="1" {{ old('is_posttest', true) ? 'checked' : '' }}>
@@ -457,7 +516,13 @@
                                 <div class="form-check form-switch">
                                     <input type="checkbox" class="form-check-input" id="is_active" 
                                            name="is_active" value="1" {{ old('is_active', true) ? 'checked' : '' }}>
-                                    <label class="form-check-label fw-bold" for="is_active">Aktifkan materi ini</label>
+                                    <label class="form-check-label fw-bold" for="is_active">
+                                        Aktifkan materi ini
+                                        <i class="mdi mdi-information-outline info-icon ms-1" 
+                                           data-bs-toggle="tooltip" 
+                                           data-bs-placement="top" 
+                                           title="Materi yang nonaktif tidak akan ditampilkan ke peserta dan tidak dapat diakses. Gunakan fitur ini untuk menyembunyikan materi sementara."></i>
+                                    </label>
                                 </div>
                                 <small class="text-muted">Materi yang nonaktif tidak akan ditampilkan ke peserta</small>
                             </div>
@@ -474,12 +539,6 @@
                                             <i class="mdi mdi-cancel me-2"></i> Batal
                                         </a>
                                     </div>
-                                    <div class="text-end">
-                                        <small class="text-muted">
-                                            <i class="mdi mdi-information-outline me-1"></i>
-                                            Urutan akan disesuaikan otomatis
-                                        </small>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -494,6 +553,9 @@
 // Variabel untuk counter soal
 let soalPretestCounter = 0;
 let soalPosttestCounter = 0;
+
+// Variabel untuk menyimpan file yang dipilih
+let selectedFiles = [];
 
 // Toggle content type selection
 function toggleContentType(type) {
@@ -614,24 +676,88 @@ function reindexSoal(type) {
     }
 }
 
-// Update informasi urutan
-function updateOrderInfo() {
-    const orderInput = document.getElementById('order');
-    const orderValue = parseInt(orderInput.value);
-    const totalMaterials = {{ $totalMaterials }};
-    const nextOrder = {{ $nextOrder }};
-    
-    let infoText = '';
-    
-    if (orderValue === nextOrder) {
-        infoText = 'Urutan saat ini: ' + orderValue + ' dari ' + (totalMaterials + 1) + ' materi';
-    } else if (orderValue < nextOrder) {
-        infoText = 'Materi akan ditempatkan di urutan ' + orderValue + '. Materi setelahnya akan bergeser.';
-    } else {
-        infoText = 'Materi akan ditempatkan di urutan ' + orderValue + '. Urutan melebihi jumlah materi saat ini.';
+// Handle file selection - tambahkan file baru ke daftar tanpa menghapus yang lama
+function handleFileSelection(files) {
+    if (files.length > 0) {
+        // Tambahkan file baru ke array selectedFiles
+        Array.from(files).forEach(file => {
+            // Cek apakah file sudah ada dalam selectedFiles
+            const isDuplicate = selectedFiles.some(existingFile => 
+                existingFile.name === file.name && existingFile.size === file.size
+            );
+            
+            if (!isDuplicate) {
+                selectedFiles.push(file);
+            }
+        });
+        
+        // Update preview dan hidden inputs
+        updateFilePreview();
+        updateFileInputs();
     }
+}
+
+// Update file preview
+function updateFilePreview() {
+    const previewContainer = document.getElementById('file-preview');
+    const fileList = document.getElementById('file-list');
     
-    document.getElementById('order-info-text').textContent = infoText;
+    if (selectedFiles.length > 0) {
+        fileList.innerHTML = '';
+        
+        selectedFiles.forEach((file, index) => {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.innerHTML = `
+                <div class="flex-grow-1">
+                    <i class="mdi mdi-file-document me-2"></i>
+                    ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)
+                </div>
+                <div class="file-actions">
+                    <button type="button" class="btn btn-sm btn-danger" onclick="removeFile(${index})" title="Hapus File">
+                        <i class="mdi mdi-delete"></i>
+                    </button>
+                </div>
+            `;
+            fileList.appendChild(fileItem);
+        });
+        
+        previewContainer.style.display = 'block';
+    } else {
+        previewContainer.style.display = 'none';
+    }
+}
+
+// Hapus file dari daftar
+function removeFile(index) {
+    selectedFiles.splice(index, 1);
+    updateFilePreview();
+    updateFileInputs();
+}
+
+// Update hidden file inputs untuk form submission
+function updateFileInputs() {
+    const container = document.getElementById('file-inputs-container');
+    container.innerHTML = '';
+    
+    // Buat DataTransfer object untuk multiple files
+    const dataTransfer = new DataTransfer();
+    
+    selectedFiles.forEach(file => {
+        dataTransfer.items.add(file);
+    });
+    
+    // Buat input file baru dengan semua file yang dipilih
+    const newInput = document.createElement('input');
+    newInput.type = 'file';
+    newInput.name = 'file_path[]';
+    newInput.multiple = true;
+    newInput.style.display = 'none';
+    
+    // Set files menggunakan DataTransfer
+    newInput.files = dataTransfer.files;
+    
+    container.appendChild(newInput);
 }
 
 // Initialize form berdasarkan nilai yang sudah dipilih sebelumnya
@@ -645,9 +771,12 @@ document.addEventListener('DOMContentLoaded', function() {
             toggleContentSection(type, true);
         }
     });
-    
-    // Initialize order info
-    updateOrderInfo();
+
+    // Initialize Bootstrap tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
 });
 
 // Fungsi untuk menampilkan SweetAlert yang lebih user friendly
@@ -674,8 +803,8 @@ document.getElementById('materialForm').addEventListener('submit', function(e) {
     // Validasi untuk setiap konten yang dipilih (hanya warning, tidak block)
     let warnings = [];
     
-    if (contentTypes.includes('file') && !document.getElementById('file_path').value) {
-        warnings.push('File materi untuk konten PDF/PPT belum diupload');
+    if (contentTypes.includes('file') && selectedFiles.length === 0) {
+        warnings.push('File materi untuk konten PDF/PPT belum dipilih');
     }
     
     if (contentTypes.includes('video')) {

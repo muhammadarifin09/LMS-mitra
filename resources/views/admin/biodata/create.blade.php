@@ -290,7 +290,7 @@
             </div>
         @endif
 
-        <form action="{{ route('biodata.store') }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('admin.biodata.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             
             <!-- Data untuk User & Login -->
@@ -371,7 +371,7 @@
 
             <!-- Submit Button -->
             <div class="d-flex justify-content-between align-items-center mt-4">
-                <a href="{{ route('biodata.index') }}" class="btn-kembali">
+                <a href="{{ route('admin.biodata.index') }}" class="btn-kembali">
                     <i class="fas fa-arrow-left"></i>
                     Kembali
                 </a>

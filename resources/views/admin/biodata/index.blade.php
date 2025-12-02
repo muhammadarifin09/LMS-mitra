@@ -134,7 +134,7 @@
 <div class="table-container">
     <div class="table-header">
         <h2 class="table-title">Daftar Biodata Mitra</h2>
-        <a href="/biodata/create" class="btn-tambah">
+        <a href="{{ route('admin.biodata.create') }}" class="btn-tambah">
             <i class="fas fa-plus-circle"></i>
             Tambah Biodata
         </a>
@@ -165,10 +165,10 @@
                         <td>{{ \Illuminate\Support\Str::limit($item->alamat, 50) }}</td>
                         <td>
                             <div class="action-buttons">
-                                <a href="/biodata/{{ $item->id_sobat }}/edit" class="btn-action btn-edit" title="Edit">
+                                <a href="{{ route('admin.biodata.edit', $item->id_sobat) }}" class="btn-action btn-edit" title="Edit">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <form action="/biodata/{{ $item->id_sobat }}" method="POST" class="d-inline">
+                                <form action="{{ route('admin.biodata.destroy', $item->id_sobat) }}" method="POST" class="d-inline">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn-action btn-delete" title="Hapus" 

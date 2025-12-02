@@ -64,7 +64,7 @@ class BiodataController extends Controller
 
         Biodata::create($biodataData);
 
-        return redirect()->route('biodata.index')->with('success', 'Biodata dan akun mitra berhasil ditambahkan!');
+        return redirect()->route('admin.biodata.index')->with('success', 'Biodata dan akun mitra berhasil ditambahkan!');
         
     } catch (\Exception $e) {
         return redirect()->back()->with('error', 'Gagal menambahkan biodata: ' . $e->getMessage());
@@ -118,7 +118,7 @@ class BiodataController extends Controller
 
         $biodata->update($updateData);
 
-        return redirect()->route('biodata.index')->with('success', 'Biodata berhasil diperbarui!');
+        return redirect()->route('admin.biodata.index')->with('success', 'Biodata berhasil diperbarui!');
     }
 
     public function destroy($id_sobat)
@@ -138,10 +138,10 @@ class BiodataController extends Controller
                 M_User::where('id', $user_id)->delete();
             }
             
-            return redirect()->route('biodata.index')->with('success', 'Biodata dan akun mitra berhasil dihapus!');
+            return redirect()->route('admin.biodata.index')->with('success', 'Biodata dan akun mitra berhasil dihapus!');
             
         } catch (\Exception $e) {
-            return redirect()->route('biodata.index')->with('error', 'Gagal menghapus biodata: ' . $e->getMessage());
+            return redirect()->route('admin.biodata.index')->with('error', 'Gagal menghapus biodata: ' . $e->getMessage());
         }
     }
 }

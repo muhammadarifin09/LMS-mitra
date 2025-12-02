@@ -271,13 +271,6 @@
                                  aria-labelledby="heading{{ $material->id }}" 
                                  data-bs-parent="#materialsAccordion">
                                 <div class="accordion-body">
-                                    <!-- Deskripsi Materi -->
-                                    @if($material->description)
-                                    <div class="mb-3">
-                                        <p class="text-muted">{{ $material->description }}</p>
-                                    </div>
-                                    @endif
-
                                     <!-- Statistik Progress Peserta -->
                                     <div class="stats-grid">
                                         <!-- Statistik Kehadiran -->
@@ -407,11 +400,6 @@
                                                 </div>
                                                 <small class="text-muted">{{ $persentasePosttest }}%</small>
                                             </div>
-                                            @if($jumlahPosttest > 0)
-                                            <small class="text-muted d-block mt-1">
-                                                Lulus: {{ $posttestLulus }} | Rata-rata: {{ round($rataRataPosttest, 1) }}%
-                                            </small>
-                                            @endif
                                         </div>
                                         @endif
                                     </div>
@@ -444,9 +432,6 @@
                                         <div class="result-item">
                                             <div>
                                                 <strong>Posttest</strong>
-                                                <small class="text-muted d-block">
-                                                    {{ $posttestLulus }} dari {{ $jumlahPosttest }} peserta lulus
-                                                </small>
                                             </div>
                                             <div class="text-end">
                                                 <span class="score-badge {{ $posttestLulus >= $jumlahPosttest * 0.7 ? 'score-passed' : 'score-failed' }}">
@@ -515,33 +500,34 @@
                                     </div>
 
                                     <!-- Action Buttons -->
-                                    <div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center">
-                                        <div class="material-actions">
-                                            <a href="{{ route('admin.kursus.materials.edit', [$kursus, $material]) }}" 
-                                               class="btn btn-warning btn-sm">
-                                                <i class="mdi mdi-pencil me-1"></i> Edit
-                                            </a>
-                                            
-                                            <form action="{{ route('admin.kursus.materials.status', [$kursus, $material]) }}" 
-                                                  method="POST" class="d-inline">
-                                                @csrf
-                                                <input type="hidden" name="is_active" value="{{ $material->is_active ? 0 : 1 }}">
-                                                <button type="submit" class="btn btn-{{ $material->is_active ? 'secondary' : 'success' }} btn-sm">
-                                                    <i class="mdi mdi-{{ $material->is_active ? 'eye-off' : 'eye' }} me-1"></i>
-                                                    {{ $material->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
-                                                </button>
-                                            </form>
-                                        </div>
-                                        
-                                        <form action="{{ route('admin.kursus.materials.destroy', [$kursus, $material]) }}" 
-                                              method="POST" class="d-inline" onsubmit="return confirmDelete(event)">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-danger btn-sm">
-                                                <i class="mdi mdi-delete me-1"></i> Hapus
-                                            </button>
-                                        </form>
-                                    </div>
+<div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center">
+    <div class="material-actions">
+        <a href="{{ route('admin.kursus.materials.edit', [$kursus, $material]) }}" 
+           class="btn btn-warning btn-sm">
+            <i class="mdi mdi-pencil me-1"></i> Edit
+        </a>
+        
+        <form action="{{ route('admin.kursus.materials.status', [$kursus, $material]) }}" 
+              method="POST" class="d-inline">
+            @csrf
+            <input type="hidden" name="is_active" value="{{ $material->is_active ? 0 : 1 }}">
+            <button type="submit" class="btn btn-{{ $material->is_active ? 'secondary' : 'success' }} btn-sm">
+                <i class="mdi mdi-{{ $material->is_active ? 'eye-off' : 'eye' }} me-1"></i>
+                {{ $material->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
+            </button>
+        </form>
+    </div>
+    
+    <form action="{{ route('admin.kursus.materials.destroy', [$kursus, $material]) }}" 
+          method="POST" class="d-inline" 
+          onsubmit="return confirmDelete(event, {{ $material->id }})">
+        @csrf
+        @method('DELETE')
+        <button type="submit" class="btn btn-danger btn-sm">
+            <i class="mdi mdi-delete me-1"></i> Hapus
+        </button>
+    </form>
+</div>
                                 </div>
                             </div>
                         </div>
@@ -570,27 +556,56 @@
 @section('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    // Fungsi confirmDelete yang benar
+    function confirmDelete(event, materialId) {
+        event.preventDefault();
+        console.log('Deleting material ID:', materialId);
+        
+        Swal.fire({
+            title: 'Apakah Anda yakin?',
+            text: "Materi akan dihapus permanen!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Show loading state
+                const submitBtn = event.target.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="mdi mdi-loading mdi-spin me-1"></i> Menghapus...';
+                submitBtn.disabled = true;
+                
+                event.target.submit();
+            }
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
-        // SweetAlert for delete confirmation
-        window.confirmDelete = function(event) {
-            event.preventDefault();
-            const form = event.target;
-            
-            Swal.fire({
-                title: 'Apakah Anda yakin?',
-                text: "Materi yang dihapus tidak dapat dikembalikan!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Ya, Hapus!',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    form.submit();
-                }
+        // SweetAlert for status changes
+        const statusForms = document.querySelectorAll('form[action*="status"]');
+        statusForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                Swal.fire({
+                    title: 'Konfirmasi',
+                    text: "Apakah Anda yakin ingin mengubah status materi?",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Ya, Ubah!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        this.submit();
+                    }
+                });
             });
-        };
+        });
     });
 </script>
 @endsection

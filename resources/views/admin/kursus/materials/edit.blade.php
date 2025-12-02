@@ -79,6 +79,60 @@
         display: none;
     }
     
+    .order-info {
+        background: #e3f2fd;
+        border: 1px solid #bbdefb;
+        border-radius: 8px;
+        padding: 10px 15px;
+        margin-top: 5px;
+    }
+    
+    .navigation-header {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-left: 4px solid #1e3c72;
+    }
+    
+    .order-display {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 12px 15px;
+        font-weight: 600;
+        color: #1e3c72;
+    }
+    
+    .info-icon {
+        cursor: pointer;
+        color: #6c757d;
+        transition: color 0.3s ease;
+    }
+    
+    .info-icon:hover {
+        color: #1e3c72;
+    }
+    
+    .tooltip-inner {
+        max-width: 300px;
+        padding: 12px;
+        background: #1e3c72;
+        color: white;
+        border-radius: 8px;
+        text-align: left;
+    }
+    
+    .bs-tooltip-auto[data-popper-placement^=top] .tooltip-arrow::before,
+    .bs-tooltip-top .tooltip-arrow::before {
+        border-top-color: #1e3c72;
+    }
+    
+    .form-check-label {
+        display: flex;
+        align-items: center;
+    }
+    
     .current-file {
         background: #e7f3ff;
         border: 1px solid #b3d9ff;
@@ -91,16 +145,47 @@
 
 @section('content')
 <div class="container-fluid">
+    <!-- Navigation Header dengan Breadcrumb -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="navigation-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-1">Edit Materi: {{ $material->title }}</h4>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb mb-0">
+                                <li class="breadcrumb-item">
+                                    <a href="{{ route('admin.dashboard') }}">Dashboard</a>
+                                </li>
+                                <li class="breadcrumb-item">
+                                    <a href="{{ route('admin.kursus.index') }}">Kursus</a>
+                                </li>
+                                <li class="breadcrumb-item">
+                                    <a href="{{ route('admin.kursus.show', $kursus) }}">{{ Str::limit($kursus->judul_kursus, 30) }}</a>
+                                </li>
+                                <li class="breadcrumb-item">
+                                    <a href="{{ route('admin.kursus.materials.index', $kursus) }}">Materi</a>
+                                </li>
+                                <li class="breadcrumb-item active">Edit Materi</li>
+                            </ol>
+                        </nav>
+                    </div>
+                    <a href="{{ route('admin.kursus.materials.index', $kursus) }}" class="btn btn-secondary">
+                        <i class="mdi mdi-arrow-left me-2"></i> Kembali ke Daftar Materi
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row">
         <div class="col-12">
             <div class="page-title-box">
                 <div class="page-title-right">
-                    <a href="{{ route('admin.kursus.materials.index', $kursus) }}" class="btn btn-secondary">
-                        <i class="mdi mdi-arrow-left"></i> Kembali
-                    </a>
+                    <!-- Kosongkan bagian ini atau tambahkan elemen lain jika perlu -->
                 </div>
-                <h4 class="page-title">Edit Materi: {{ $material->title }}</h4>
-                <p class="mb-0">Kursus: {{ $kursus->judul_kursus }}</p>
+                <h4 class="page-title">Edit Materi untuk: {{ $kursus->judul_kursus }}</h4>
+                <p class="mb-0 text-white-50">Perbarui informasi materi berikut</p>
             </div>
         </div>
     </div>
@@ -125,13 +210,20 @@
                                 @enderror
                             </div>
                             <div class="col-md-4">
-                                <label for="order" class="form-label">Urutan <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control @error('order') is-invalid @enderror" 
-                                       id="order" name="order" value="{{ old('order', $material->order) }}" min="0" required>
-                                <small class="text-muted">Urutan tampilan materi</small>
-                                @error('order')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <label class="form-label">
+                                    Urutan Tampilan 
+                                    <i class="mdi mdi-information-outline info-icon ms-1" 
+                                       data-bs-toggle="tooltip" 
+                                       data-bs-placement="top" 
+                                       title="Urutan akan disesuaikan otomatis oleh sistem. Urutan dapat diubah nanti melalui fitur sortir materi."></i>
+                                </label>
+                                <!-- Input hidden untuk order -->
+                                <input type="hidden" id="order" name="order" value="{{ $material->order }}">
+                                
+                                <div class="order-display">
+                                    <i class="mdi mdi-sort-numeric-asc me-2"></i>
+                                    Urutan ke-{{ $material->order }}
+                                </div>
                             </div>
                         </div>
 
@@ -142,23 +234,6 @@
                                           id="description" name="description" rows="3"
                                           placeholder="Deskripsi singkat tentang materi ini">{{ old('description', $material->description) }}</textarea>
                                 @error('description')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <!-- Tipe Materi (Single Selection) -->
-                        <div class="row mb-3">
-                            <div class="col-12">
-                                <label for="type" class="form-label">Tipe Materi <span class="text-danger">*</span></label>
-                                <select class="form-select @error('type') is-invalid @enderror" id="type" name="type" required>
-                                    <option value="material" {{ old('type', $material->type) == 'material' ? 'selected' : '' }}>Materi Pembelajaran</option>
-                                    <option value="pre_test" {{ old('type', $material->type) == 'pre_test' ? 'selected' : '' }}>Pre Test</option>
-                                    <option value="post_test" {{ old('type', $material->type) == 'post_test' ? 'selected' : '' }}>Post Test</option>
-                                    <option value="recap" {{ old('type', $material->type) == 'recap' ? 'selected' : '' }}>Rekap</option>
-                                </select>
-                                <small class="text-muted">Pilih tipe materi</small>
-                                @error('type')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -252,7 +327,13 @@
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" id="attendance_required" 
                                            name="attendance_required" value="1" {{ old('attendance_required', $material->attendance_required) ? 'checked' : '' }}>
-                                    <label class="form-check-label fw-bold" for="attendance_required">Wajib Kehadiran</label>
+                                    <label class="form-check-label fw-bold" for="attendance_required">
+                                        Wajib Kehadiran
+                                        <i class="mdi mdi-information-outline info-icon ms-1" 
+                                           data-bs-toggle="tooltip" 
+                                           data-bs-placement="top" 
+                                           title="Jika diaktifkan, peserta wajib mengkonfirmasi kehadiran untuk materi ini sebelum dapat melanjutkan ke materi berikutnya."></i>
+                                    </label>
                                 </div>
                                 <small class="text-muted">Centang jika peserta wajib mengkonfirmasi kehadiran untuk materi ini</small>
                             </div>
@@ -284,6 +365,7 @@
                                             <div class="col-md-6">
                                                 <label for="file_path" class="form-label">
                                                     {{ $material->file_path ? 'Ganti File Materi' : 'Upload File Materi' }}
+                                                <small class="text-muted">(Opsional - biarkan kosong jika tidak ingin mengubah)</small>
                                                 </label>
                                                 <input type="file" class="form-control @error('file_path') is-invalid @enderror" 
                                                        id="file_path" name="file_path" accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png">
@@ -350,18 +432,8 @@
                                     <label for="durasi_pretest" class="form-label">Durasi Pretest (menit)</label>
                                     <input type="number" class="form-control @error('durasi_pretest') is-invalid @enderror" 
                                            id="durasi_pretest" name="durasi_pretest" 
-                                           value="{{ old('durasi_pretest', $material->durasi_pretest) }}" min="1">
+                                           value="{{ old('durasi_pretest', $material->durasi_pretest ?? 60) }}" min="1">
                                     @error('durasi_pretest')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="passing_grade_pretest" class="form-label">Passing Grade (%)</label>
-                                    <input type="number" class="form-control @error('passing_grade_pretest') is-invalid @enderror" 
-                                           id="passing_grade_pretest" name="passing_grade_pretest" 
-                                           value="{{ old('passing_grade_pretest', $material->passing_grade) }}" min="1" max="100">
-                                    <small class="text-muted">Nilai minimal untuk lulus pretest</small>
-                                    @error('passing_grade_pretest')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -398,18 +470,8 @@
                                     <label for="durasi_posttest" class="form-label">Durasi Posttest (menit)</label>
                                     <input type="number" class="form-control @error('durasi_posttest') is-invalid @enderror" 
                                            id="durasi_posttest" name="durasi_posttest" 
-                                           value="{{ old('durasi_posttest', $material->durasi_posttest) }}" min="1">
+                                           value="{{ old('durasi_posttest', $material->durasi_posttest ?? 60) }}" min="1">
                                     @error('durasi_posttest')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="passing_grade_posttest" class="form-label">Passing Grade (%)</label>
-                                    <input type="number" class="form-control @error('passing_grade_posttest') is-invalid @enderror" 
-                                           id="passing_grade_posttest" name="passing_grade_posttest" 
-                                           value="{{ old('passing_grade_posttest', $material->passing_grade_posttest) }}" min="1" max="100">
-                                    <small class="text-muted">Nilai minimal untuk lulus posttest</small>
-                                    @error('passing_grade_posttest')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -443,7 +505,13 @@
                                 <div class="form-check form-switch">
                                     <input type="checkbox" class="form-check-input" id="is_active" 
                                            name="is_active" value="1" {{ old('is_active', $material->is_active) ? 'checked' : '' }}>
-                                    <label class="form-check-label fw-bold" for="is_active">Aktifkan materi ini</label>
+                                    <label class="form-check-label fw-bold" for="is_active">
+                                        Aktifkan materi ini
+                                        <i class="mdi mdi-information-outline info-icon ms-1" 
+                                           data-bs-toggle="tooltip" 
+                                           data-bs-placement="top" 
+                                           title="Materi yang nonaktif tidak akan ditampilkan ke peserta dan tidak dapat diakses. Gunakan fitur ini untuk menyembunyikan materi sementara."></i>
+                                    </label>
                                 </div>
                                 <small class="text-muted">Materi yang nonaktif tidak akan ditampilkan ke peserta</small>
                             </div>
@@ -451,17 +519,21 @@
 
                         <div class="row mt-4">
                             <div class="col-12">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="mdi mdi-content-save me-2"></i> Update Materi
-                                </button>
-                                <a href="{{ route('admin.kursus.materials.index', $kursus) }}" class="btn btn-secondary">
-                                    <i class="mdi mdi-cancel me-2"></i> Batal
-                                </a>
-                                
-                                <!-- Tombol Hapus -->
-                                <button type="button" class="btn btn-danger float-end" onclick="confirmDelete()">
-                                    <i class="mdi mdi-delete me-2"></i> Hapus Materi
-                                </button>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="mdi mdi-content-save me-2"></i> Update Materi
+                                        </button>
+                                        <a href="{{ route('admin.kursus.materials.index', $kursus) }}" class="btn btn-secondary">
+                                            <i class="mdi mdi-cancel me-2"></i> Batal
+                                        </a>
+                                    </div>
+                                    <div>
+                                        <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+                                            <i class="mdi mdi-delete me-2"></i> Hapus Materi
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </form>
@@ -477,7 +549,6 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 // Variabel untuk counter soal
 let soalPretestCounter = 0;
@@ -486,6 +557,10 @@ let soalPosttestCounter = 0;
 // Data soal yang sudah ada
 const existingPretest = @json($material->soal_pretest ?? []);
 const existingPosttest = @json($material->soal_posttest ?? []);
+
+// Flag untuk menandai apakah soal sudah dimuat
+let pretestLoaded = false;
+let posttestLoaded = false;
 
 // Toggle content type selection
 function toggleContentType(type) {
@@ -511,34 +586,62 @@ function toggleContentSection(type, isVisible) {
     if (section) {
         section.style.display = isVisible ? 'block' : 'none';
         
-        // Jika pretest/posttest dipilih dan belum ada soal, tambahkan soal default atau load existing
+        // Jika pretest/posttest dipilih dan belum ada soal, load existing soal HANYA JIKA BELUM DIMUAT
         if ((type === 'pretest' || type === 'posttest') && isVisible) {
             const container = document.getElementById(`soal-${type}-container`);
-            if (container.children.length === 0) {
+            const isLoaded = type === 'pretest' ? pretestLoaded : posttestLoaded;
+            
+            if (container.children.length === 0 && !isLoaded) {
                 loadExistingSoal(type);
+                
+                // Tandai sudah dimuat
+                if (type === 'pretest') {
+                    pretestLoaded = true;
+                } else {
+                    posttestLoaded = true;
+                }
             }
         }
     }
 }
 
-// Load existing soal
+// Load existing soal - PERBAIKAN: Hanya load jika belum ada
 function loadExistingSoal(type) {
     const existingSoal = type === 'pretest' ? existingPretest : existingPosttest;
     const container = document.getElementById(`soal-${type}-container`);
+    
+    // Clear container terlebih dahulu untuk memastikan tidak ada duplikasi
+    container.innerHTML = '';
     
     if (existingSoal && existingSoal.length > 0) {
         existingSoal.forEach((soal, index) => {
             addSoal(type, soal, index);
         });
+        
+        // Update counter berdasarkan jumlah soal yang ada
+        if (type === 'pretest') {
+            soalPretestCounter = existingSoal.length;
+        } else {
+            soalPosttestCounter = existingSoal.length;
+        }
     } else {
-        addSoal(type); // Tambah soal kosong jika tidak ada existing
+        // Jika tidak ada soal existing, tambahkan satu soal kosong
+        addSoal(type);
     }
 }
 
-// Tambah soal baru atau dengan data existing
+// Tambah soal baru atau dengan data existing - PERBAIKAN: Handle counter dengan benar
 function addSoal(type, existingData = null, index = null) {
     const container = document.getElementById(`soal-${type}-container`);
-    const counter = index !== null ? index : (type === 'pretest' ? soalPretestCounter : soalPosttestCounter);
+    
+    // Jika index tidak diberikan, gunakan counter yang sesuai
+    let counter;
+    if (index !== null) {
+        counter = index;
+    } else {
+        counter = (type === 'pretest' ? soalPretestCounter : soalPosttestCounter);
+    }
+    
     const soalId = counter + 1;
     
     const newSoal = document.createElement('div');
@@ -581,10 +684,13 @@ function addSoal(type, existingData = null, index = null) {
     `;
     container.appendChild(newSoal);
     
-    if (type === 'pretest') {
-        soalPretestCounter = Math.max(soalPretestCounter, counter + 1);
-    } else {
-        soalPosttestCounter = Math.max(soalPosttestCounter, counter + 1);
+    // Update counter HANYA jika ini adalah soal baru (bukan dari existing data)
+    if (index === null) {
+        if (type === 'pretest') {
+            soalPretestCounter++;
+        } else {
+            soalPosttestCounter++;
+        }
     }
 }
 
@@ -604,6 +710,13 @@ function reindexSoal(type) {
     const container = document.getElementById(`soal-${type}-container`);
     const soalItems = container.querySelectorAll('.soal-item');
     
+    // Reset counter
+    if (type === 'pretest') {
+        soalPretestCounter = 0;
+    } else {
+        soalPosttestCounter = 0;
+    }
+    
     soalItems.forEach((item, index) => {
         // Update label pertanyaan
         item.querySelector('label').textContent = `Pertanyaan ${index + 1}`;
@@ -615,16 +728,17 @@ function reindexSoal(type) {
             const newName = name.replace(new RegExp(`${type}_soal\\[\\d+\\]`), `${type}_soal[${index}]`);
             input.setAttribute('name', newName);
         });
+        
+        // Increment counter
+        if (type === 'pretest') {
+            soalPretestCounter++;
+        } else {
+            soalPosttestCounter++;
+        }
     });
-    
-    if (type === 'pretest') {
-        soalPretestCounter = soalItems.length;
-    } else {
-        soalPosttestCounter = soalItems.length;
-    }
 }
 
-// Initialize form berdasarkan nilai yang sudah dipilih sebelumnya
+// Initialize form berdasarkan nilai yang sudah dipilih sebelumnya - PERBAIKAN: Load soal hanya sekali
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize selected options
     const contentTypes = ['file', 'video', 'pretest', 'posttest'];
@@ -636,13 +750,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Load existing soal untuk konten yang sudah dipilih
-    if (existingPretest.length > 0) {
-        loadExistingSoal('pretest');
-    }
-    if (existingPosttest.length > 0) {
-        loadExistingSoal('posttest');
-    }
+    // Load existing soal HANYA JIKA section sudah visible (tidak perlu panggil loadExistingSoal lagi)
+    // Karena sudah ditangani oleh toggleContentSection
+
+    // Initialize Bootstrap tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
 });
 
 // Fungsi untuk menampilkan SweetAlert yang lebih user friendly
