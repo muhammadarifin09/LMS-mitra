@@ -726,6 +726,15 @@
                 justify-content: center;
             }
             
+            /* Sedikit menyesuaikan untuk tablet */
+            .stat-mini-item {
+                padding: 18px 20px;
+            }
+            
+            .stat-mini-number {
+                font-size: 1.6rem;
+            }
+            
             .content-grid {
                 grid-template-columns: 1fr;
                 gap: 20px;
@@ -875,17 +884,33 @@
             .stats-mini {
                 display: flex;
                 justify-content: center;
-                align-items: center;
-                gap: clamp(8px, 3vw, 15px); /* Gap responsif */
+                align-items: stretch;
+                gap: clamp(10px, 2vw, 15px);
                 margin-top: 25px !important;
-                flex-wrap: wrap;
+                width: 100%;
             }
-
+            
             .stat-mini-item {
-                flex: 0 0 auto;
-                width: min(100px, 30vw); /* Lebar responsif */
-                padding: clamp(12px, 3vw, 15px) clamp(15px, 4vw, 20px) !important;
+                flex: 1;
+                min-width: 0;
+                padding: clamp(10px, 2.5vw, 14px) clamp(8px, 2vw, 12px) !important;
+                border-radius: 12px; /* Tetap rounded, ukuran proporsional */
                 text-align: center;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+            
+            .stat-mini-number {
+                font-size: clamp(1.2rem, 4vw, 1.5rem) !important;
+                font-weight: 700;
+                line-height: 1.2;
+            }
+            
+            .stat-mini-label {
+                font-size: clamp(0.7rem, 2.5vw, 0.8rem) !important;
+                margin-top: 4px;
+                line-height: 1.2;
             }
             
             .slider-arrow {
@@ -1139,13 +1164,54 @@
             .divider {
                 order: 5 !important;
                 grid-row: 5 !important;
-                margin-left: 195px !important;
+                margin: 25px auto !important; /* PERUBAHAN: auto untuk center, 25px atas-bawah */
+                max-width: 150px; /* Sedikit lebih kecil di mobile */
             }
             
             .stats-mini {
                 order: 6 !important;
                 grid-row: 6 !important;
+                display: flex;
+                justify-content: center;
+                gap: 15px;
+                margin-top: 25px !important;
             }
+            
+            .stat-mini-item {
+                flex: 1;
+                min-width: 0;
+                padding: 15px 10px !important;
+                border-radius: 15px; /* Sedikit lebih kecil */
+            }
+            
+            .stat-mini-number {
+                font-size: 1.5rem !important;
+            }
+            
+            .stat-mini-label {
+                font-size: 0.8rem !important;
+            }
+        }
+
+        /* Mobile kecil (576px ke bawah) - Tetap berjejer 3 */
+        @media (max-width: 576px) {
+            .stats-mini {
+            gap: 8px;
+            padding: 0 5px;
+        }
+        
+        .stat-mini-item {
+            padding: 10px 6px !important;
+            border-radius: 10px; /* Lebih kecil tapi tetap rounded */
+        }
+        
+        .stat-mini-number {
+            font-size: clamp(1.1rem, 3.5vw, 1.3rem) !important;
+        }
+        
+        .stat-mini-label {
+            font-size: clamp(0.65rem, 2vw, 0.75rem) !important;
+        }
         }
     </style>
 </head>

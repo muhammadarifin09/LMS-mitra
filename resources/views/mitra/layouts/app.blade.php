@@ -20,189 +20,11 @@
             display: flex;
             flex-direction: column;
         }
-        
-        /* Navigation - Sticky dengan teks besar */
-        .main-nav {
-            background: rgba(255, 255, 255, 0.98);
-            padding: 20px 60px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            border-bottom: 3px solid #1e3c72;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            backdrop-filter: blur(10px);
-        }
-        
-        .nav-brand {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: #1e3c72;
-            text-decoration: none;
-            position: relative;
-            padding-right: 25px;
-        }
 
-        .nav-brand::after {
-            content: "";
-            position: absolute;
-            right: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            height: 60px;
-            width: 1.5px;
-            background: linear-gradient(to bottom, rgba(42, 82, 152, 0.7));
-            border-radius: 2px;
-        }
-        
-        /* Logo MOCC BPS sebagai gambar */
-        .logo-image {
-            height: 50px;
-            width: auto;
-            transition: transform 0.3s ease;
-        }
-        
-        .logo-image:hover {
-            transform: scale(1.05);
-        }
-        
-        .nav-menu {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        /* Style untuk ikon navigasi */
-        .nav-icon {
-            position: relative;
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #1e3c72;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: rgba(30, 60, 114, 0.1);
-        }
-
-        .nav-icon:hover {
-            background: rgba(30, 60, 114, 0.2);
-            color: #2a5298;
-            transform: scale(1.1);
-        }
-
-        /* Badge notifikasi */
-        .notification-badge {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background: #e74c3c;
-            color: white;
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            font-size: 0.7rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-        
-        /* Perbesar ukuran teks navigasi */
-        .nav-item {
-            padding: 12px 25px;
-            border-radius: 25px;
-            font-weight: 600;
-            color: #1e3c72;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            font-size: 1.1rem;
-        }
-        
-        .nav-item:hover, .nav-item.active {
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            color: white;
-            transform: translateY(-2px);
-        }
-        
-        /* User Profile & Avatar Styles - PERBAIKAN */
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 8px 15px;
-            border-radius: 25px;
-            background: rgba(30, 60, 114, 0.05);
-            transition: all 0.3s ease;
-            margin-left: 20px;
-        }
-
-        .user-profile:hover {
-            background: rgba(30, 60, 114, 0.1);
-        }
-
-        .user-avatar {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
-            flex-shrink: 0;
-            border: 2px solid white;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        }
-
-        .avatar-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 50%;
-        }
-
-        .avatar-initials {
-            color: white;
-            font-weight: 700;
-            font-size: 16px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .user-info {
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-        }
-
-        .user-name {
-            font-weight: 700;
-            color: #1e3c72;
-            font-size: 0.95rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 150px;
-        }
-
-        .user-status {
-            font-size: 0.75rem;
-            color: #5a6c7d;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .status-dot {
-            width: 6px;
-            height: 6px;
-            background: #28a745;
-            border-radius: 50%;
-            display: inline-block;
+        /* Prevent horizontal scroll */
+        html, body {
+            overflow-x: hidden;
+            max-width: 100%;
         }
 
         /* Dashboard Layout */
@@ -272,184 +94,8 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
         }
 
-        /* Footer */
-        .main-footer {
-            background: #1a365d;
-            color: white;
-            padding: 50px 0 25px;
-            margin-top: auto;
-            width: 100%;
-            font-size: 14px;
-        }
-
-        .footer-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        .footer-content {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1.5fr;
-            gap: 40px;
-            margin-bottom: 40px;
-        }
-
-        .footer-section h3 {
-            font-size: 1.2rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-            color: white;
-            border-bottom: 2px solid #2d74da;
-            padding-bottom: 8px;
-        }
-
-        .footer-address {
-            line-height: 1.7;
-            margin-bottom: 20px;
-        }
-
-        .footer-address p {
-            margin-bottom: 8px;
-        }
-
-        .footer-links {
-            list-style: none;
-        }
-
-        .footer-links li {
-            margin-bottom: 10px;
-        }
-
-        .footer-links a {
-            color: rgba(255, 255, 255, 0.85);
-            text-decoration: none;
-            transition: color 0.3s ease;
-            font-size: 14px;
-        }
-
-        .footer-links a:hover {
-            color: white;
-            text-decoration: underline;
-        }
-
-        .news-item {
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .news-date {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 5px;
-        }
-
-        .news-title {
-            font-weight: 500;
-            line-height: 1.4;
-        }
-
-        .footer-divider {
-            height: 1px;
-            background: rgba(255, 255, 255, 0.2);
-            margin: 30px 0;
-        }
-
-        .footer-bottom {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .bps-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 15px;
-            color: white;
-        }
-
-        .contact-info {
-            margin-top: 15px;
-        }
-
-        .contact-info p {
-            margin-bottom: 5px;
-        }
-
-        .berakhlak-container {
-            margin-top: 25px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .berakhlak-image {
-            max-width: 200px;
-            margin-bottom: 15px;
-        }
-
-        .berakhlak-links {
-            list-style: none;
-            margin-top: 10px;
-        }
-
-        .berakhlak-links li {
-            margin-bottom: 8px;
-        }
-
-        .berakhlak-links a {
-            color: rgba(255, 255, 255, 0.85);
-            text-decoration: none;
-            transition: color 0.3s ease;
-            font-size: 14px;
-        }
-
-        .berakhlak-links a:hover {
-            color: white;
-            text-decoration: underline;
-        }
-
-        /* CSS untuk Fallback Image */
-        .avatar-image[src=""],
-        .avatar-image:not([src]) {
-            opacity: 0;
-        }
-
-        .avatar-image:not([src]) + .avatar-initials,
-        .avatar-image[src=""] + .avatar-initials {
-            display: flex !important;
-        }
-
-        /* Responsif */
-        @media (max-width: 1200px) {
-            .footer-content {
-                grid-template-columns: 1fr 1fr;
-                gap: 30px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .main-nav {
-                padding: 12px 20px;
-            }
-            
-            .nav-menu {
-                gap: 5px;
-            }
-            
-            .nav-item {
-                padding: 8px 15px;
-                font-size: 1rem;
-            }
-            
-            .logo-image {
-                height: 60px;
-            }
-            
+        /* ===== RESPONSIVE FIXES ===== */
+        @media (max-width: 992px) {
             .dashboard-container {
                 flex-direction: column;
             }
@@ -457,6 +103,7 @@
             .sidebar {
                 width: 100%;
                 order: 2;
+                margin-top: 20px;
             }
             
             .main-content {
@@ -464,62 +111,46 @@
                 margin: 10px;
                 padding: 20px;
             }
-            
-            .footer-content {
-                grid-template-columns: 1fr;
-                gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-container {
+                min-height: calc(100vh - 80px);
             }
             
-            .footer-container {
-                padding: 0 15px;
-            }
-            
-            .berakhlak-image {
-                max-width: 150px;
+            .main-content {
+                margin: 5px;
+                padding: 15px;
+                border-radius: 15px;
             }
 
-            /* Responsif untuk User Profile */
-            .user-profile {
-                margin-left: 10px;
-                padding: 6px 12px;
+            .sidebar {
+                padding: 20px 0;
+            }
+
+            .sidebar-item {
+                padding: 10px 15px;
+                font-size: 0.9rem;
             }
             
-            .user-avatar {
-                width: 40px;
-                height: 40px;
+            .sidebar-title {
+                padding: 0 15px 10px 15px;
+                font-size: 1rem;
             }
-            
-            .avatar-initials {
+        }
+
+        /* Improve text readability on mobile */
+        @media (max-width: 768px) {
+            body {
                 font-size: 14px;
-            }
-            
-            .user-name {
-                font-size: 0.85rem;
-                max-width: 120px;
-            }
-            
-            .user-status {
-                font-size: 0.7rem;
+                line-height: 1.5;
             }
         }
 
         @media (max-width: 576px) {
-            .user-info {
-                display: none;
-            }
-            
-            .user-profile {
-                padding: 8px;
-                background: transparent;
-            }
-            
-            .user-profile:hover {
-                background: rgba(30, 60, 114, 0.1);
-            }
-
-            .nav-menu {
-                flex-wrap: wrap;
-                justify-content: center;
+            .main-content {
+                margin: 5px;
+                padding: 12px;
             }
         }
     </style>
