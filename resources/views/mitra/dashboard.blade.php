@@ -141,57 +141,151 @@
         color: #5a6c7d;
         line-height: 1.6;
     }
+
+    /* ===== RESPONSIVE DESIGN UNTUK MOBILE (≤400px) ===== */
+    @media (max-width: 400px) {
+        /* Layout utama */
+        .main-content {
+            padding: 15px !important;
+            margin: 10px !important;
+            border-radius: 15px !important;
+        }
+        
+        /* Welcome Section */
+        .welcome-section {
+            padding: 20px !important;
+            margin-bottom: 20px !important;
+            border-radius: 12px !important;
+        }
+        
+        .welcome-title {
+            font-size: 1.5rem !important; /* Turun dari 2.5rem */
+            margin-bottom: 15px !important;
+        }
+        
+        .welcome-subtitle {
+            font-size: 0.9rem !important; /* Turun dari 1.2rem */
+            line-height: 1.4 !important;
+            text-align: justify;
+            hyphens: auto;
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            grid-template-columns: 1fr !important; /* Satu kolom saja */
+            gap: 15px !important;
+            margin-bottom: 25px !important;
+        }
+        
+        .stat-card {
+            padding: 15px !important;
+            border-radius: 10px !important;
+        }
+        
+        .stat-number {
+            font-size: 1.8rem !important; /* Turun dari 2.5rem */
+            margin-bottom: 5px !important;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem !important; /* Turun dari 0.9rem */
+        }
+        
+        /* Features Section */
+        .features-section {
+            margin-bottom: 25px !important;
+        }
+        
+        .section-title {
+            font-size: 1.3rem !important; /* Turun dari 1.8rem */
+            margin-bottom: 15px !important;
+            text-align: center;
+        }
+        
+        .features-grid {
+            grid-template-columns: 1fr !important; /* Satu kolom saja */
+            gap: 15px !important;
+        }
+        
+        .feature-card {
+            padding: 15px !important;
+            border-radius: 10px !important;
+        }
+        
+        .feature-icon {
+            width: 45px !important; /* Kecilkan icon */
+            height: 45px !important;
+            font-size: 1rem !important;
+            margin-bottom: 10px !important;
+            border-radius: 8px !important;
+        }
+        
+        .feature-card h5 {
+            font-size: 1rem !important;
+            margin-bottom: 8px !important;
+        }
+        
+        .feature-card p {
+            font-size: 0.85rem !important;
+            line-height: 1.4 !important;
+        }
+        
+        /* Efek hover di mobile dinonaktifkan */
+        .feature-card:hover {
+            transform: none !important;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08) !important;
+        }
+    }
 </style>
 
     <!-- Welcome Section -->
     <div class="welcome-section">
         <h1 class="welcome-title">Selamat Datang di MOCC BPS!</h1>
         <p class="welcome-subtitle">
-            Dengan Memadukan Media Digital Dan Teknologi Daring, Keterbatasan Mitra BPS 
-            Dalam Mengembangkan Kompetensi Statistik Karena Jarak Dan Waktu Dapat Diminimalkan.
+            Platform pembelajaran mandiri bagi Mitra Statistik untuk mempersiapkan diri sebelum pelatihan tatap muka dan penugasan di lapangan dengan sistem belajar adaptif.
         </p>
     </div>
 
     <!-- Stats Grid -->
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-number">2,847</div>
+            <div class="stat-number">{{ $pesertaAktif }}</div>
             <div class="stat-label">Peserta Aktif</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number">15+</div>
+            <div class="stat-number">{{ $kursusTersedia }}</div>
             <div class="stat-label">Kursus Tersedia</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number">98%</div>
-            <div class="stat-label">Tingkat Kepuasan</div>
+            <div class="stat-number">{{ $materiOnline }}</div>
+            <div class="stat-label">Materi Online</div>
         </div>
     </div>
 
     <!-- Features Section -->
     <div class="features-section">
-        <h3 class="section-title">Mengapa Memilih MOCC BPS?</h3>
+        <h3 class="section-title">Apa Yang Mitra Dapatkan?</h3>
         <div class="features-grid">
             <div class="feature-card">
                 <div class="feature-icon">
-                    <i class="fas fa-globe"></i>
+                    <i class="fas fa-chalkboard-teacher"></i>
                 </div>
-                <h5>Akses Dimana Saja</h5>
-                <p>Belajar kapan saja dan di mana saja dengan platform online yang dapat diakses 24/7 dari berbagai perangkat.</p>
+                <h5>Materi Terarah</h5>
+                <p>Akses materi pembelajaran yang dirancang sesuai kebutuhan kompetensi mitra sebelum turun ke lapangan.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">
-                    <i class="fas fa-chart-line"></i>
+                    <i class="fas fa-certificate"></i>
                 </div>
-                <h5>Kompetensi Statistik</h5>
-                <p>Tingkatkan kemampuan statistik dengan materi yang disusun oleh ahli BPS dan praktisi terkemuka.</p>
+                <h5>Evaluasi Terstandar</h5>
+                <p>Selesaikan evaluasi terstruktur sebagai prasyarat resmi mengikuti pelatihan dan penugasan berikutnya.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">
                     <i class="fas fa-users"></i>
                 </div>
-                <h5>Komunitas Belajar</h5>
-                <p>Bergabung dengan komunitas praktisi statistik dari seluruh Indonesia untuk berbagi pengetahuan.</p>
+                <h5>Progress Terpantau</h5>
+                <p>Setiap mitra dapat memantau perkembangan belajar secara mandiri dari kursus yang diikuti melalui menu Kursus Saya.</p>
             </div>
         </div>
 
