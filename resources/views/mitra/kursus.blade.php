@@ -325,6 +325,266 @@
             justify-content: center;
         }
     }
+
+    /* ===== RESPONSIVE DESIGN UNTUK MOBILE KECIL (≤400px) ===== */
+    @media (max-width: 400px) {
+        /* Header Kursus */
+        .main-content {
+            padding: 15px 12px !important; /* Tambah kiri-kanan 12px */
+            margin: 10px 10px !important; /* Tambah margin kiri-kanan 8px */
+        }
+
+        .kursus-header {
+            margin-bottom: 20px !important;
+            text-align: center;
+        }
+        
+        .kursus-title {
+            font-size: 1.5rem !important; /* Turun dari 2.2rem */
+            margin-bottom: 8px !important;
+        }
+        
+        .kursus-subtitle {
+            font-size: 0.9rem !important; /* Turun dari 1.1rem */
+            line-height: 1.4;
+        }
+        
+        /* Course Grid - 1 kolom dengan padding lebih kecil */
+        .course-grid {
+            grid-template-columns: 1fr !important;
+            gap: 15px !important;
+            margin-bottom: 20px !important;
+        }
+        
+        /* Course Card */
+        .modern-course-card {
+            border-radius: 10px !important;
+        }
+        
+        /* Course Image */
+        .course-image-wrapper {
+            height: 120px !important; /* Lebih kecil dari 160px */
+        }
+        
+        .course-badge {
+            font-size: 0.6rem !important;
+            padding: 3px 6px !important;
+            top: 8px !important;
+            right: 8px !important;
+            border-radius: 10px !important;
+        }
+        
+        /* Course Content */
+        .course-content-wrapper {
+            padding: 12px !important; /* Lebih kecil dari 20px */
+        }
+        
+        .course-date {
+            font-size: 0.7rem !important;
+            margin-bottom: 6px !important;
+        }
+        
+        .course-main-title {
+            font-size: 0.95rem !important; /* Turun dari 1.1rem */
+            height: 2.4em !important; /* Sesuaikan tinggi */
+            line-height: 1.2 !important;
+            margin-bottom: 6px !important;
+        }
+        
+        .course-category {
+            font-size: 0.75rem !important;
+            margin-bottom: 8px !important;
+        }
+        
+        .course-description {
+            font-size: 0.75rem !important; /* Turun dari 0.8rem */
+            line-height: 1.4 !important;
+            height: 3.2em !important; /* Sesuaikan tinggi */
+            margin-bottom: 10px !important;
+        }
+        
+        /* Meta Information */
+        .course-meta-grid {
+            grid-template-columns: repeat(2, 1fr) !important; /* Tetap 2 kolom */
+            gap: 6px !important;
+            margin-bottom: 10px !important;
+        }
+        
+        .meta-card {
+            padding: 6px !important;
+            border-radius: 4px !important;
+        }
+        
+        .meta-value {
+            font-size: 0.8rem !important; /* Turun dari 0.9rem */
+            margin-bottom: 1px !important;
+        }
+        
+        .meta-label {
+            font-size: 0.65rem !important; /* Turun dari 0.7rem */
+        }
+        
+        /* Action Row */
+        .course-action-row {
+            flex-direction: row !important; /* Tetap horizontal */
+            gap: 8px !important;
+            padding-top: 10px !important;
+        }
+        
+        .btn-follow-course, 
+        .btn-view-course-white {
+            padding: 6px 10px !important;
+            font-size: 0.7rem !important; /* Lebih kecil */
+            gap: 4px !important;
+            flex: 1; /* Membagi ruang sama rata */
+        }
+        
+        /* Modal Responsive */
+        .modal-dialog.modal-lg {
+            margin: 10px !important;
+            max-width: calc(100% - 20px) !important;
+        }
+        
+        .modal-header {
+            padding: 10px 12px !important;
+            margin: 0 10px !important;
+        }
+        
+        .modal-title {
+            font-size: 0.9rem !important;
+        }
+        
+        .modal-body {
+            padding: 12px !important;
+            margin: 0 10px !important;
+            font-size: 0.8rem;
+        }
+        
+        .info-item {
+            padding: 6px 0 !important;
+            margin-bottom: 8px !important;
+        }
+        
+        .info-item strong {
+            font-size: 0.8rem;
+            min-width: 120px !important; /* Lebih kecil */
+        }
+        
+        /* Card di modal */
+        .card-body {
+            padding: 10px !important;
+            font-size: 0.8rem;
+        }
+        
+        /* List di modal */
+        ul {
+            padding-left: 20px !important;
+            margin-bottom: 0;
+        }
+        
+        li {
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+        }
+        
+        /* Modal footer */
+        .modal-footer {
+            padding: 10px !important;
+            margin: 0 10px !important;
+        }
+        
+        .modal-footer .btn {
+            padding: 6px 12px !important;
+            font-size: 0.8rem !important;
+        }
+        
+        /* Level badges di modal */
+        .badge {
+            font-size: 0.7rem !important;
+            padding: 4px 8px !important;
+        }
+        
+        /* Nonaktifkan efek hover di mobile */
+        .modern-course-card:hover {
+            transform: none !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08) !important;
+        }
+        
+        .btn-follow-course:hover,
+        .btn-view-course-white:hover {
+            transform: none !important;
+            box-shadow: none !important;
+        }
+    }
+
+    /* ===== OPTIMASI TAMBAHAN UNTUK SEMUA UKURAN MOBILE ===== */
+    @media (max-width: 576px) {
+        /* Pastikan gambar di modal responsif */
+        .modal-course-image {
+            max-height: 200px !important;
+        }
+        
+        .modal-image-placeholder {
+            height: 150px !important;
+            font-size: 2rem !important;
+        }
+        
+        /* Kolom di modal menjadi 1 kolom */
+        .modal-body .row .col-md-6 {
+            width: 100% !important;
+            margin-bottom: 15px;
+        }
+        
+        /* Judul section di modal */
+        .fw-bold.text-primary {
+            font-size: 0.9rem;
+        }
+        
+        /* Course info di modal */
+        .course-info .card-body {
+            padding: 12px;
+        }
+    }
+
+    /* ===== RESPONSIVE FONT SIZE GLOBAL UNTUK MOBILE ===== */
+    @media (max-width: 400px) {
+        /* Ukuran font dasar untuk mobile */
+        body {
+            font-size: 14px;
+        }
+        
+        /* Headers di modal */
+        h5, h6 {
+            font-size: 0.9rem;
+        }
+        
+        /* Text di card */
+        .card-text {
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+    }
+
+    /* ===== FIX UNTUK OVERFLOW TEXT ===== */
+    @media (max-width: 400px) {
+        /* Pastikan teks tidak overflow */
+        .course-main-title,
+        .course-description,
+        .modal-title,
+        .card-text {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+        }
+        
+        /* Tombol dengan teks panjang */
+        .btn-follow-course,
+        .btn-view-course-white {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
 </style>
 
 <!-- Kursus Header -->
@@ -465,7 +725,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="info-item">
-                                        <strong><i class="fas fa-chart-line me-2"></i>Tingkat Kesulitan:</strong>
+                                        <strong><i class="fas fa-chart-line me-2"></i>Kesulitan:</strong>
                                         <span>
                                             @if($item->tingkat_kesulitan == 'pemula')
                                                 <span class="badge bg-primary">Pemula</span>
