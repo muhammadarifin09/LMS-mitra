@@ -239,6 +239,242 @@
             padding: 15px;
         }
     }
+
+    /* ===== RESPONSIVE DESIGN UNTUK MOBILE KECIL (≤400px) ===== */
+    @media (max-width: 400px) {
+        /* Container utama */
+        .main-content {
+            padding: 15px 12px !important; /* Tambah kiri-kanan 12px */
+            margin: 10px 10px !important; /* Tambah margin kiri-kanan 8px */
+        }
+        
+        /* Header Kursus */
+        .kursus-header {
+            margin-bottom: 20px !important;
+            text-align: center;
+        }
+        
+        .kursus-title {
+            font-size: 1.5rem !important; /* Turun dari 2.2rem */
+            margin-bottom: 8px !important;
+        }
+        
+        .kursus-subtitle {
+            font-size: 0.9rem !important; /* Turun dari 1.1rem */
+            line-height: 1.4;
+        }
+        
+        /* Filter Section */
+        .filter-section {
+            padding: 0rem !important;
+            margin-bottom: 0.5rem !important;
+            border-radius: 10px !important;
+        }
+        
+        .filter-buttons {
+            gap: 0.3rem !important;
+            margin-bottom: 15px;
+            justify-content: center;
+        }
+        
+        .filter-btn {
+            padding: 0.4rem 0.8rem !important;
+            font-size: 0.6rem !important; /* Lebih kecil */
+            border-radius: 5px !important;
+        }
+        
+        /* Search box */
+        .search-input {
+            padding: 0.4rem 1rem !important; /* Lebih besar sedikit */
+            font-size: 0.6rem !important; /* Font lebih besar agar terbaca */
+            width: 100% !important;
+            min-width: 188px !important; /* Lebar minimal lebih panjang */
+            max-width: 288px !important; /* Maksimal panjang */
+            border-radius: 6px !important;
+            border: 1px solid #ccc !important;
+            box-sizing: border-box !important;
+        }
+        
+        /* Layout filter */
+        .filter-section .d-flex {
+            flex-direction: column !important;
+            gap: 5px !important;
+        }
+        
+        .search-box {
+            width: 100% !important;
+            text-align: center;
+            margin: 0 auto;
+            padding: 0 5px; /* Beri sedikit padding samping */
+        }
+        
+        /* Main Content */
+        .courses-main-content {
+            padding: 0 !important;
+        }
+        
+        /* Course Grid */
+        .course-grid {
+            grid-template-columns: 1fr !important;
+            gap: 15px !important;
+            margin-bottom: 20px !important;
+        }
+        
+        /* Course Card */
+        .modern-course-card {
+            border-radius: 10px !important;
+            margin: 0 2px;
+        }
+        
+        /* Course Image */
+        .course-image-wrapper {
+            height: 120px !important; /* Turun dari 160px */
+        }
+        
+        /* Course Content */
+        .course-content-wrapper {
+            padding: 12px !important; /* Turun dari 20px */
+            gap: 10px !important; /* Kurangi gap */
+        }
+        
+        /* Status Badge */
+        .status-container {
+            text-align: left;
+            margin-bottom: 5px;
+        }
+        
+        .status-badge {
+            padding: 4px 10px !important;
+            font-size: 0.65rem !important; /* Lebih kecil */
+            border-radius: 10px !important;
+            width: auto;
+            display: inline-block;
+        }
+        
+        /* Course Title */
+        .course-main-title {
+            font-size: 0.95rem !important; /* Turun dari 1.1rem */
+            line-height: 1.2 !important;
+            text-align: center;
+            -webkit-line-clamp: 2 !important;
+        }
+        
+        /* Progress Section */
+        .progress-section {
+            padding: 10px !important;
+            border-radius: 6px !important;
+        }
+        
+        .progress-info {
+            flex-direction: column !important;
+            gap: 5px !important;
+            margin-bottom: 8px !important;
+            font-size: 0.75rem !important;
+            text-align: center;
+        }
+        
+        .progress-info span:first-child {
+            font-size: 0.7rem !important;
+        }
+        
+        .progress-bar {
+            height: 6px !important;
+            border-radius: 3px !important;
+            margin: 4px 0;
+        }
+        
+        /* Action Button */
+        .btn-view-course-blue {
+            padding: 8px 15px !important;
+            font-size: 0.8rem !important; /* Turun dari 0.9rem */
+            gap: 6px !important;
+            border-radius: 5px !important;
+        }
+        
+        /* Empty State */
+        .kursus-saya-container > div > div:last-child {
+            padding: 20px 10px !important;
+        }
+        
+        .kursus-saya-container i.fa-book-open {
+            font-size: 2rem !important;
+        }
+        
+        .kursus-saya-container h4 {
+            font-size: 1.2rem !important;
+        }
+        
+        .kursus-saya-container p {
+            font-size: 0.9rem !important;
+        }
+        
+        .kursus-saya-container a[style*="background: #1e3c72"] {
+            padding: 6px 16px !important;
+            font-size: 0.9rem !important;
+        }
+        
+        /* Nonaktifkan efek hover di mobile */
+        .modern-course-card:hover {
+            transform: none !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08) !important;
+        }
+        
+        .btn-view-course-blue:hover {
+            transform: none !important;
+            box-shadow: none !important;
+        }
+    }
+
+    /* ===== OPTIMASI GLOBAL UNTUK MOBILE ===== */
+    @media (max-width: 400px) {
+        /* Pastikan tidak ada overflow */
+        * {
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        
+        /* Perbaikan layout filter section */
+        .filter-section .d-flex.justify-content-between {
+            flex-wrap: wrap;
+        }
+        
+        /* Text alignment untuk mobile */
+        .kursus-header,
+        .status-container,
+        .course-main-title,
+        .progress-info {
+            text-align: center;
+        }
+        
+        /* Word wrap untuk teks panjang */
+        .course-main-title,
+        .progress-info span {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+        }
+        
+        /* Progress bar responsif */
+        .progress-fill {
+            min-width: 5% !important; /* Pastikan progress minimal terlihat */
+        }
+    }
+
+    /* ===== PERBAIKAN MARGIN DAN PADDING ===== */
+    @media (max-width: 400px) {
+        /* Tambah padding untuk container utama */
+        body .main-content {
+            padding: 15px 12px !important; /* Tambah kiri-kanan 12px */
+            margin: 10px 10px !important; /* Tambah margin kiri-kanan 8px */
+        }
+        
+        /* Kurangi gap di grid */
+        .course-grid {
+            margin-left: -2px;
+            margin-right: -2px;
+            padding: 0 2px;
+        }
+    }
 </style>
 
 <div class="kursus-saya-container">

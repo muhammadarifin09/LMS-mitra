@@ -84,7 +84,11 @@ class KursusController extends Controller
 
         $enrollments = Enrollment::where('user_id', $userId)
             ->with(['kursus' => function($query) {
-                $query->where('status', 'aktif');
+                $query->where('status', 'aktif')
+                    ->with(['materials' => function($q) {
+                        $q->where('is_active', true)
+                            ->orderBy('order');
+                    }]);
             }])
             ->whereHas('kursus', function($query) {
                 $query->where('status', 'aktif');
@@ -92,17 +96,33 @@ class KursusController extends Controller
 
         // Apply filter
         if ($filter === 'in_progress') {
-            $enrollments->where('status', 'in_progress')
-                    ->where('progress_percentage', '<', 100);
+            $enrollments->where('progress_percentage', '<', 100);
         }
 
         if ($filter === 'completed') {
-            $enrollments->where('status', 'completed')
-                    ->orWhere('progress_percentage', 100);
+            $enrollments->where('progress_percentage', '=', 100);
         }
 
         $enrollments = $enrollments->orderBy('updated_at', 'desc')
                                 ->get();
+
+        // Hitung progress untuk setiap enrollment
+        foreach ($enrollments as $enrollment) {
+            if ($enrollment->kursus && $enrollment->kursus->materials) {
+                // Gunakan method yang sama dengan halaman detail
+                $materials = $this->getMaterialsWithStatus($enrollment->kursus->materials, Auth::user());
+                
+                $totalMaterials = count($materials);
+                $completedMaterials = collect($materials)->where('status', 'completed')->count();
+                $progressPercentage = $totalMaterials > 0 ? round(($completedMaterials / $totalMaterials) * 100) : 0;
+                
+                // Update enrollment
+                $enrollment->completed_activities = $completedMaterials;
+                $enrollment->total_activities = $totalMaterials;
+                $enrollment->progress_percentage = $progressPercentage;
+                $enrollment->status = $progressPercentage == 100 ? 'completed' : 'in_progress';
+            }
+        }
 
         return view('mitra.kursus-saya', compact('enrollments', 'filter'));
     }

@@ -726,6 +726,15 @@
                 justify-content: center;
             }
             
+            /* Sedikit menyesuaikan untuk tablet */
+            .stat-mini-item {
+                padding: 18px 20px;
+            }
+            
+            .stat-mini-number {
+                font-size: 1.6rem;
+            }
+            
             .content-grid {
                 grid-template-columns: 1fr;
                 gap: 20px;
@@ -875,17 +884,33 @@
             .stats-mini {
                 display: flex;
                 justify-content: center;
-                align-items: center;
-                gap: clamp(8px, 3vw, 15px); /* Gap responsif */
+                align-items: stretch;
+                gap: clamp(10px, 2vw, 15px);
                 margin-top: 25px !important;
-                flex-wrap: wrap;
+                width: 100%;
             }
-
+            
             .stat-mini-item {
-                flex: 0 0 auto;
-                width: min(100px, 30vw); /* Lebar responsif */
-                padding: clamp(12px, 3vw, 15px) clamp(15px, 4vw, 20px) !important;
+                flex: 1;
+                min-width: 0;
+                padding: clamp(10px, 2.5vw, 14px) clamp(8px, 2vw, 12px) !important;
+                border-radius: 12px; /* Tetap rounded, ukuran proporsional */
                 text-align: center;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+            
+            .stat-mini-number {
+                font-size: clamp(1.2rem, 4vw, 1.5rem) !important;
+                font-weight: 700;
+                line-height: 1.2;
+            }
+            
+            .stat-mini-label {
+                font-size: clamp(0.7rem, 2.5vw, 0.8rem) !important;
+                margin-top: 4px;
+                line-height: 1.2;
             }
             
             .slider-arrow {
@@ -1139,14 +1164,138 @@
             .divider {
                 order: 5 !important;
                 grid-row: 5 !important;
-                margin-left: 195px !important;
+                margin: 25px auto !important; /* PERUBAHAN: auto untuk center, 25px atas-bawah */
+                max-width: 150px; /* Sedikit lebih kecil di mobile */
             }
             
             .stats-mini {
                 order: 6 !important;
                 grid-row: 6 !important;
+                display: flex;
+                justify-content: center;
+                gap: 15px;
+                margin-top: 25px !important;
+            }
+            
+            .stat-mini-item {
+                flex: 1;
+                min-width: 0;
+                padding: 15px 10px !important;
+                border-radius: 15px; /* Sedikit lebih kecil */
+            }
+            
+            .stat-mini-number {
+                font-size: 1.5rem !important;
+            }
+            
+            .stat-mini-label {
+                font-size: 0.8rem !important;
             }
         }
+
+        /* Mobile kecil (576px ke bawah) - Tetap berjejer 3 */
+        @media (max-width: 576px) {
+            .stats-mini {
+            gap: 8px;
+            padding: 0 5px;
+        }
+        
+        .stat-mini-item {
+            padding: 10px 6px !important;
+            border-radius: 10px; /* Lebih kecil tapi tetap rounded */
+        }
+        
+        .stat-mini-number {
+            font-size: clamp(1.1rem, 3.5vw, 1.3rem) !important;
+        }
+        
+        .stat-mini-label {
+            font-size: clamp(0.65rem, 2vw, 0.75rem) !important;
+        }
+        }
+
+        /* ===== PERBAIKAN KHUSUS UNTUK 400px KE BAWAH (DEVICE SANGAT KECIL) ===== */
+    @media (max-width: 400px) {
+        .main-nav {
+            padding: 8px 8px !important;
+        }
+        
+        .logo-image {
+            height: 28px !important;
+            margin-left: 4px !important;
+            margin-right: 8px !important;
+        }
+        
+        /* JANGAN SEMBUNYIKAN ICON WORLD - semua icon tetap ada */
+        .nav-icon {
+            width: 28px !important;
+            height: 28px !important;
+            font-size: 0.8rem !important;
+            margin-right: 4px !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* PERBAIKAN: Lingkaran biru pada icon world dan notif - HAPUS background color */
+        .nav-icon {
+            background-color: transparent !important; /* HAPUS lingkaran biru */
+            width: 12px;
+            height: 12px;
+        }
+        
+        /* PERBAIKAN: Icon sendiri yang berwarna biru */
+        .nav-icon i {
+            font-size: 0.9rem !important;
+        }
+        
+        .notification-badge {
+            width: 12px;
+            height: 12px;
+            font-size: 0.5rem;
+            top: 6px;
+            right: 6px;
+        }
+        
+        .user-avatar {
+            width: 28px !important;
+            height: 28px !important;
+        }
+        
+        .avatar-initials {
+            font-size: 0.6rem !important;
+        }
+        
+        /* PERBAIKAN: Tambah jarak untuk hamburger menu */
+        .mobile-menu-btn {
+            font-size: 1.1rem;
+            padding: 4px 4px;
+            margin-left: 15px !important; /* TAMBAH jarak dari 4px ke 10px */
+        }
+        
+        /* PERBAIKAN: Garis separator - sesuaikan posisi */
+        .nav-brand::after {
+            height: 28px;
+            width: 2px;
+            background-color: #d1d5db;
+            right: -4px !important; /* PERUBAHAN: dari -8px ke -4px */
+            opacity: 0.7;
+            position: absolute;
+            content: '';
+        }
+        
+        /* PERBAIKAN: Atur posisi container logo */
+        .nav-brand {
+            position: relative;
+            padding-right: 8px !important; /* KURANGI dari 12px ke 8px */
+        }
+        
+        /* Kurangi gap di user profile */
+        .user-profile {
+            gap: 6px;
+            padding: 4px;
+        }
+    }
     </style>
 </head>
 <body>

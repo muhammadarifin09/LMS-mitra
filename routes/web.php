@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Mitra\BerandaController;
 use App\Http\Controllers\Mitra\KursusController as MitraKursusController;
+use App\Http\Controllers\Mitra\DashboardController;
 
 // Login
 Route::get('/', fn() => view('login'))->name('login.page');
@@ -84,7 +85,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 Route::middleware(['auth', 'role:mitra'])->group(function () {
     // Route tanpa prefix (untuk kompatibilitas)
     Route::get('/beranda', [BerandaController::class, 'index'])->name('mitra.beranda');
-    Route::get('/dashboard', fn() => view('mitra.dashboard'))->name('mitra.dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('mitra.dashboard');
     
     // Route dengan prefix mitra
     Route::prefix('mitra')->name('mitra.')->group(function () {

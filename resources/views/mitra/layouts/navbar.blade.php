@@ -1,5 +1,5 @@
 <style>
-    /* Navigation - Sticky dengan teks besar */
+    /* ===== FIXED NAVBAR STYLES ===== */
     .main-nav {
         background: rgba(255, 255, 255, 0.98);
         padding: 15px 60px;
@@ -92,7 +92,6 @@
         font-weight: bold;
     }
     
-    /* Perbesar ukuran teks navigasi */
     .nav-item {
         padding: 10px 20px;
         border-radius: 20px;
@@ -107,6 +106,18 @@
         background: linear-gradient(135deg, #1e3c72, #2a5298);
         color: white;
         transform: translateY(-2px);
+    }
+
+    /* Mobile Menu Button - Hidden by default */
+    .mobile-menu-btn {
+        display: none !important;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: #1e3c72;
+        padding: 5px 10px;
+        cursor: pointer;
+        z-index: 1001;
     }
 
     /* User Profile & Avatar Styles - DIPERBAIKI */
@@ -202,10 +213,99 @@
         display: flex !important;
     }
 
-    /* Responsif untuk User Profile */
-    @media (max-width: 768px) {
+    /* ===== RESPONSIVE FIXES ===== */
+    @media (max-width: 1200px) {
         .main-nav {
             padding: 12px 20px;
+        }
+        
+        .nav-menu {
+            gap: 8px;
+        }
+        
+        .nav-item {
+            padding: 4px 7px;
+            font-size: 0.9rem;
+        }
+        
+        .logo-image {
+            height: 45px;
+        }
+        
+        .user-profile {
+            margin-left: 10px;
+            padding: 5px 10px;
+        }
+        
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+        }
+        
+        .avatar-initials {
+            font-size: 0.75rem;
+        }
+        
+        .user-name {
+            font-size: 0.8rem;
+            max-width: 100px;
+        }
+        
+        .user-status {
+            font-size: 0.65rem;
+        }
+
+        .nav-icon {
+            width: 35px;
+            height: 35px;
+            font-size: 1rem;
+        }
+    }
+
+    @media (max-width: 992px) {
+        .nav-menu {
+            display: none !important;
+            position: absolute;
+            top: 100%;
+            left: -48px;
+            right: 0;
+            width: 100%; /* Pastikan full width */
+            max-width: 100%; /* Pastikan tidak dibatasi */
+            background: rgba(255, 255, 255, 0.98);
+            flex-direction: column;
+            padding: 20px;
+            gap: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border-top: 1px solid rgba(30, 60, 114, 0.1);
+            
+            /* TAMBAHKAN INI: */
+            align-items: flex-start !important; /* Pastikan item rata kiri */
+        }
+        
+        .nav-menu.show {
+            display: flex !important;
+        }
+        
+        .mobile-menu-btn {
+            display: block !important;
+        }
+        
+        .nav-item {
+            text-align: left;
+            padding: 12px 20px;
+            border-radius: 10px;
+            justify-content: flex-start;
+            width: 100%; /* Pastikan item memenuhi lebar */
+        }
+    }
+
+    @media (max-width: 768px) {
+        .nav-menu {
+            gap: 5px;
+        }
+        
+        .logo-image {
+            height: 45px;
         }
         
         .user-profile {
@@ -258,9 +358,138 @@
             background: rgba(30, 60, 114, 0.1);
         }
 
-        .nav-menu {
-            flex-wrap: wrap;
+        .main-nav {
+            padding: 10px 15px !important;
+        }
+        
+        .logo-image {
+            height: 40px !important;
+        }
+    }
+
+    /* ===== PERBAIKAN KHUSUS UNTUK 400px KE BAWAH (DEVICE SANGAT KECIL) ===== */
+    @media (max-width: 400px) {
+        .main-nav {
+            padding: 8px 8px !important;
+        }
+        
+        .logo-image {
+            height: 28px !important;
+            margin-left: 4px !important;
+            margin-right: 8px !important;
+        }
+        
+        /* JANGAN SEMBUNYIKAN ICON WORLD - semua icon tetap ada */
+        .nav-icon {
+            width: 28px !important;
+            height: 28px !important;
+            font-size: 0.8rem !important;
+            margin-right: 4px !important;
+            display: flex;
+            align-items: center;
             justify-content: center;
+        }
+        
+        /* PERBAIKAN: Lingkaran biru pada icon world dan notif - HAPUS background color */
+        .nav-icon {
+            background-color: transparent !important; /* HAPUS lingkaran biru */
+            width: 12px;
+            height: 12px;
+        }
+        
+        /* PERBAIKAN: Icon sendiri yang berwarna biru */
+        .nav-icon i {
+            font-size: 0.9rem !important;
+        }
+        
+        .notification-badge {
+            width: 12px;
+            height: 12px;
+            font-size: 0.5rem;
+            top: 6px;
+            right: 6px;
+        }
+        
+        .user-avatar {
+            width: 28px !important;
+            height: 28px !important;
+        }
+        
+        .avatar-initials {
+            font-size: 0.6rem !important;
+        }
+        
+        /* PERBAIKAN: Tambah jarak untuk hamburger menu */
+        .mobile-menu-btn {
+            font-size: 1.1rem;
+            padding: 4px 4px;
+            margin-left: 15px !important; /* TAMBAH jarak dari 4px ke 10px */
+        }
+        
+        /* PERBAIKAN: Garis separator - sesuaikan posisi */
+        .nav-brand::after {
+            height: 28px;
+            width: 2px;
+            background-color: #d1d5db;
+            right: -4px !important; /* PERUBAHAN: dari -8px ke -4px */
+            opacity: 0.7;
+            position: absolute;
+            content: '';
+        }
+        
+        /* PERBAIKAN: Atur posisi container logo */
+        .nav-brand {
+            position: relative;
+            padding-right: 8px !important; /* KURANGI dari 12px ke 8px */
+        }
+        
+        /* Kurangi gap di user profile */
+        .user-profile {
+            gap: 6px;
+            padding: 4px;
+        }
+    }
+
+    /* Touch-friendly improvements */
+    @media (max-width: 768px) {
+        .nav-icon, 
+        .slider-arrow, 
+        .slider-dot,
+        .content-card,
+        .stat-mini-item {
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .nav-icon,
+        .slider-arrow {
+            min-width: 44px;
+            min-height: 44px;
+        }
+        
+        button, 
+        .btn-simple {
+            min-height: 44px;
+            padding: 12px 20px;
+        }
+    }
+
+    /* Prevent horizontal scroll */
+    html, body {
+        overflow-x: hidden;
+        max-width: 100%;
+    }
+
+    /* Improve text readability on mobile */
+    @media (max-width: 768px) {
+        body {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .welcome-subtitle,
+        .content-description {
+            line-height: 1.6;
         }
     }
 </style>
@@ -291,6 +520,11 @@
                     Kursus Saya
                 </a>
             </div>
+
+            <!-- Mobile Menu Button -->
+            <button class="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </button>
         </div>
         
         <!-- Tambahkan bagian ikon di sini -->
@@ -318,9 +552,9 @@
                         
                         @if($biodata && $biodata->foto_profil)
                             <img src="{{ asset('storage/' . $biodata->foto_profil) }}" 
-                                    alt="Foto Profil" 
-                                    class="avatar-image"
-                                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                 alt="Foto Profil" 
+                                 class="avatar-image"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                             <div class="avatar-initials" style="display: none;">{{ $initials }}</div>
                         @else
                             <div class="avatar-initials">{{ $initials }}</div>
@@ -340,3 +574,36 @@
         </div>
     </div>
 </nav>
+
+<script>
+    // Mobile Menu Functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        const navMenu = document.querySelector('.nav-menu');
+        
+        if (mobileMenuBtn && navMenu) {
+            mobileMenuBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                navMenu.classList.toggle('show');
+            });
+            
+            // Close menu when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!navMenu.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
+                    navMenu.classList.remove('show');
+                }
+            });
+        }
+
+        // Handle image loading errors
+        document.querySelectorAll('.avatar-image').forEach(img => {
+            img.addEventListener('error', function() {
+                this.style.display = 'none';
+                const initials = this.nextElementSibling;
+                if (initials && initials.classList.contains('avatar-initials')) {
+                    initials.style.display = 'flex';
+                }
+            });
+        });
+    });
+</script>

@@ -1,91 +1,10 @@
-<footer class="main-footer">
-    <div class="footer-container">
-        <div class="footer-content">
-           
-             <!-- Alamat BPS + BerAKHLAK -->
-                <div class="footer-section">
-                    <div class="bps-title">BADAN PUSAT STATISTIK</div>
-                    <div class="footer-address">
-                        <p>Badan Pusat Statistik Kabupaten Tanah Laut (BPS-Statistics of Tanah Laut Regency)</p>
-                        <p>Alamat: Jalan A. Syairani No. 9 Pelaihari Kab. Tanah Laut</p>
-                        <p>Prov. Kalimantan Selatan</p>
-                        <p>76914</p>
-                        <p>Indonesia</p>
-                    </div>
-                    <div class="contact-info">
-                        <p>Telepon: +62 512 21092</p>
-                        <p>Fax: +62 512 3113</p>
-                        <p>Email: bps6301@bps.go.id</p>
-                        <p>bps6301@gmail.com</p>
-                    </div>
-                    
-                    <!-- Gambar BerAKHLAK dan Manual S&K Daftar Tarakan -->
-                    <div class="berakhlak-container">   
-                        <!-- Coba berbagai path yang mungkin -->
-                        <img src="/img/berakhlak-logo.png" alt="BerAKHLAK" class="berakhlak-image" onerror="this.style.display='none'">
-
-                        
-                        <ul class="berakhlak-links">
-                            <li><a href="#">Manual S&K Daftar Tarakan</a></li>
-                        </ul>
-                    </div>
-                </div>
-
-            <!-- Tentang Kami -->
-            <div class="footer-section">
-                <h3>Tentang Kami</h3>
-                <ul class="footer-links">
-                    <li><a href="https://ppid.bps.go.id/app/konten/6301/Profil-BPS.html?_gl=1*15t609r*_ga*MjQxOTY0MDAzLjE3NjEyNzM4MzU.*_ga_XXTTVXWHDB*czE3NjEyNzM4MzQkbzEkZzAkdTE3NjEyNzM4MzQkajYwJGwwJGgw">Profil BPS</a></li>
-                    <li><a href="#">PPID</a></li>
-                    <li><a href="#">Kebijakan Diseminasi</a></li>
-                </ul>
-            </div>
-
-            <!-- Tautan Lainnya -->
-            <div class="footer-section">
-                <h3>Tautan Lainnya</h3>
-                <ul class="footer-links">
-                    <li><a href="#">ASEAN Stats</a></li>
-                    <li><a href="#">Forum Masyarakat Statistik</a></li>
-                    <li><a href="#">Reformasi Birokrasi</a></li>
-                    <li><a href="#">Layanan Pengaduan Secara Elektronik</a></li>
-                    <li><a href="#">Politeknik Statistika STIS</a></li>
-                    <li><a href="#">Pusdiklat BPS</a></li>
-                    <li><a href="#">JDIH BPS</a></li>
-                </ul>
-            </div>
-
-            <!-- Government Public Relation -->
-            <div class="footer-section">
-                <h3>Government Public Relation</h3>
-                <div class="news-item">
-                    <div class="news-date">21 October 2025, 19:23 WEB</div>
-                    <div class="news-title">Sertifikasi Pemerintah Indonesia: Mendorong 18.805 UMKM dan Sektor Tenaga Kerja</div>
-                </div>
-                <div class="news-item">
-                    <div class="news-date">21 October 2025, 19:22 WEB</div>
-                    <div class="news-title">Sertifikasi Pemerintah Indonesia: Capai Swasembada 225 Ribu Hektar, Target 480 Ribu Hektar Tahun Depan</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="footer-divider"></div>
-
-        <div class="footer-bottom">
-            <div class="copyright">
-                Hak Cipta © 2023 Badan Pusat Statistik
-            </div>
-        </div>
-    </div>
-</footer>
-
 <style>
     /* Footer */
     .main-footer {
         background: #1a365d;
         color: white;
         padding: 50px 0 25px;
-        margin-top: auto;
+        margin-top: 100px;
         width: 100%;
         font-size: 14px;
     }
@@ -110,6 +29,13 @@
         color: white;
         border-bottom: 2px solid #2d74da;
         padding-bottom: 8px;
+    }
+
+    .footer-section h4 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: white;
     }
 
     .footer-address {
@@ -139,23 +65,6 @@
     .footer-links a:hover {
         color: white;
         text-decoration: underline;
-    }
-
-    .news-item {
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .news-date {
-        font-size: 12px;
-        color: rgba(255, 255, 255, 0.7);
-        margin-bottom: 5px;
-    }
-
-    .news-title {
-        font-weight: 500;
-        line-height: 1.4;
     }
 
     .footer-divider {
@@ -193,31 +102,10 @@
         margin-top: 25px;
         padding-top: 20px;
         border-top: 1px solid rgba(255, 255, 255, 0.2);
-        position: relative;
     }
 
     .berakhlak-image {
         max-width: 200px;
-        height: auto;
-        margin-bottom: 15px;
-        display: block;
-
-
-    }
-
-    /* Style untuk fallback image */
-    .image-fallback {
-        width: 200px;
-        height: 80px;
-        background: linear-gradient(135deg, #2d74da, #1a365d);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 15px;
-        border-radius: 4px;
-        font-weight: bold;
-        border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
     .berakhlak-links {
@@ -241,7 +129,7 @@
         text-decoration: underline;
     }
 
-    /* Responsif */
+    /* ===== RESPONSIVE FIXES ===== */
     @media (max-width: 1200px) {
         .footer-content {
             grid-template-columns: 1fr 1fr;
@@ -251,25 +139,177 @@
 
     @media (max-width: 768px) {
         .footer-content {
-            grid-template-columns: 1fr;
+            grid-template-columns: 1fr !important;
             gap: 30px;
         }
         
-        .footer-container {
-            padding: 0 15px;
+        .footer-section {
+            text-align: left !important; /* Ubah dari center ke left */
+            order: 0; /* Reset order */
+        }
+        
+        /* Urutkan section sesuai kebutuhan */
+        .footer-section:first-child {
+            order: 1; /* bps-title + footer-address + berakhlak-container */
+        }
+        
+        .footer-section:nth-child(3) {
+            order: 2; /* Tentang Kami */
+        }
+        
+        .footer-section:nth-child(2) {
+            order: 3; /* Kontak Kami */
+        }
+        
+        /* Style untuk elemen dalam section pertama */
+        .bps-title {
+            text-align: left;
+            margin-bottom: 15px;
+        }
+        
+        .footer-address {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        
+        .berakhlak-container {
+            text-align: left;
+            margin-top: 20px;
         }
         
         .berakhlak-image {
-            max-width: 150px;
+            max-width: 150px !important;
+            margin: 0 !important; /* Hilangkan margin center */
         }
         
-        .image-fallback {
-            width: 150px;
-            height: 60px;
+        /* Style untuk section lainnya */
+        .footer-section h3 {
+            text-align: left;
+            margin-bottom: 15px;
+        }
+        
+        .contact-info {
+            text-align: left;
+        }
+        
+        .footer-links {
+            text-align: left;
+            padding-left: 0;
+            list-style-position: inside;
+        }
+        
+        .footer-links li {
+            margin-bottom: 8px;
+        }
+        
+        .footer-links a {
+            text-align: left;
+            justify-content: flex-start !important;
+        }
+        
+        .main-footer {
+            margin-top: 50px !important;
+            padding: 30px 0 15px !important;
+        }
+        
+        .footer-bottom {
+            text-align: left !important;
+            margin-top: 30px;
+        }
+        
+        .copyright {
+            text-align: left;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .main-footer {
+            padding: 25px 0 10px !important;
+        }
+        
+        .footer-content {
+            gap: 25px;
+        }
+        
+        .berakhlak-image {
+            max-width: 130px !important;
+        }
+        
+        .bps-title {
+            font-size: 1.3rem;
+        }
+        
+        .footer-section h3 {
+            font-size: 1.1rem;
+        }
+    }
+
+    /* Prevent horizontal scroll */
+    html, body {
+        overflow-x: hidden;
+        max-width: 100%;
+    }
+
+    /* Improve text readability on mobile */
+    @media (max-width: 768px) {
+        body {
             font-size: 14px;
+            line-height: 1.5;
         }
     }
 </style>
+
+<!-- Footer -->
+<footer class="main-footer">
+    <div class="footer-container">
+        <div class="footer-content">
+            <!-- Alamat BPS + BerAKHLAK -->
+            <div class="footer-section">
+                <div class="bps-title">BADAN PUSAT STATISTIK</div>
+                <div class="footer-address">
+                    <p>Badan Pusat Statistik Kabupaten Tanah Laut (BPS-Statistics of Tanah Laut Regency)</p>
+                    <p>Alamat: Jalan A. Syairani No. 9 Pelaihari Kab. Tanah Laut</p>
+                    <p>Prov. Kalimantan Selatan</p>
+                    <p>76914</p>
+                    <p>Indonesia</p>
+                </div>
+                
+                <!-- Gambar BerAKHLAK -->
+                <div class="berakhlak-container">
+                    <img src="{{ asset('img/cover.jpg') }}" alt="BerAKHLAK" class="berakhlak-image">
+                    <ul class="berakhlak-links">
+                </div>
+            </div>
+
+            <!-- Kontak Kami -->
+            <div class="footer-section">
+                <h3>Kontak Kami</h3>
+                <div class="contact-info">
+                    <p>Telepon: +62 512 21092</p>
+                    <p>Fax: +62 512 3113</p>
+                    <p>Email: bps6301@bps.go.id</p>
+                    <p>bps6301@gmail.com</p>
+                </div>
+            </div>
+
+            <!-- Tentang Kami -->
+            <div class="footer-section">
+                <h3>Tentang Kami</h3>
+                <ul class="footer-links">
+                    <li><a href="https://ppid.bps.go.id/app/konten/6301/Profil-BPS.html?_gl=1*15t609r*_ga*MjQxOTY0MDAzLjE3NjEyNzM4MzU.*_ga_XXTTVXWHDB*czE3NjEyNzM4MzQkbzEkZzAkdTE3NjEyNzM4MzQkajYwJGwwJGgw">Profil BPS</a></li>
+                    <li><a href="https://ppid.bps.go.id/?mfd=6301&_gl=1*1yli45g*_ga*MTQyMzAzNDgwMC4xNzQwMjk0NzU4*_ga_XXTTVXWHDB*czE3NjQyMDY0ODIkbzEwJGcwJHQxNzY0MjA2NDkyJGo1MCRsMCRoMA..">PPID</a></li>
+                    <li><a href="https://ppid.bps.go.id/app/konten/0000/Layanan-BPS.html?_gl=1*8lxw4a*_ga*MTQyMzAzNDgwMC4xNzQwMjk0NzU4*_ga_XXTTVXWHDB*czE3NjQyMDY0ODIkbzEwJGcwJHQxNzY0MjA2NDkyJGo1MCRsMCRoMA..#pills-3">Kebijakan Diseminasi</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="copyright">
+                Hak Cipta © 2023 Badan Pusat Statistik
+            </div>
+        </div>
+    </div>
+</footer>
 
 <script>
 // Script untuk menangani gambar yang tidak ditemukan
@@ -291,15 +331,5 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         };
     });
-    
-    // Jika tidak ada gambar yang berhasil load setelah 1 detik, tampilkan fallback
-    setTimeout(() => {
-        if (!imageFound) {
-            const fallback = document.querySelector('.image-fallback');
-            if (fallback) {
-                fallback.style.display = 'flex';
-            }
-        }
-    }, 1000);
 });
 </script>
