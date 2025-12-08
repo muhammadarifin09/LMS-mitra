@@ -12,6 +12,9 @@ use App\Models\MaterialProgress;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use ZipArchive;
 
 class KursusController extends Controller
 {
@@ -49,11 +52,18 @@ class KursusController extends Controller
                             ->firstOrFail();
 
         // Process materials dengan status (hanya yang aktif)
-        $materials = $this->getMaterialsWithStatus($kursus->materials, $user);
+        $materials = $this->getMaterialsWithStatus($kursus->materials, $user, $id);
         
         // Calculate progress
-        $totalMaterials = $kursus->materials->count();
-        $completedMaterials = collect($materials)->where('status', 'completed')->count();
+        $totalMaterials = count($materials);
+        $completedMaterials = 0;
+        
+        foreach ($materials as $material) {
+            if ($material['status'] === 'completed') {
+                $completedMaterials++;
+            }
+        }
+        
         $progressPercentage = $totalMaterials > 0 ? round(($completedMaterials / $totalMaterials) * 100) : 0;
 
         return view('mitra.kursus-detail', compact(
@@ -72,7 +82,6 @@ class KursusController extends Controller
         $filter = $request->get('filter', 'all');
         $userId = Auth::id();
 
-        // Query enrollments, bukan kursus
         $enrollments = Enrollment::where('user_id', $userId)
             ->with(['kursus' => function($query) {
                 $query->where('status', 'aktif');
@@ -98,43 +107,73 @@ class KursusController extends Controller
         return view('mitra.kursus-saya', compact('enrollments', 'filter'));
     }
 
-    private function getMaterialsWithStatus($materials, $user)
+    /**
+     * PERBAIKAN BESAR: Logika status material
+     */
+    private function getMaterialsWithStatus($materials, $user, $kursusId)
     {
         $processedMaterials = [];
-        $previousCompleted = true; // First material is always accessible
         
-        foreach ($materials->sortBy('order') as $material) {
+        // Ambil semua progress user untuk kursus ini
+        $userProgress = MaterialProgress::where('user_id', $user->id)
+            ->whereIn('material_id', $materials->pluck('id'))
+            ->get()
+            ->keyBy('material_id');
+        
+        $previousMaterialCompleted = true; // Material pertama selalu bisa diakses
+        
+        foreach ($materials->sortBy('order') as $index => $material) {
             // Skip jika materi tidak aktif
             if (!$material->is_active) {
                 continue;
             }
             
-            $progress = MaterialProgress::where('user_id', $user->id)
-                                    ->where('material_id', $material->id)
-                                    ->first();
+            $progress = $userProgress[$material->id] ?? null;
             
-            // Determine if material is accessible
-            $isAccessible = $previousCompleted;
+            // Parse file_path untuk mendapatkan file paths
+            $filePaths = [];
+            $totalFiles = 0;
+            $hasMaterial = !empty($material->file_path);
             
-            // Determine status
-            if ($progress && $this->isMaterialCompleted($progress, $material)) {
+            if ($hasMaterial) {
+                $filePaths = json_decode($material->file_path, true) ?? [$material->file_path];
+                $totalFiles = count($filePaths);
+            }
+            
+            // **PERBAIKAN KRUSIAL: Tentukan apakah material ini bisa diakses**
+            // Material pertama selalu bisa diakses
+            if ($material->order === 1) {
+                $isAccessible = true;
+            } else {
+                // Cek apakah material sebelumnya sudah selesai
+                $previousMaterial = $materials->where('order', $material->order - 1)->first();
+                if ($previousMaterial) {
+                    $previousProgress = $userProgress[$previousMaterial->id] ?? null;
+                    $isAccessible = $this->isMaterialCompleted($previousProgress, $previousMaterial);
+                } else {
+                    $isAccessible = true;
+                }
+            }
+            
+            // Tentukan apakah material ini sudah selesai
+            $isCompleted = $this->isMaterialCompleted($progress, $material);
+            
+            // **PERBAIKAN: Tentukan status dengan benar**
+            if ($isCompleted) {
                 $status = 'completed';
                 $statusClass = 'completed';
-                $previousCompleted = true;
             } elseif ($isAccessible) {
                 $status = 'current';
                 $statusClass = 'current';
-                $previousCompleted = false;
             } else {
                 $status = 'locked';
                 $statusClass = 'locked';
-                $previousCompleted = false;
             }
             
             // Get specific status for each task
-            $attendanceStatus = $progress->attendance_status ?? 'pending';
-            $materialStatus = $progress->material_status ?? 'pending';
-            $videoStatus = $progress->video_status ?? 'pending';
+            $attendanceStatus = $progress ? ($progress->attendance_status ?? 'pending') : 'pending';
+            $materialStatus = $progress ? ($progress->material_status ?? 'pending') : 'pending';
+            $videoStatus = $progress ? ($progress->video_status ?? 'pending') : 'pending';
             
             // For test types, check if completed
             $isTestCompleted = false;
@@ -147,10 +186,15 @@ class KursusController extends Controller
                 $isTestCompleted = true;
                 $testScore = $progress->posttest_score;
             }
+
+            // Ambil downloaded_files
+            $downloadedFiles = [];
+            if ($progress && $progress->downloaded_files) {
+                $downloadedFiles = json_decode($progress->downloaded_files, true) ?? [];
+            }
             
             // Determine available content types
             $hasAttendance = $material->attendance_required ?? true;
-            $hasMaterial = !empty($material->file_path);
             $hasVideo = !empty($material->video_url);
             
             $processedMaterials[] = [
@@ -173,30 +217,99 @@ class KursusController extends Controller
                 'file_path' => $material->file_path,
                 'video_url' => $material->video_url,
                 'description' => $material->description,
+                'downloaded_files' => $downloadedFiles,
+                'total_files' => $totalFiles,
                 // Tambahan untuk menentukan konten yang tersedia
                 'attendance_required' => $hasAttendance,
                 'has_material' => $hasMaterial,
-                'has_video' => $hasVideo
+                'has_video' => $hasVideo,
+                'file_paths' => $filePaths
             ];
         }
         
         return $processedMaterials;
     }
 
+    /**
+     * Helper method untuk cek semua materi sebelumnya sudah selesai
+     */
+    private function allPreviousMaterialsCompleted($userId, $kursusId, $currentOrder)
+    {
+        if ($currentOrder <= 1) {
+            return true;
+        }
+        
+        // Ambil semua materi sebelumnya yang AKTIF
+        $previousMaterials = Materials::where('course_id', $kursusId)
+            ->where('is_active', true)
+            ->where('order', '<', $currentOrder)
+            ->orderBy('order')
+            ->get();
+        
+        foreach ($previousMaterials as $material) {
+            $progress = MaterialProgress::where('user_id', $userId)
+                ->where('material_id', $material->id)
+                ->first();
+            
+            if (!$this->isMaterialCompleted($progress, $material)) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+
+    /**
+     * Helper method untuk cek apakah material sudah selesai (dengan multiple files)
+     */
     private function isMaterialCompleted($progress, $material)
     {
+        // Jika tidak ada progress, maka belum selesai
+        if (!$progress) {
+            return false;
+        }
+
         // For test materials, check if test is completed
         if ($material->type === 'pre_test') {
             return $progress->pretest_score !== null;
         } elseif ($material->type === 'post_test') {
             return $progress->posttest_score !== null;
         } elseif ($material->type === 'recap') {
-            return true; // Recap is always accessible once unlocked
+            return true; // Recap selalu bisa diakses setelah terbuka
         } else {
-            // For regular materials, check all statuses
-            return $progress->attendance_status === 'completed' &&
-                   $progress->material_status === 'completed' &&
-                   $progress->video_status === 'completed';
+            // Untuk material reguler, cek semua status yang diperlukan
+            $attendanceRequired = $material->attendance_required ?? true;
+            $hasMaterial = !empty($material->file_path);
+            $hasVideo = !empty($material->video_url);
+            
+            $attendanceCompleted = !$attendanceRequired || $progress->attendance_status === 'completed';
+            $videoCompleted = !$hasVideo || $progress->video_status === 'completed';
+            
+            // Cek material completion
+            $materialCompleted = true; // default jika tidak ada material
+            
+            if ($hasMaterial) {
+                if ($progress->all_files_downloaded) {
+                    $materialCompleted = true;
+                } else {
+                    // Parse file_path untuk mendapatkan jumlah file
+                    $filePaths = json_decode($material->file_path, true);
+                    if (!is_array($filePaths)) {
+                        $filePaths = [$material->file_path];
+                    }
+                    $totalFiles = count($filePaths);
+                    
+                    $downloadedFiles = json_decode($progress->downloaded_files, true) ?? [];
+                    $materialCompleted = (count($downloadedFiles) >= $totalFiles);
+                }
+            }
+            
+            // PERBAIKAN: Gunakan material_status sebagai fallback
+            if (!$materialCompleted && $progress->material_status === 'completed') {
+                $materialCompleted = true;
+            }
+            
+            return $attendanceCompleted && $materialCompleted && $videoCompleted;
         }
     }
 
@@ -228,8 +341,6 @@ class KursusController extends Controller
 
         try {
             // Create enrollment
-
-            // Hitung real total materials dari kursus ini (HANYA YANG AKTIF)
             $totalMaterials = Materials::where('course_id', $id)
                                         ->where('is_active', true)
                                         ->count();
@@ -237,7 +348,7 @@ class KursusController extends Controller
             Enrollment::create([
                 'user_id' => $user->id,
                 'kursus_id' => $id,
-                'total_activities' => $totalMaterials, // ← PAKAI REAL COUNT (hanya yang aktif)
+                'total_activities' => $totalMaterials,
                 'enrolled_at' => now()
             ]);
 
@@ -268,175 +379,743 @@ class KursusController extends Controller
     }
 
     // MARK: - Progress Tracking Methods
-    public function markAttendance($materialId)
+    public function markAttendance(Request $request, $kursus, $material)
     {
-        $user = Auth::user();
-        $material = Materials::where('is_active', true)
-                            ->findOrFail($materialId);
-        
-        $enrollment = Enrollment::where('user_id', $user->id)
-                            ->where('kursus_id', $material->course_id)
-                            ->firstOrFail();
+        Log::info('Mark Attendance:', [
+            'kursus' => $kursus,
+            'material' => $material,
+            'user_id' => Auth::id()
+        ]);
 
-        MaterialProgress::updateOrCreate(
-            [
-                'user_id' => $user->id,
-                'material_id' => $materialId
-            ],
-            [
-                'attendance_status' => 'completed'
-            ]
-        );
+        $user = Auth::user();
         
-        return response()->json(['success' => true]);
+        // Validasi user terenroll di kursus ini
+        $enrollment = Enrollment::where('user_id', $user->id)
+            ->where('kursus_id', $kursus)
+            ->firstOrFail();
+
+        $materialRecord = Materials::where('is_active', true)
+            ->where('id', $material)
+            ->where('course_id', $kursus)
+            ->firstOrFail();
+
+        // Update atau buat progress
+        $progress = MaterialProgress::where('user_id', $user->id)
+            ->where('material_id', $material)
+            ->first();
+        
+        if ($progress) {
+            $progress->attendance_status = 'completed';
+            $progress->save();
+        } else {
+            $progress = MaterialProgress::create([
+                'user_id' => $user->id,
+                'material_id' => $material,
+                'attendance_status' => 'completed',
+                'material_status' => empty($materialRecord->file_path) ? 'completed' : 'pending',
+                'video_status' => empty($materialRecord->video_url) ? 'completed' : 'pending'
+            ]);
+        }
+
+        // PERBAIKAN: Otomatis cek dan unlock material berikutnya
+        $this->checkAndUnlockNextMaterial($user->id, $material, $kursus);
+
+        // Update enrollment progress
+        $this->updateEnrollmentProgress($user->id, $kursus);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Kehadiran berhasil dicatat',
+            'material_id' => $material,
+            'attendance_status' => 'completed'
+        ]);
     }
 
-    public function markMaterialCompleted($materialId)
+    // MARK: - File Download Methods
+    /**
+     * Download material file (ZIP atau single file)
+     */
+    public function downloadMaterialFile($kursus, $material)
     {
+        Log::info('Download Material File:', [
+            'kursus' => $kursus,
+            'material' => $material,
+            'user_id' => Auth::id()
+        ]);
+        
         $user = Auth::user();
-        $material = Materials::where('is_active', true)
-                            ->findOrFail($materialId);
         
+        // Pastikan user terenroll di kursus ini
         $enrollment = Enrollment::where('user_id', $user->id)
-                            ->where('kursus_id', $material->course_id)
-                            ->firstOrFail();
-
-        MaterialProgress::updateOrCreate(
-            [
-                'user_id' => $user->id,
-                'material_id' => $materialId
-            ],
-            [
-                'material_status' => 'completed'
-            ]
-        );
+            ->where('kursus_id', $kursus)
+            ->firstOrFail();
         
-        return response()->json(['success' => true]);
+        // Ambil materi yang aktif
+        $materialRecord = Materials::where('is_active', true)
+            ->where('id', $material)
+            ->where('course_id', $kursus)
+            ->firstOrFail();
+        
+        // Cek apakah materi memiliki file
+        if (!$materialRecord->file_path || empty($materialRecord->file_path)) {
+            abort(404, 'File materi tidak tersedia');
+        }
+        
+        try {
+            // Parse file_path (bisa string atau JSON array)
+            $filePaths = json_decode($materialRecord->file_path, true);
+            
+            // Jika bukan array, buat array dari string
+            if (!is_array($filePaths)) {
+                $filePaths = [$materialRecord->file_path];
+            }
+            
+            // Filter hanya file yang valid
+            $validFilePaths = [];
+            foreach ($filePaths as $filePath) {
+                if (Storage::disk('public')->exists($filePath)) {
+                    $validFilePaths[] = $filePath;
+                }
+            }
+            
+            if (empty($validFilePaths)) {
+                abort(404, 'Tidak ada file yang tersedia');
+            }
+            
+            // Catat SEMUA file sebagai downloaded
+            $this->recordAllFilesDownloaded($user->id, $material, count($validFilePaths));
+            
+            // PERBAIKAN: Otomatis cek dan unlock material berikutnya
+            $this->checkAndUnlockNextMaterial($user->id, $material, $kursus);
+            
+            // Update enrollment progress
+            $this->updateEnrollmentProgress($user->id, $kursus);
+            
+            // Jika hanya ada 1 file, download langsung
+            if (count($validFilePaths) === 1) {
+                $filePath = $validFilePaths[0];
+                $fileName = basename($filePath);
+                
+                return Storage::disk('public')->download($filePath, $fileName);
+            }
+            
+            // Jika ada multiple files, buat zip archive
+            return $this->createZipDownload($validFilePaths, $materialRecord->title);
+            
+        } catch (\Exception $e) {
+            Log::error('Error downloading material file:', [
+                'error' => $e->getMessage(),
+                'user_id' => $user->id,
+                'material' => $material
+            ]);
+            
+            return back()->with('error', 'Gagal mengunduh file: ' . $e->getMessage());
+        }
     }
 
-    public function markVideoCompleted($materialId)
+    /**
+     * Membuat zip archive dari multiple files
+     */
+    private function createZipDownload(array $filePaths, string $materialTitle)
+    {
+        $zipFileName = 'materi-' . Str::slug($materialTitle) . '-' . time() . '.zip';
+        $zipPath = storage_path('app/public/temp/' . $zipFileName);
+        
+        if (!Storage::disk('public')->exists('temp')) {
+            Storage::disk('public')->makeDirectory('temp');
+        }
+
+        $zip = new ZipArchive;
+        
+        if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
+            foreach ($filePaths as $filePath) {
+                $fileName = basename($filePath);
+                $zip->addFile(Storage::disk('public')->path($filePath), $fileName);
+            }
+            
+            $zip->close();
+            
+            return response()->download($zipPath)->deleteFileAfterSend(true);
+        } else {
+            throw new \Exception('Gagal membuat file zip');
+        }
+    }
+
+    private function recordAllFilesDownloaded($userId, $materialId, $totalFiles)
+    {
+        try {
+            $progress = MaterialProgress::where('user_id', $userId)
+                ->where('material_id', $materialId)
+                ->first();
+            
+            $downloadedFiles = range(0, $totalFiles - 1);
+            
+            if (!$progress) {
+                MaterialProgress::create([
+                    'user_id' => $userId,
+                    'material_id' => $materialId,
+                    'downloaded_files' => json_encode($downloadedFiles),
+                    'total_files' => $totalFiles,
+                    'all_files_downloaded' => true,
+                    'material_status' => 'completed',
+                    'attendance_status' => 'pending',
+                    'video_status' => 'pending'
+                ]);
+            } else {
+                $progress->update([
+                    'downloaded_files' => json_encode($downloadedFiles),
+                    'total_files' => $totalFiles,
+                    'all_files_downloaded' => true,
+                    'material_status' => 'completed'
+                ]);
+            }
+            
+            return true;
+            
+        } catch (\Exception $e) {
+            Log::error('Error recording all files downloaded:', [
+                'error' => $e->getMessage(),
+                'user_id' => $userId,
+                'material_id' => $materialId
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * API untuk mencatat video telah ditonton
+     */
+    public function recordVideoWatched(Request $request, $kursus, $material)
+    {
+        try {
+            $user = Auth::user();
+            
+            // Update progress video
+            $progress = MaterialProgress::where('user_id', $user->id)
+                ->where('material_id', $material)
+                ->first();
+            
+            if ($progress) {
+                $progress->video_status = 'completed';
+                $progress->save();
+            } else {
+                $materialRecord = Materials::find($material);
+                MaterialProgress::create([
+                    'user_id' => $user->id,
+                    'material_id' => $material,
+                    'video_status' => 'completed',
+                    'material_status' => ($materialRecord && $materialRecord->file_path) ? 'pending' : 'completed',
+                    'attendance_status' => ($materialRecord && ($materialRecord->attendance_required ?? true)) ? 'pending' : 'completed'
+                ]);
+            }
+
+            // PERBAIKAN: Otomatis cek dan unlock material berikutnya
+            $this->checkAndUnlockNextMaterial($user->id, $material, $kursus);
+
+            // Update enrollment progress
+            $this->updateEnrollmentProgress($user->id, $kursus);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Video telah ditandai sebagai telah ditonton'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error recording video watched:', [
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id(),
+                'material' => $material
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mencatat progress video'
+            ], 500);
+        }
+    }
+
+    /**
+     * PERBAIKAN: Method untuk cek dan unlock material berikutnya
+     */
+    private function checkAndUnlockNextMaterial($userId, $currentMaterialId, $kursusId)
+    {
+        try {
+            $currentMaterial = Materials::where('is_active', true)
+                ->where('id', $currentMaterialId)
+                ->where('course_id', $kursusId)
+                ->first();
+            
+            if (!$currentMaterial) {
+                return false;
+            }
+            
+            // Cek apakah material saat ini sudah selesai
+            $progress = MaterialProgress::where('user_id', $userId)
+                ->where('material_id', $currentMaterialId)
+                ->first();
+            
+            if (!$progress) {
+                return false;
+            }
+            
+            $isCurrentCompleted = $this->isMaterialCompleted($progress, $currentMaterial);
+            
+            if ($isCurrentCompleted) {
+                // Cari material berikutnya
+                $nextMaterial = Materials::where('course_id', $kursusId)
+                    ->where('is_active', true)
+                    ->where('order', '>', $currentMaterial->order)
+                    ->orderBy('order')
+                    ->first();
+                
+                if ($nextMaterial) {
+                    // Untuk material berikutnya, kita tidak perlu melakukan apa-apa di database
+                    // Karena status akan dihitung ulang saat getMaterialsWithStatus dipanggil
+                    Log::info('Material berikutnya siap dibuka:', [
+                        'current_material_id' => $currentMaterialId,
+                        'next_material_id' => $nextMaterial->id,
+                        'next_material_order' => $nextMaterial->order
+                    ]);
+                    
+                    return true;
+                }
+            }
+            
+            return false;
+            
+        } catch (\Exception $e) {
+            Log::error('Error checking and unlocking next material:', [
+                'error' => $e->getMessage(),
+                'user_id' => $userId,
+                'current_material_id' => $currentMaterialId,
+                'kursus_id' => $kursusId
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Method baru: Refresh status material untuk real-time update
+     */
+    public function refreshMaterialStatus($kursusId, $materialId)
+    {
+        try {
+            $user = Auth::user();
+            
+            $kursus = Kursus::where('status', 'aktif')
+                ->where('id', $kursusId)
+                ->with(['materials' => function($query) {
+                    $query->where('is_active', true)
+                          ->orderBy('order');
+                }])
+                ->firstOrFail();
+            
+            // Cari material yang diminta
+            $targetMaterial = null;
+            foreach ($kursus->materials as $material) {
+                if ($material->id == $materialId) {
+                    $targetMaterial = $material;
+                    break;
+                }
+            }
+            
+            if (!$targetMaterial) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Material tidak ditemukan'
+                ], 404);
+            }
+            
+            // Hitung ulang status untuk material ini dan berikutnya
+            $userProgress = MaterialProgress::where('user_id', $user->id)
+                ->whereIn('material_id', $kursus->materials->pluck('id'))
+                ->get()
+                ->keyBy('material_id');
+            
+            $materialsWithStatus = [];
+            
+            foreach ($kursus->materials->sortBy('order') as $material) {
+                $progress = $userProgress[$material->id] ?? null;
+                
+                // Tentukan status untuk setiap material
+                if ($material->order === 1) {
+                    $isAccessible = true;
+                } else {
+                    $previousMaterial = $kursus->materials->where('order', $material->order - 1)->first();
+                    if ($previousMaterial) {
+                        $previousProgress = $userProgress[$previousMaterial->id] ?? null;
+                        $isAccessible = $this->isMaterialCompleted($previousProgress, $previousMaterial);
+                    } else {
+                        $isAccessible = true;
+                    }
+                }
+                
+                $isCompleted = $this->isMaterialCompleted($progress, $material);
+                
+                if ($isCompleted) {
+                    $status = 'completed';
+                    $statusClass = 'completed';
+                } elseif ($isAccessible) {
+                    $status = 'current';
+                    $statusClass = 'current';
+                } else {
+                    $status = 'locked';
+                    $statusClass = 'locked';
+                }
+                
+                $materialsWithStatus[] = [
+                    'id' => $material->id,
+                    'title' => $material->title,
+                    'order' => $material->order,
+                    'status' => $status,
+                    'status_class' => $statusClass
+                ];
+            }
+            
+            return response()->json([
+                'success' => true,
+                'materials' => $materialsWithStatus
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error refreshing material status:', [
+                'error' => $e->getMessage(),
+                'kursus_id' => $kursusId,
+                'material_id' => $materialId
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal refresh status material'
+            ], 500);
+        }
+    }
+
+    public function completeMaterial(Request $request, $kursusId, $materialId)
+    {
+        try {
+            $user = Auth::user();
+            
+            // Validasi user terenroll
+            $enrollment = Enrollment::where('user_id', $user->id)
+                ->where('kursus_id', $kursusId)
+                ->firstOrFail();
+            
+            // Update material progress
+            $progress = MaterialProgress::where('user_id', $user->id)
+                ->where('material_id', $materialId)
+                ->first();
+            
+            if ($progress) {
+                // Update material_status ke completed
+                $progress->material_status = 'completed';
+                $progress->save();
+                
+                // PERBAIKAN: Otomatis cek dan unlock material berikutnya
+                $this->checkAndUnlockNextMaterial($user->id, $materialId, $kursusId);
+                
+                // Update enrollment progress
+                $this->updateEnrollmentProgress($user->id, $kursusId);
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Material berhasil diselesaikan'
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Progress tidak ditemukan'
+                ], 404);
+            }
+            
+        } catch (\Exception $e) {
+            Log::error('Error completing material:', [
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id(),
+                'material_id' => $materialId
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menandai material selesai'
+            ], 500);
+        }
+    }
+
+    /**
+     * Untuk menampilkan daftar file yang tersedia (optional)
+     */
+    public function showMaterialFiles($kursus, $material)
     {
         $user = Auth::user();
-        $material = Materials::where('is_active', true)
-                            ->findOrFail($materialId);
         
         $enrollment = Enrollment::where('user_id', $user->id)
-                            ->where('kursus_id', $material->course_id)
-                            ->firstOrFail();
+            ->where('kursus_id', $kursus)
+            ->firstOrFail();
 
-        MaterialProgress::updateOrCreate(
-            [
-                'user_id' => $user->id,
-                'material_id' => $materialId
-            ],
-            [
-                'video_status' => 'completed'
-            ]
-        );
+        $materialRecord = Materials::where('is_active', true)
+            ->where('id', $material)
+            ->where('course_id', $kursus)
+            ->firstOrFail();
+
+        // Parse file_path
+        $filePaths = json_decode($materialRecord->file_path, true);
         
-        return response()->json(['success' => true]);
+        if (!is_array($filePaths)) {
+            $filePaths = [$materialRecord->file_path];
+        }
+
+        // Siapkan data file
+        $files = [];
+        foreach ($filePaths as $index => $filePath) {
+            if (Storage::disk('public')->exists($filePath)) {
+                $files[] = [
+                    'index' => $index,
+                    'name' => basename($filePath),
+                    'size' => Storage::disk('public')->size($filePath),
+                    'extension' => pathinfo($filePath, PATHINFO_EXTENSION),
+                    'download_url' => route('mitra.kursus.material.download', [
+                        'kursus' => $kursus,
+                        'material' => $material
+                    ])
+                ];
+            }
+        }
+
+        return view('mitra.material-files', [
+            'kursus' => $enrollment->kursus,
+            'material' => $materialRecord,
+            'files' => $files,
+            'hasMultiple' => count($files) > 1,
+            'downloadAllUrl' => route('mitra.kursus.material.download', [
+                'kursus' => $kursus,
+                'material' => $material
+            ])
+        ]);
+    }
+
+    public function viewMaterialVideo($kursus, $material)
+    {
+        Log::info('View Material Video:', [
+            'kursus' => $kursus,
+            'material' => $material,
+            'user_id' => Auth::id()
+        ]);
+
+        $user = Auth::user();
+        
+        // Pastikan user terenroll di kursus ini
+        $enrollment = Enrollment::where('user_id', $user->id)
+            ->where('kursus_id', $kursus)
+            ->firstOrFail();
+
+        // Ambil materi yang aktif
+        $materialRecord = Materials::where('is_active', true)
+            ->where('id', $material)
+            ->where('course_id', $kursus)
+            ->firstOrFail();
+
+        // Cek apakah materi memiliki video
+        if (!$materialRecord->video_url || empty($materialRecord->video_url)) {
+            abort(404, 'Video materi tidak tersedia');
+        }
+
+        // Update progress video status
+        $progress = MaterialProgress::where('user_id', $user->id)
+            ->where('material_id', $material)
+            ->first();
+        
+        if ($progress) {
+            $progress->video_status = 'completed';
+            $progress->save();
+        } else {
+            MaterialProgress::create([
+                'user_id' => $user->id,
+                'material_id' => $material,
+                'video_status' => 'completed',
+                'material_status' => empty($materialRecord->file_path) ? 'completed' : 'pending',
+                'attendance_status' => ($materialRecord->attendance_required ?? true) ? 'pending' : 'completed'
+            ]);
+        }
+
+        // PERBAIKAN: Otomatis cek dan unlock material berikutnya
+        $this->checkAndUnlockNextMaterial($user->id, $material, $kursus);
+
+        // Update enrollment progress
+        $this->updateEnrollmentProgress($user->id, $kursus);
+
+        // Tampilkan halaman view video
+        return view('mitra.video-viewer', [
+            'kursus' => $enrollment->kursus,
+            'material' => $materialRecord,
+            'videoUrl' => $materialRecord->video_url
+        ]);
+    }
+
+    public function markVideoAsWatched(Request $request, $kursus, $material)
+    {
+        Log::info('Mark Video as Watched:', [
+            'kursus' => $kursus,
+            'material' => $material,
+            'user_id' => Auth::id()
+        ]);
+
+        $user = Auth::user();
+        
+        try {
+            // Update progress video
+            $progress = MaterialProgress::where('user_id', $user->id)
+                ->where('material_id', $material)
+                ->first();
+            
+            if ($progress) {
+                $progress->video_status = 'completed';
+                $progress->save();
+            } else {
+                $materialRecord = Materials::find($material);
+                MaterialProgress::create([
+                    'user_id' => $user->id,
+                    'material_id' => $material,
+                    'video_status' => 'completed',
+                    'material_status' => ($materialRecord && $materialRecord->file_path) ? 'pending' : 'completed',
+                    'attendance_status' => ($materialRecord && ($materialRecord->attendance_required ?? true)) ? 'pending' : 'completed'
+                ]);
+            }
+
+            // PERBAIKAN: Otomatis cek dan unlock material berikutnya
+            $this->checkAndUnlockNextMaterial($user->id, $material, $kursus);
+
+            // Update enrollment progress
+            $this->updateEnrollmentProgress($user->id, $kursus);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Video telah ditandai sebagai telah ditonton'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error marking video as watched:', [
+                'error' => $e->getMessage(),
+                'user_id' => $user->id,
+                'material' => $material
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menandai video: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     // MARK: - Test Methods
-    public function showTest($kursusId, $materialId, $testType)
-    {
-        $kursus = Kursus::findOrFail($kursusId);
-        
-        // HANYA ambil materi yang AKTIF
-        $material = Materials::where('is_active', true)
-                            ->where('id', $materialId)
-                            ->firstOrFail();
-        
-        $user = Auth::user();
+    public function showTest($kursus, $material, $testType)
+{
+    Log::info('Show Test:', [
+        'kursus' => $kursus,
+        'material' => $material,
+        'test_type' => $testType,
+        'user_id' => Auth::id()
+    ]);
 
-        // Validate test type
-        if ($material->type !== $testType) {
-            abort(404);
-        }
+    $kursusRecord = Kursus::findOrFail($kursus);
+    
+    // HANYA ambil materi yang AKTIF
+    $materialRecord = Materials::where('is_active', true)
+                        ->where('id', $material)
+                        ->firstOrFail();
+    
+    $user = Auth::user();
 
-        // ⚠️ PERBAIKAN: Tentukan soal berdasarkan jenis test
-        if ($testType === 'pre_test') {
-            $soalTest = $material->soal_pretest;
-            $durasi = $material->durasi_pretest;
-        } else {
-            $soalTest = $material->soal_posttest;
-            $durasi = $material->durasi_posttest;
-        }
-
-        // Validasi apakah soal tersedia
-        if (empty($soalTest)) {
-            return redirect()->route('mitra.kursus.show', $kursusId)
-                ->with('error', 'Soal ' . ($testType === 'pre_test' ? 'pretest' : 'posttest') . ' belum tersedia.');
-        }
-
-        // Check if user can access this test
-        if (!$this->canAccessMaterial($user->id, $kursusId, $material)) {
-            return redirect()->route('mitra.kursus.show', $kursusId)
-                ->with('error', 'Silakan selesaikan materi sebelumnya terlebih dahulu.');
-        }
-
-        // ⚠️ PERBAIKAN: Cek apakah user sudah mengerjakan test ini
-        $progress = MaterialProgress::where('user_id', $user->id)
-            ->where('material_id', $materialId)
-            ->first();
-
-        if ($testType === 'pre_test' && $progress && $progress->pretest_score !== null) {
-            return redirect()->route('mitra.kursus.show', $kursusId)
-                ->with('info', 'Anda sudah mengerjakan pretest ini.');
-        }
-
-        if ($testType === 'post_test' && $progress && $progress->posttest_score !== null) {
-            return redirect()->route('mitra.kursus.show', $kursusId)
-                ->with('info', 'Anda sudah mengerjakan posttest ini.');
-        }
-
-        return view('mitra.test', compact('kursus', 'material', 'testType', 'soalTest', 'durasi'));
+    // Validate test type
+    if ($materialRecord->type !== $testType) {
+        abort(404);
     }
 
-    public function submitTest(Request $request, $kursusId, $materialId, $testType)
+    // Tentukan soal berdasarkan jenis test
+    if ($testType === 'pre_test') {
+        $soalTest = $materialRecord->soal_pretest;
+        $durasi = $materialRecord->durasi_pretest;
+    } else {
+        $soalTest = $materialRecord->soal_posttest;
+        $durasi = $materialRecord->durasi_posttest;
+    }
+
+    // Validasi apakah soal tersedia
+    if (empty($soalTest)) {
+        return redirect()->route('mitra.kursus.show', $kursus)
+            ->with('error', 'Soal ' . ($testType === 'pre_test' ? 'pretest' : 'posttest') . ' belum tersedia.');
+    }
+
+    // Check if user can access this test
+    if (!$this->canAccessMaterial($user->id, $kursus, $materialRecord)) {
+        return redirect()->route('mitra.kursus.show', $kursus)
+            ->with('error', 'Silakan selesaikan materi sebelumnya terlebih dahulu.');
+    }
+
+    // Cek apakah user sudah mengerjakan test ini
+    $progress = MaterialProgress::where('user_id', $user->id)
+        ->where('material_id', $material)
+        ->first();
+
+    if ($testType === 'pre_test' && $progress && $progress->pretest_score !== null) {
+        return redirect()->route('mitra.kursus.show', $kursus)
+            ->with('info', 'Anda sudah mengerjakan pretest ini.');
+    }
+
+    if ($testType === 'post_test' && $progress && $progress->posttest_score !== null) {
+        return redirect()->route('mitra.kursus.show', $kursus)
+            ->with('info', 'Anda sudah mengerjakan posttest ini.');
+    }
+
+    // PERBAIKAN: Kirim variabel dengan nama yang benar
+    return view('mitra.test', [
+        'kursus' => $kursusRecord,
+        'material' => $materialRecord, // Ini yang harusnya digunakan di view
+        'testType' => $testType,
+        'soalTest' => $soalTest,
+        'durasi' => $durasi
+    ]);
+}
+
+    public function submitTest(Request $request, $kursus, $material, $testType)
     {
-        Log::info('=== TEST SUBMISSION START ===');
-        Log::info('Request Data:', $request->all());
+        Log::info('=== TEST SUBMISSION START ===', [
+            'kursus' => $kursus,
+            'material' => $material,
+            'test_type' => $testType,
+            'user_id' => Auth::id()
+        ]);
 
         try {
             // HANYA ambil materi yang AKTIF
-            $material = Materials::where('is_active', true)
-                                ->findOrFail($materialId);
+            $materialRecord = Materials::where('is_active', true)
+                                ->findOrFail($material);
             $user = Auth::user();
 
-            if ($material->type !== $testType) {
+            if ($materialRecord->type !== $testType) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Jenis test tidak sesuai'
                 ], 404);
             }
 
-            // ⚠️ PERBAIKAN: Validasi lebih fleksibel untuk menerima answers kosong
+            // Validasi lebih fleksibel untuk menerima answers kosong
             $validated = $request->validate([
-                'answers' => 'sometimes|array', // Gunakan sometimes agar boleh tidak ada
+                'answers' => 'sometimes|array',
                 'answers.*' => 'sometimes|nullable|integer'
             ]);
 
-            // Default answers ke array kosong jika tidak ada
             $userAnswers = $validated['answers'] ?? [];
-            
             $score = 0;
 
-            // ⚠️ PERBAIKAN: Tentukan soal yang akan digunakan berdasarkan tipe test
+            // Tentukan soal yang akan digunakan berdasarkan tipe test
             if ($testType === 'pre_test') {
-                $soalTest = $material->soal_pretest;
-                $totalQuestions = count($material->soal_pretest ?? []);
+                $soalTest = $materialRecord->soal_pretest;
+                $totalQuestions = count($materialRecord->soal_pretest ?? []);
             } else {
-                $soalTest = $material->soal_posttest;
-                $totalQuestions = count($material->soal_posttest ?? []);
+                $soalTest = $materialRecord->soal_posttest;
+                $totalQuestions = count($materialRecord->soal_posttest ?? []);
             }
-
-            Log::info('Processing answers:', [
-                'test_type' => $testType,
-                'total_questions' => $totalQuestions,
-                'user_answers_count' => count($userAnswers),
-                'user_answers' => $userAnswers
-            ]);
 
             // Validasi: pastikan ada soal yang tersedia
             if ($totalQuestions === 0) {
@@ -446,10 +1125,8 @@ class KursusController extends Controller
                 ], 400);
             }
 
-            // ⚠️ PERBAIKAN: Hitung score berdasarkan tipe test
-            // Jika user tidak menjawab sama sekali, $userAnswers akan kosong
+            // Hitung score berdasarkan tipe test
             foreach ($soalTest as $index => $soal) {
-                // Cek apakah user menjawab soal ini
                 if (isset($userAnswers[$index]) && 
                     $userAnswers[$index] !== null && 
                     $userAnswers[$index] !== '' && 
@@ -459,16 +1136,7 @@ class KursusController extends Controller
             }
 
             $finalScore = $totalQuestions > 0 ? ($score / $totalQuestions) * 100 : 0;
-            $isPassed = $finalScore >= $material->passing_grade;
-
-            // Log hasil test
-            Log::info('Test Results:', [
-                'score' => $score,
-                'total_questions' => $totalQuestions,
-                'final_score' => $finalScore,
-                'is_passed' => $isPassed,
-                'passing_grade' => $material->passing_grade
-            ]);
+            $isPassed = $finalScore >= $materialRecord->passing_grade;
 
             // Save progress
             $progressData = [
@@ -491,30 +1159,24 @@ class KursusController extends Controller
                 $progress = MaterialProgress::updateOrCreate(
                     [
                         'user_id' => $user->id,
-                        'material_id' => $materialId
+                        'material_id' => $material
                     ],
                     $progressData
                 );
 
+                // PERBAIKAN: Otomatis cek dan unlock material berikutnya
+                $this->checkAndUnlockNextMaterial($user->id, $material, $kursus);
+                
                 // Update enrollment progress
-                $this->updateEnrollmentProgress($user->id, $kursusId);
+                $this->updateEnrollmentProgress($user->id, $kursus);
                 
                 DB::commit();
-
-                Log::info('Test saved successfully:', [
-                    'test_type' => $testType,
-                    'score' => $finalScore,
-                    'is_passed' => $isPassed,
-                    'correct' => $score,
-                    'total' => $totalQuestions,
-                    'progress_id' => $progress->id
-                ]);
 
                 return response()->json([
                     'success' => true,
                     'score' => round($finalScore, 2),
                     'is_passed' => $isPassed,
-                    'passing_grade' => $material->passing_grade,
+                    'passing_grade' => $materialRecord->passing_grade,
                     'total_questions' => $totalQuestions,
                     'correct_answers' => $score,
                     'answered_count' => count($userAnswers),
@@ -529,7 +1191,6 @@ class KursusController extends Controller
         } catch (ValidationException $e) {
             Log::error('Validation error:', ['errors' => $e->errors()]);
             
-            // ⚠️ PERBAIKAN: Handle array to string conversion
             $errorMessages = [];
             foreach ($e->errors() as $field => $messages) {
                 foreach ($messages as $message) {
@@ -547,8 +1208,7 @@ class KursusController extends Controller
             Log::error('Test Submission Error:', [
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
+                'line' => $e->getLine()
             ]);
 
             return response()->json([
@@ -564,30 +1224,30 @@ class KursusController extends Controller
             $enrollment = Enrollment::where('user_id', $userId)
                 ->where('kursus_id', $kursusId)
                 ->first();
-
+            
             if ($enrollment) {
-                // Hitung progress berdasarkan materi yang sudah diselesaikan (HANYA YANG AKTIF)
+                // Hitung progress berdasarkan materi yang sudah diselesaikan
                 $totalMaterials = Materials::where('course_id', $kursusId)
                                             ->where('is_active', true)
                                             ->count();
                 
-                // Hitung materi yang sudah diselesaikan (dengan test atau semua status completed)
-                $completedMaterials = MaterialProgress::where('user_id', $userId)
-                    ->whereHas('material', function($query) use ($kursusId) {
-                        $query->where('course_id', $kursusId)
-                              ->where('is_active', true); // HANYA MATERI AKTIF
-                    })
-                    ->where(function($query) {
-                        $query->where('pretest_score', '>=', DB::raw('passing_grade'))
-                              ->orWhere('posttest_score', '>=', DB::raw('passing_grade'))
-                              ->orWhere(function($q) {
-                                  $q->where('attendance_status', 'completed')
-                                    ->where('material_status', 'completed')
-                                    ->where('video_status', 'completed');
-                              });
-                    })
-                    ->count();
-
+                // Hitung materi yang sudah diselesaikan
+                $completedMaterials = 0;
+                $allMaterials = Materials::where('course_id', $kursusId)
+                    ->where('is_active', true)
+                    ->orderBy('order')
+                    ->get();
+                
+                foreach ($allMaterials as $material) {
+                    $progress = MaterialProgress::where('user_id', $userId)
+                        ->where('material_id', $material->id)
+                        ->first();
+                    
+                    if ($this->isMaterialCompleted($progress, $material)) {
+                        $completedMaterials++;
+                    }
+                }
+                
                 $progressPercentage = $totalMaterials > 0 ? round(($completedMaterials / $totalMaterials) * 100) : 0;
                 
                 // Update status enrollment
@@ -597,14 +1257,6 @@ class KursusController extends Controller
                     'progress_percentage' => $progressPercentage,
                     'status' => $status,
                     'completed_at' => $status === 'completed' ? now() : null
-                ]);
-
-                Log::info('Enrollment progress updated:', [
-                    'enrollment_id' => $enrollment->id,
-                    'progress_percentage' => $progressPercentage,
-                    'status' => $status,
-                    'completed_materials' => $completedMaterials,
-                    'total_materials' => $totalMaterials
                 ]);
             }
         } catch (\Exception $e) {
@@ -616,28 +1268,296 @@ class KursusController extends Controller
         }
     }
 
-    public function showRecap($kursusId, $materialId)
+    /**
+     * API untuk mendapatkan progress terbaru
+     */
+    public function getProgress($kursusId)
     {
-        $kursus = Kursus::findOrFail($kursusId);
+        try {
+            $user = Auth::user();
+            
+            $enrollment = Enrollment::where('user_id', $user->id)
+                ->where('kursus_id', $kursusId)
+                ->firstOrFail();
+            
+            // Hitung progress berdasarkan materi yang sudah diselesaikan
+            $totalMaterials = Materials::where('course_id', $kursusId)
+                                        ->where('is_active', true)
+                                        ->count();
+            
+            // Hitung berapa banyak material yang sudah selesai
+            $completedMaterials = 0;
+            $allMaterials = Materials::where('course_id', $kursusId)
+                ->where('is_active', true)
+                ->orderBy('order')
+                ->get();
+            
+            foreach ($allMaterials as $material) {
+                $progress = MaterialProgress::where('user_id', $user->id)
+                    ->where('material_id', $material->id)
+                    ->first();
+                
+                if ($this->isMaterialCompleted($progress, $material)) {
+                    $completedMaterials++;
+                }
+            }
+            
+            $progressPercentage = $totalMaterials > 0 ? round(($completedMaterials / $totalMaterials) * 100) : 0;
+            
+            return response()->json([
+                'success' => true,
+                'progress_percentage' => $progressPercentage,
+                'completed_materials' => $completedMaterials,
+                'total_materials' => $totalMaterials
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error getting progress:', [
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id(),
+                'kursus_id' => $kursusId
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mendapatkan progress'
+            ], 500);
+        }
+    }
+
+    /**
+     * API untuk mendapatkan status material terbaru
+     */
+    public function getMaterialStatus($kursusId, $materialId)
+    {
+        try {
+            $user = Auth::user();
+            
+            $materialRecord = Materials::where('is_active', true)
+                ->where('id', $materialId)
+                ->where('course_id', $kursusId)
+                ->firstOrFail();
+            
+            $progress = MaterialProgress::where('user_id', $user->id)
+                ->where('material_id', $materialId)
+                ->first();
+            
+            // Tentukan status
+            if ($materialRecord->order === 1) {
+                $isAccessible = true;
+            } else {
+                $previousMaterial = Materials::where('course_id', $kursusId)
+                    ->where('is_active', true)
+                    ->where('order', $materialRecord->order - 1)
+                    ->first();
+                
+                if (!$previousMaterial) {
+                    $isAccessible = true;
+                } else {
+                    $previousProgress = MaterialProgress::where('user_id', $user->id)
+                        ->where('material_id', $previousMaterial->id)
+                        ->first();
+                    
+                    $isAccessible = $this->isMaterialCompleted($previousProgress, $previousMaterial);
+                }
+            }
+            
+            $isCompleted = $this->isMaterialCompleted($progress, $materialRecord);
+            
+            if ($isCompleted) {
+                $status = 'completed';
+            } elseif ($isAccessible) {
+                $status = 'current';
+            } else {
+                $status = 'locked';
+            }
+            
+            return response()->json([
+                'success' => true,
+                'material_id' => $materialId,
+                'status' => $status,
+                'attendance_status' => $progress ? $progress->attendance_status : 'pending',
+                'material_status' => $progress ? $progress->material_status : 'pending',
+                'video_status' => $progress ? $progress->video_status : 'pending',
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error getting material status:', [
+                'error' => $e->getMessage(),
+                'kursus_id' => $kursusId,
+                'material_id' => $materialId
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mendapatkan status material'
+            ], 500);
+        }
+    }
+
+    /**
+ * Refresh status semua material dalam kursus
+ */
+public function refreshAllMaterialsStatus($kursusId)
+{
+    try {
+        $user = Auth::user();
+        
+        $kursus = Kursus::where('status', 'aktif')
+            ->where('id', $kursusId)
+            ->with(['materials' => function($query) {
+                $query->where('is_active', true)
+                      ->orderBy('order');
+            }])
+            ->firstOrFail();
+        
+        $materials = $this->getMaterialsWithStatus($kursus->materials, $user, $kursusId);
+        
+        return response()->json([
+            'success' => true,
+            'materials' => $materials
+        ]);
+        
+    } catch (\Exception $e) {
+        Log::error('Error refreshing all materials status:', [
+            'error' => $e->getMessage(),
+            'kursus_id' => $kursusId
+        ]);
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Gagal refresh status material'
+        ], 500);
+    }
+}
+
+    public function getMaterialSubtasks($kursusId, $materialId)
+    {
+        try {
+            $kursus = Kursus::findOrFail($kursusId);
+            $material = Materials::where('is_active', true)
+                                ->where('id', $materialId)
+                                ->where('course_id', $kursusId)
+                                ->firstOrFail();
+            
+            $user = Auth::user();
+            
+            // Pastikan user terenroll
+            $enrollment = Enrollment::where('user_id', $user->id)
+                ->where('kursus_id', $kursusId)
+                ->firstOrFail();
+            
+            // Dapatkan progress untuk material ini
+            $progress = MaterialProgress::where('user_id', $user->id)
+                ->where('material_id', $materialId)
+                ->first();
+            
+            // Tentukan status menggunakan logika yang sama
+            if ($material->order === 1) {
+                $isAccessible = true;
+            } else {
+                $previousMaterial = Materials::where('course_id', $kursusId)
+                    ->where('is_active', true)
+                    ->where('order', $material->order - 1)
+                    ->first();
+                
+                if (!$previousMaterial) {
+                    $isAccessible = true;
+                } else {
+                    $previousProgress = MaterialProgress::where('user_id', $user->id)
+                        ->where('material_id', $previousMaterial->id)
+                        ->first();
+                    
+                    $isAccessible = $this->isMaterialCompleted($previousProgress, $previousMaterial);
+                }
+            }
+            
+            $isCompleted = $this->isMaterialCompleted($progress, $material);
+            
+            if ($isCompleted) {
+                $status = 'completed';
+                $statusClass = 'completed';
+            } elseif ($isAccessible) {
+                $status = 'current';
+                $statusClass = 'current';
+            } else {
+                $status = 'locked';
+                $statusClass = 'locked';
+            }
+            
+            // Parse file_path
+            $filePaths = json_decode($material->file_path, true) ?? [$material->file_path];
+            $totalFiles = count($filePaths);
+            
+            // Prepare material data
+            $materialData = [
+                'id' => $material->id,
+                'title' => $material->title,
+                'description' => $material->description,
+                'type' => 'material',
+                'status' => $status,
+                'status_class' => $statusClass,
+                'attendance_required' => $material->attendance_required ?? true,
+                'attendance_status' => $progress && $progress->attendance_status === 'completed' ? 'completed' : 'pending',
+                'has_material' => !empty($material->file_path),
+                'material_status' => $progress && $progress->material_status === 'completed' ? 'completed' : 'pending',
+                'file_path' => $material->file_path,
+                'file_paths' => $filePaths,
+                'total_files' => $totalFiles,
+                'has_video' => !empty($material->video_url),
+                'video_status' => $progress && $progress->video_status === 'completed' ? 'completed' : 'pending',
+                'video_url' => $material->video_url,
+            ];
+            
+            return response()->json([
+                'success' => true,
+                'html' => view('mitra.partials.material-subtasks', [
+                    'material' => $materialData,
+                    'kursus' => $kursus
+                ])->render()
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in getMaterialSubtasks:', [
+                'error' => $e->getMessage(),
+                'kursusId' => $kursusId,
+                'materialId' => $materialId
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error loading material subtasks'
+            ], 500);
+        }
+    }
+
+    public function showRecap($kursus, $material)
+    {
+        Log::info('Show Recap:', [
+            'kursus' => $kursus,
+            'material' => $material,
+            'user_id' => Auth::id()
+        ]);
+
+        $kursusRecord = Kursus::findOrFail($kursus);
         // HANYA ambil materi yang AKTIF
-        $material = Materials::where('is_active', true)
-                            ->findOrFail($materialId);
+        $materialRecord = Materials::where('is_active', true)
+                            ->findOrFail($material);
         
         $user = Auth::user();
 
-        if ($material->type !== 'recap') {
+        if ($materialRecord->type !== 'recap') {
             abort(404);
         }
 
-        // Get all progress for this course (HANYA untuk materi yang AKTIF)
+        // Get all progress for this course
         $progress = MaterialProgress::where('user_id', $user->id)
-            ->whereIn('material_id', $kursus->materials()
+            ->whereIn('material_id', $kursusRecord->materials()
                                             ->where('is_active', true)
                                             ->pluck('id'))
             ->with('material')
             ->get();
 
-        return view('mitra.recap', compact('kursus', 'material', 'progress'));
+        return view('mitra.recap', compact('kursusRecord', 'materialRecord', 'progress'));
     }
 
     // Helper method to check if user can access material
@@ -650,7 +1570,7 @@ class KursusController extends Controller
 
         // Get previous material (HANYA YANG AKTIF)
         $previousMaterial = Materials::where('course_id', $kursusId)
-            ->where('is_active', true) // HANYA MATERI AKTIF
+            ->where('is_active', true)
             ->where('order', $material->order - 1)
             ->first();
 

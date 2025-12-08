@@ -1,6 +1,7 @@
 @extends('mitra.layouts.app')
 
-@section('title', ucfirst($testType) . ' - ' . $material->title)
+@section('title', ucfirst($testType) . ' - ' . $material->title) <!-- Ubah di sini -->
+4
 
 @section('content')
 <style>
