@@ -166,6 +166,188 @@
         position: absolute;
         left: -9999px;
     }
+    
+    /* Video Section Styles */
+    .video-control-section {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .video-question-item {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .player-config-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+    
+    .config-item {
+        background: white;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+    }
+    
+    .config-item label {
+        font-weight: 500;
+        margin-bottom: 5px;
+        display: block;
+    }
+    
+    .config-item small {
+        color: #6c757d;
+        font-size: 12px;
+    }
+    
+    /* Video Preview */
+    .video-preview-container {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-top: 15px;
+    }
+    
+    .video-preview-header {
+        background: #f8f9fa;
+        padding: 10px 15px;
+        border-bottom: 1px solid #dee2e6;
+        font-weight: 600;
+    }
+    
+    .video-preview-body {
+        padding: 20px;
+        background: white;
+    }
+    
+    .ratio-16x9 {
+        --bs-aspect-ratio: 56.25%; /* 16:9 Aspect Ratio */
+    }
+    
+    /* Animation */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.3s ease;
+    }
+    
+    /* Badges */
+    .badge-video {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .badge-hosted {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+    }
+    
+    .badge-external {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+    }
+
+    .google-drive-info {
+        background: #e8f5e9;
+        border: 1px solid #c8e6c9;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 10px;
+    }
+    
+    .google-drive-info h6 {
+        color: #2e7d32;
+    }
+    
+    .upload-progress {
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 10px;
+        display: none;
+    }
+    
+    .progress-bar-google {
+        background: linear-gradient(135deg, #4285f4, #34a853, #fbbc05, #ea4335);
+        background-size: 400% 400%;
+        animation: gradient 3s ease infinite;
+    }
+    
+    @keyframes gradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    
+    .file-size-info {
+        font-size: 12px;
+        color: #666;
+        margin-top: 5px;
+    }
+    
+    .upload-status {
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-top: 5px;
+    }
+    
+    .status-uploading {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+    
+    .status-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .status-error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    
+    .video-preview-thumbnail {
+        width: 100%;
+        height: 200px;
+        background: #f8f9fa;
+        border: 1px dashed #dee2e6;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6c757d;
+        margin-top: 10px;
+    }
+    
+    .video-preview-thumbnail i {
+        font-size: 48px;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .player-config-grid {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
 @endsection
 
@@ -222,6 +404,7 @@
                 <div class="card-body">
                     <form action="{{ route('admin.kursus.materials.store', $kursus) }}" method="POST" enctype="multipart/form-data" id="materialForm">
                         @csrf
+                        
 
                         <!-- Informasi Dasar Materi -->
                         <div class="row mb-3">
@@ -283,7 +466,7 @@
                                                     Materi PDF/PPT
                                                 </label>
                                             </div>
-                                            <small class="text-muted">Upload file materi dalam format PDF, PPT, atau dokumen (dapat menambahkan file satu per satu atau multiple)</small>
+                                            <small class="text-muted">Upload file materi dalam format PDF, PPT, atau dokumen (disimpan di server lokal)</small>
                                         </div>
                                     </div>
 
@@ -299,7 +482,7 @@
                                                     Video Pembelajaran
                                                 </label>
                                             </div>
-                                            <small class="text-muted">Tautan video YouTube atau platform video lainnya</small>
+                                            <small class="text-muted">Video akan diupload ke Google Drive dengan kontrol seperti Digitalent</small>
                                         </div>
                                     </div>
 
@@ -378,6 +561,7 @@
                                                     <small class="text-muted">
                                                         Format: PDF, DOC, PPT, atau gambar. Maksimal 10MB per file. 
                                                         Dapat menambahkan file satu per satu atau multiple.
+                                                        <strong>File akan disimpan di server lokal.</strong>
                                                     </small>
                                                     @error('file_path')
                                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -401,32 +585,221 @@
                             </div>
                         </div>
 
-                        <!-- Konten Materi: Video -->
+                        <!-- Konten Materi: Video (DIGITALENT STYLE) -->
                         <div id="video-content-section" class="row mb-3" style="display: none;">
                             <div class="col-12">
                                 <div class="card bg-light">
                                     <div class="card-body">
-                                        <h6 class="card-title"><i class="mdi mdi-video text-primary me-2"></i>Materi Video</h6>
-                                        <div class="row">
-                                            <div class="col-md-6">
+                                        <h6 class="card-title"><i class="mdi mdi-video text-primary me-2"></i>Materi Video (Digitalent Style)</h6>
+                                        
+                                        <!-- Informasi Google Drive -->
+                                        <div class="google-drive-info">
+                                            <h6><i class="mdi mdi-google-drive me-2"></i>Google Drive Storage</h6>
+                                            <small class="text-muted">
+                                                Video akan diupload ke Google Drive untuk keamanan dan penyimpanan yang lebih baik.
+                                                Durasi video akan dideteksi otomatis.
+                                            </small>
+                                        </div>
+
+                                        <!-- Video Type Selection -->
+                                        <div class="row mb-3">
+                                            <div class="col-md-12">
+                                                <label for="video_type" class="form-label">Jenis Video <span class="text-danger">*</span></label>
+                                                <select class="form-select @error('video_type') is-invalid @enderror" 
+                                                        id="video_type" name="video_type" onchange="toggleVideoType()">
+                                                    <option value="">Pilih Jenis Video</option>
+                                                    <option value="youtube" {{ old('video_type') == 'youtube' ? 'selected' : '' }}>YouTube</option>
+                                                    <option value="vimeo" {{ old('video_type') == 'vimeo' ? 'selected' : '' }}>Vimeo</option>
+                                                    <option value="hosted" {{ old('video_type') == 'hosted' ? 'selected' : '' }}>Google Drive (Upload Sendiri)</option>
+                                                    <option value="external" {{ old('video_type') == 'external' ? 'selected' : '' }}>External (Embed)</option>
+                                                </select>
+                                                <small class="text-muted mt-1">Pilih "Google Drive" untuk upload video ke cloud storage</small>
+                                                @error('video_type')
+                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+                                        </div>
+
+                                        <!-- Video URL (for YouTube, Vimeo, External) -->
+                                        <div class="row mb-3" id="video-url-section" style="display: none;">
+                                            <div class="col-12">
                                                 <label for="video_url" class="form-label">URL Video</label>
-                                                <input type="url" class="form-control @error('video_url') is-invalid @enderror" 
-                                                       id="video_url" name="video_url" value="{{ old('video_url') }}" 
-                                                       placeholder="https://youtube.com/embed/...">
-                                                <small class="text-muted">Link embed video YouTube atau platform lainnya</small>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="mdi mdi-link"></i>
+                                                    </span>
+                                                    <input type="url" class="form-control @error('video_url') is-invalid @enderror" 
+                                                           id="video_url" name="video_url" value="{{ old('video_url') }}" 
+                                                           placeholder="Masukkan URL video">
+                                                </div>
+                                                <small class="text-muted" id="url-help-text">
+                                                    <!-- Text help akan diisi oleh JavaScript -->
+                                                </small>
                                                 @error('video_url')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
                                             </div>
-                                            <div class="col-md-6">
-                                                <label for="duration_video" class="form-label">Durasi Video (menit)</label>
-                                                <input type="number" class="form-control @error('duration_video') is-invalid @enderror" 
-                                                       id="duration_video" name="duration_video" value="{{ old('duration_video') }}" min="1"
-                                                       placeholder="Contoh: 45">
-                                                <small class="text-muted">Durasi video dalam menit</small>
-                                                @error('duration_video')
+                                        </div>
+
+                                        <!-- Video File Upload (for Google Drive) -->
+                                        <div class="row mb-3" id="video-file-section" style="display: none;">
+                                            <div class="col-12">
+                                                <label for="video_file" class="form-label">Upload Video ke Google Drive</label>
+                                                <input type="file" class="form-control @error('video_file') is-invalid @enderror" 
+                                                       id="video_file" name="video_file" accept=".mp4,.webm,.avi,.mov,.wmv" 
+                                                       onchange="previewVideoFile(this)">
+                                                <small class="text-muted">Format: MP4, WebM, AVI, MOV, WMV. Maksimal 100MB</small>
+                                                @error('video_file')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
+                                                
+                                                <!-- Video Preview -->
+                                                <div id="video-preview" style="display: none;">
+                                                    <div class="video-preview-thumbnail mt-3">
+                                                        <i class="mdi mdi-video"></i>
+                                                    </div>
+                                                    <div id="video-file-info" class="file-size-info"></div>
+                                                </div>
+                                                
+                                                <!-- Upload Progress -->
+                                                <div id="upload-progress" class="upload-progress">
+                                                    <div class="d-flex justify-content-between mb-2">
+                                                        <span>Uploading to Google Drive...</span>
+                                                        <span id="upload-percentage">0%</span>
+                                                    </div>
+                                                    <div class="progress">
+                                                        <div id="upload-progress-bar" class="progress-bar progress-bar-google" 
+                                                             role="progressbar" style="width: 0%"></div>
+                                                    </div>
+                                                    <div id="upload-status" class="upload-status mt-2"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Durasi Video (Otomatis) -->
+                                        <div class="row mb-3" id="duration-info-section" style="display: none;">
+                                            <div class="col-12">
+                                                <div class="alert alert-info">
+                                                    <i class="mdi mdi-timer-sand me-2"></i>
+                                                    <strong>Durasi Video:</strong> 
+                                                    <span id="duration-display">Akan terdeteksi otomatis setelah upload</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Player Configuration (Digitalent Style) -->
+                                        <div class="video-control-section fade-in" id="player-config-section" style="display: none;">
+                                            <h6><i class="mdi mdi-cog me-2"></i>Pengaturan Video Player</h6>
+                                            <small class="text-muted d-block mb-3">Kontrol seperti platform Digitalent - video tidak bisa di-skip</small>
+                                            
+                                            <div class="player-config-grid">
+                                                <!-- Basic Controls -->
+                                                <div class="config-item">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="allow_skip" 
+                                                               name="allow_skip" value="1" {{ old('allow_skip') ? 'checked' : '' }}>
+                                                        <label class="form-check-label fw-bold" for="allow_skip">
+                                                            Izinkan Skip
+                                                        </label>
+                                                    </div>
+                                                    <small class="text-muted">Jika nonaktif, peserta tidak bisa melewati video</small>
+                                                </div>
+
+                                                <div class="config-item">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="disable_forward_seek" 
+                                                               name="disable_forward_seek" value="1" {{ old('disable_forward_seek', true) ? 'checked' : '' }}>
+                                                        <label class="form-check-label fw-bold" for="disable_forward_seek">
+                                                            Nonaktifkan Forward Seek
+                                                        </label>
+                                                    </div>
+                                                    <small class="text-muted">Peserta tidak bisa maju ke bagian video yang belum ditonton</small>
+                                                </div>
+
+                                                <div class="config-item">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="disable_backward_seek" 
+                                                               name="disable_backward_seek" value="1" {{ old('disable_backward_seek') ? 'checked' : '' }}>
+                                                        <label class="form-check-label fw-bold" for="disable_backward_seek">
+                                                            Nonaktifkan Backward Seek
+                                                        </label>
+                                                    </div>
+                                                    <small class="text-muted">Peserta tidak bisa mundur ke bagian sebelumnya</small>
+                                                </div>
+
+                                                <div class="config-item">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="disable_right_click" 
+                                                               name="disable_right_click" value="1" {{ old('disable_right_click', true) ? 'checked' : '' }}>
+                                                        <label class="form-check-label fw-bold" for="disable_right_click">
+                                                            Nonaktifkan Klik Kanan
+                                                        </label>
+                                                    </div>
+                                                    <small class="text-muted">Mencegah download/save video</small>
+                                                </div>
+
+                                                <!-- Completion Requirements -->
+                                                <div class="config-item">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="require_completion" 
+                                                               name="require_completion" value="1" {{ old('require_completion', true) ? 'checked' : '' }}>
+                                                        <label class="form-check-label fw-bold" for="require_completion">
+                                                            Wajib Selesai Menonton
+                                                        </label>
+                                                    </div>
+                                                    <small class="text-muted">Peserta harus menonton video hingga selesai</small>
+                                                </div>
+
+                                                <div class="config-item">
+                                                    <label for="min_watch_percentage" class="form-label">Persentase Minimal Tontonan</label>
+                                                    <input type="range" class="form-range" id="min_watch_percentage" 
+                                                           name="min_watch_percentage" min="50" max="100" step="5" 
+                                                           value="{{ old('min_watch_percentage', 90) }}">
+                                                    <div class="d-flex justify-content-between">
+                                                        <small>50%</small>
+                                                        <span id="percentage-value" class="fw-bold">90%</span>
+                                                        <small>100%</small>
+                                                    </div>
+                                                    <small class="text-muted d-block mt-1">Minimal persentase video yang harus ditonton</small>
+                                                </div>
+
+                                                <!-- Video Questions -->
+                                                <div class="config-item">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="auto_pause_on_question" 
+                                                               name="auto_pause_on_question" value="1" {{ old('auto_pause_on_question', true) ? 'checked' : '' }}>
+                                                        <label class="form-check-label fw-bold" for="auto_pause_on_question">
+                                                            Auto Pause saat Pertanyaan
+                                                        </label>
+                                                    </div>
+                                                    <small class="text-muted">Video otomatis pause saat pertanyaan muncul</small>
+                                                </div>
+
+                                                <div class="config-item">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="require_question_completion" 
+                                                               name="require_question_completion" value="1" {{ old('require_question_completion') ? 'checked' : '' }}>
+                                                        <label class="form-check-label fw-bold" for="require_question_completion">
+                                                            Wajib Jawab Pertanyaan
+                                                        </label>
+                                                    </div>
+                                                    <small class="text-muted">Harus menjawab pertanyaan untuk melanjutkan video</small>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Video Questions -->
+                                        <div class="video-control-section fade-in" id="video-questions-section" style="display: none;">
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <h6 class="mb-0"><i class="mdi mdi-help-circle me-2"></i>Pertanyaan Video</h6>
+                                                <button type="button" class="btn btn-success btn-sm" onclick="addVideoQuestion()">
+                                                    <i class="mdi mdi-plus"></i> Tambah Pertanyaan
+                                                </button>
+                                            </div>
+                                            <small class="text-muted d-block mb-3">Tambahkan pertanyaan yang muncul di waktu tertentu dalam video</small>
+                                            
+                                            <div id="video-questions-container">
+                                                <!-- Video questions akan ditambahkan di sini -->
                                             </div>
                                         </div>
                                     </div>
@@ -440,7 +813,7 @@
                             
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <label for="durasi_pretest" class="form-label">Durasi Pretest (menit)</label>
+                                    <label for="durasi_pretest" class="form-label">Durasi Pretest (menit) <span class="text-danger">*</span></label>
                                     <input type="number" class="form-control @error('durasi_pretest') is-invalid @enderror" 
                                            id="durasi_pretest" name="durasi_pretest" 
                                            value="{{ old('durasi_pretest', 60) }}" min="1">
@@ -478,7 +851,7 @@
                             
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <label for="durasi_posttest" class="form-label">Durasi Posttest (menit)</label>
+                                    <label for="durasi_posttest" class="form-label">Durasi Posttest (menit) <span class="text-danger">*</span></label>
                                     <input type="number" class="form-control @error('durasi_posttest') is-invalid @enderror" 
                                            id="durasi_posttest" name="durasi_posttest" 
                                            value="{{ old('durasi_posttest', 60) }}" min="1">
@@ -532,13 +905,14 @@
                             <div class="col-12">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
-                                        <button type="submit" class="btn btn-primary">
+                                        <button type="submit" class="btn btn-primary" id="submitBtn">
                                             <i class="mdi mdi-content-save me-2"></i> Simpan Materi
                                         </button>
                                         <a href="{{ route('admin.kursus.materials.index', $kursus) }}" class="btn btn-secondary">
                                             <i class="mdi mdi-cancel me-2"></i> Batal
                                         </a>
                                     </div>
+                                    <div id="form-status"></div>
                                 </div>
                             </div>
                         </div>
@@ -549,13 +923,18 @@
     </div>
 </div>
 
+<!-- SweetAlert -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
 // Variabel untuk counter soal
 let soalPretestCounter = 0;
 let soalPosttestCounter = 0;
+let videoQuestionCounter = 0;
 
 // Variabel untuk menyimpan file yang dipilih
 let selectedFiles = [];
+let currentVideoFile = null;
 
 // Toggle content type selection
 function toggleContentType(type) {
@@ -581,6 +960,17 @@ function toggleContentSection(type, isVisible) {
     if (section) {
         section.style.display = isVisible ? 'block' : 'none';
         
+        // Jika video dipilih, tampilkan config
+        if (type === 'video' && isVisible) {
+            document.getElementById('player-config-section').style.display = 'block';
+            document.getElementById('video-questions-section').style.display = 'block';
+            document.getElementById('duration-info-section').style.display = 'block';
+        } else if (type === 'video' && !isVisible) {
+            document.getElementById('player-config-section').style.display = 'none';
+            document.getElementById('video-questions-section').style.display = 'none';
+            document.getElementById('duration-info-section').style.display = 'none';
+        }
+        
         // Jika pretest/posttest dipilih, tambahkan soal default
         if ((type === 'pretest' || type === 'posttest') && isVisible) {
             const container = document.getElementById(`soal-${type}-container`);
@@ -590,6 +980,81 @@ function toggleContentSection(type, isVisible) {
         }
     }
 }
+
+// Toggle video type sections
+function toggleVideoType() {
+    const videoType = document.getElementById('video_type').value;
+    const urlSection = document.getElementById('video-url-section');
+    const fileSection = document.getElementById('video-file-section');
+    const urlHelp = document.getElementById('url-help-text');
+    const videoUrlInput = document.getElementById('video_url');
+    
+    // Reset
+    urlSection.style.display = 'none';
+    fileSection.style.display = 'none';
+    document.getElementById('video-preview').style.display = 'none';
+    document.getElementById('upload-progress').style.display = 'none';
+    videoUrlInput.placeholder = 'Masukkan URL video';
+    
+    // Show appropriate section
+    if (videoType === 'youtube') {
+        urlSection.style.display = 'block';
+        urlHelp.textContent = 'Format: https://youtube.com/watch?v=ID_VIDEO atau https://youtu.be/ID_VIDEO';
+        videoUrlInput.placeholder = 'Contoh: https://youtube.com/watch?v=dQw4w9WgXcQ';
+        document.getElementById('duration-display').textContent = 'Durasi akan dideteksi dari YouTube';
+    } else if (videoType === 'vimeo') {
+        urlSection.style.display = 'block';
+        urlHelp.textContent = 'Format: https://vimeo.com/ID_VIDEO';
+        videoUrlInput.placeholder = 'Contoh: https://vimeo.com/123456789';
+        document.getElementById('duration-display').textContent = 'Durasi akan dideteksi dari Vimeo';
+    } else if (videoType === 'external') {
+        urlSection.style.display = 'block';
+        urlHelp.textContent = 'Masukkan URL embed video (iframe src)';
+        videoUrlInput.placeholder = 'Contoh: https://example.com/embed/video';
+        document.getElementById('duration-display').textContent = 'Masukkan durasi manual jika diperlukan';
+    } else if (videoType === 'hosted') {
+        fileSection.style.display = 'block';
+        document.getElementById('duration-display').textContent = 'Durasi akan dideteksi otomatis setelah upload';
+    }
+}
+
+// Preview video file sebelum upload
+function previewVideoFile(input) {
+    const preview = document.getElementById('video-preview');
+    const fileInfo = document.getElementById('video-file-info');
+    const uploadProgress = document.getElementById('upload-progress');
+    
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        currentVideoFile = file;
+        
+        // Show preview
+        preview.style.display = 'block';
+        uploadProgress.style.display = 'none';
+        
+        // Show file info
+        const fileSize = (file.size / (1024 * 1024)).toFixed(2);
+        fileInfo.innerHTML = `
+            <strong>${file.name}</strong><br>
+            Size: ${fileSize} MB | Type: ${file.type}<br>
+            Video akan diupload ke Google Drive secara otomatis.
+        `;
+        
+        // Reset progress bar
+        document.getElementById('upload-progress-bar').style.width = '0%';
+        document.getElementById('upload-percentage').textContent = '0%';
+        document.getElementById('upload-status').className = 'upload-status';
+        document.getElementById('upload-status').innerHTML = '';
+    } else {
+        preview.style.display = 'none';
+        currentVideoFile = null;
+    }
+}
+
+// Update percentage value display
+document.getElementById('min_watch_percentage').addEventListener('input', function() {
+    document.getElementById('percentage-value').textContent = this.value + '%';
+});
 
 // Tambah soal baru
 function addSoal(type) {
@@ -640,6 +1105,94 @@ function addSoal(type) {
     }
 }
 
+// Tambah pertanyaan video baru
+function addVideoQuestion() {
+    const container = document.getElementById('video-questions-container');
+    const questionId = videoQuestionCounter;
+    
+    const newQuestion = document.createElement('div');
+    newQuestion.className = 'video-question-item fade-in';
+    newQuestion.innerHTML = `
+        <div class="row mb-3">
+            <div class="col-11">
+                <h6 class="mb-3">Pertanyaan Video #${videoQuestionCounter + 1}</h6>
+            </div>
+            <div class="col-1">
+                <button type="button" class="btn btn-danger btn-sm" onclick="removeVideoQuestion(this)" title="Hapus Pertanyaan">
+                    <i class="mdi mdi-delete"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">Waktu Muncul (detik)</label>
+                <input type="number" class="form-control" name="video_questions[${questionId}][time_in_seconds]" 
+                       min="0" value="0" placeholder="0">
+                <small class="text-muted">Detik ke berapa pertanyaan muncul</small>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Poin</label>
+                <input type="number" class="form-control" name="video_questions[${questionId}][points]" 
+                       min="1" max="10" value="1">
+                <small class="text-muted">Poin untuk jawaban benar (1-10)</small>
+            </div>
+        </div>
+        
+        <div class="row mb-3">
+            <div class="col-12">
+                <label class="form-label">Pertanyaan</label>
+                <textarea class="form-control" name="video_questions[${questionId}][question]" 
+                          rows="2" placeholder="Tulis pertanyaan di sini..." required></textarea>
+            </div>
+        </div>
+        
+        <div class="row mb-3">
+            ${Array.from({length: 4}, (_, i) => `
+            <div class="col-md-6 mb-2">
+                <div class="input-group">
+                    <div class="input-group-text">
+                        <input type="radio" name="video_questions[${questionId}][correct_option]" value="${i}" required>
+                    </div>
+                    <input type="text" class="form-control" name="video_questions[${questionId}][options][]" 
+                           placeholder="Pilihan ${String.fromCharCode(65 + i)}" required>
+                </div>
+            </div>
+            `).join('')}
+        </div>
+        
+        <div class="row">
+            <div class="col-12">
+                <label class="form-label">Penjelasan (Opsional)</label>
+                                <textarea class="form-control" name="video_questions[${questionId}][explanation]" 
+                          rows="2" placeholder="Penjelasan jawaban yang benar"></textarea>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="required_${questionId}" 
+                           name="video_questions[${questionId}][required_to_continue]" value="1" checked>
+                    <label class="form-check-label" for="required_${questionId}">
+                        Wajib dijawab untuk melanjutkan video
+                    </label>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.appendChild(newQuestion);
+    videoQuestionCounter++;
+    
+    // Update dynamic IDs for checkboxes
+    const checkbox = newQuestion.querySelector(`[id^="required_"]`);
+    if (checkbox) {
+        checkbox.id = `required_${questionId}`;
+        checkbox.nextElementSibling.setAttribute('for', `required_${questionId}`);
+    }
+}
+
 // Hapus soal
 function removeSoal(button, type) {
     const container = document.getElementById(`soal-${type}-container`);
@@ -647,7 +1200,21 @@ function removeSoal(button, type) {
         button.closest('.soal-item').remove();
         reindexSoal(type);
     } else {
-        alert('Minimal harus ada 1 soal');
+        Swal.fire({
+            title: 'Peringatan',
+            text: 'Minimal harus ada 1 soal',
+            icon: 'warning',
+            confirmButtonColor: '#1e3c72'
+        });
+    }
+}
+
+// Hapus pertanyaan video
+function removeVideoQuestion(button) {
+    const container = document.getElementById('video-questions-container');
+    if (container.children.length > 0) {
+        button.closest('.video-question-item').remove();
+        reindexVideoQuestions();
     }
 }
 
@@ -676,23 +1243,53 @@ function reindexSoal(type) {
     }
 }
 
-// Handle file selection - tambahkan file baru ke daftar tanpa menghapus yang lama
-function handleFileSelection(files) {
-    if (files.length > 0) {
-        // Tambahkan file baru ke array selectedFiles
-        Array.from(files).forEach(file => {
-            // Cek apakah file sudah ada dalam selectedFiles
-            const isDuplicate = selectedFiles.some(existingFile => 
-                existingFile.name === file.name && existingFile.size === file.size
-            );
-            
-            if (!isDuplicate) {
-                selectedFiles.push(file);
-            }
+// Reindex video questions
+function reindexVideoQuestions() {
+    const container = document.getElementById('video-questions-container');
+    const questions = container.querySelectorAll('.video-question-item');
+    
+    questions.forEach((item, index) => {
+        // Update title
+        const title = item.querySelector('h6');
+        if (title) {
+            title.textContent = `Pertanyaan Video #${index + 1}`;
+        }
+        
+        // Update all input names
+        const inputs = item.querySelectorAll('[name]');
+        inputs.forEach(input => {
+            const name = input.getAttribute('name');
+            const newName = name.replace(/video_questions\[\d+\]/, `video_questions[${index}]`);
+            input.setAttribute('name', newName);
         });
         
-        // Update preview dan hidden inputs
+        // Update checkbox ID
+        const checkbox = item.querySelector('[id^="required_"]');
+        if (checkbox) {
+            checkbox.id = `required_${index}`;
+            checkbox.nextElementSibling.setAttribute('for', `required_${index}`);
+        }
+    });
+    
+    videoQuestionCounter = questions.length;
+}
+
+// Handle file selection - tambahkan file baru ke daftar tanpa menghapus yang lama
+// GANTI fungsi handleFileSelection yang ada dengan ini:
+function handleFileSelection(files) {
+    if (files.length > 0) {
+        // Clear existing files array
+        selectedFiles = [];
+        
+        // Add all selected files
+        Array.from(files).forEach(file => {
+            selectedFiles.push(file);
+        });
+        
+        // Update preview
         updateFilePreview();
+        
+        // Update hidden file inputs untuk form submission
         updateFileInputs();
     }
 }
@@ -736,6 +1333,7 @@ function removeFile(index) {
 }
 
 // Update hidden file inputs untuk form submission
+// GANTI fungsi updateFileInputs yang ada dengan ini:
 function updateFileInputs() {
     const container = document.getElementById('file-inputs-container');
     container.innerHTML = '';
@@ -769,88 +1367,30 @@ document.addEventListener('DOMContentLoaded', function() {
         if (checkbox.checked) {
             checkbox.closest('.content-type-option').classList.add('selected');
             toggleContentSection(type, true);
+            
+            // Jika video sudah dipilih, init video type
+            if (type === 'video') {
+                setTimeout(() => {
+                    const videoType = document.getElementById('video_type').value;
+                    if (videoType) {
+                        toggleVideoType();
+                    }
+                }, 100);
+            }
         }
     });
+
+    // Initialize percentage display
+    const percentageSlider = document.getElementById('min_watch_percentage');
+    if (percentageSlider) {
+        document.getElementById('percentage-value').textContent = percentageSlider.value + '%';
+    }
 
     // Initialize Bootstrap tooltips
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
-});
-
-// Fungsi untuk menampilkan SweetAlert yang lebih user friendly
-function showAlert(title, message, type = 'error') {
-    Swal.fire({
-        title: title,
-        text: message,
-        icon: type,
-        confirmButtonColor: '#1e3c72'
-    });
-}
-
-// Validasi form sebelum submit (non-blocking, hanya warning)
-document.getElementById('materialForm').addEventListener('submit', function(e) {
-    const contentTypes = Array.from(document.querySelectorAll('input[name="content_types[]"]:checked'))
-        .map(cb => cb.value);
-    
-    if (contentTypes.length === 0) {
-        e.preventDefault();
-        showAlert('Peringatan', 'Pilih minimal satu jenis konten materi');
-        return false;
-    }
-    
-    // Validasi untuk setiap konten yang dipilih (hanya warning, tidak block)
-    let warnings = [];
-    
-    if (contentTypes.includes('file') && selectedFiles.length === 0) {
-        warnings.push('File materi untuk konten PDF/PPT belum dipilih');
-    }
-    
-    if (contentTypes.includes('video')) {
-        const videoUrl = document.getElementById('video_url').value;
-        if (!videoUrl) {
-            warnings.push('URL video untuk konten video belum diisi');
-        } else if (!isValidUrl(videoUrl)) {
-            warnings.push('URL video tidak valid');
-        }
-    }
-    
-    if (contentTypes.includes('pretest')) {
-        const soalPretestContainer = document.getElementById('soal-pretest-container');
-        if (soalPretestContainer.children.length === 0) {
-            warnings.push('Pretest harus memiliki minimal 1 soal');
-        }
-    }
-    
-    if (contentTypes.includes('posttest')) {
-        const soalPosttestContainer = document.getElementById('soal-posttest-container');
-        if (soalPosttestContainer.children.length === 0) {
-            warnings.push('Posttest harus memiliki minimal 1 soal');
-        }
-    }
-    
-    // Jika ada warnings, tampilkan konfirmasi
-    if (warnings.length > 0) {
-        e.preventDefault();
-        const warningMessage = 'Perhatikan hal berikut:\n\n' + warnings.join('\n') + '\n\nLanjutkan menyimpan?';
-        
-        Swal.fire({
-            title: 'Data Belum Lengkap',
-            text: warningMessage,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#1e3c72',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Ya, Simpan',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Jika user memilih untuk lanjut, submit form
-                document.getElementById('materialForm').submit();
-            }
-        });
-    }
 });
 
 // Fungsi untuk validasi URL sederhana
@@ -861,6 +1401,140 @@ function isValidUrl(string) {
     } catch (_) {
         return false;
     }
+}
+
+// Validasi form sebelum submit
+document.getElementById('materialForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const contentTypes = Array.from(document.querySelectorAll('input[name="content_types[]"]:checked'))
+        .map(cb => cb.value);
+    
+    if (contentTypes.length === 0) {
+        Swal.fire({
+            title: 'Peringatan',
+            text: 'Pilih minimal satu jenis konten materi',
+            icon: 'warning',
+            confirmButtonColor: '#1e3c72'
+        });
+        return false;
+    }
+    
+    // Validasi untuk setiap konten yang dipilih
+    let warnings = [];
+    
+    if (contentTypes.includes('file') && selectedFiles.length === 0) {
+        warnings.push('File materi untuk konten PDF/PPT belum dipilih');
+    }
+    
+    if (contentTypes.includes('video')) {
+        const videoType = document.getElementById('video_type').value;
+        if (!videoType) {
+            warnings.push('Jenis video harus dipilih');
+        } else {
+            if (videoType === 'hosted') {
+                const videoFile = document.getElementById('video_file').value;
+                if (!videoFile) {
+                    warnings.push('File video harus diupload untuk Google Drive');
+                }
+            } else {
+                const videoUrl = document.getElementById('video_url').value;
+                if (!videoUrl) {
+                    warnings.push('URL video harus diisi');
+                } else if (!isValidUrl(videoUrl)) {
+                    warnings.push('URL video tidak valid');
+                }
+            }
+        }
+    }
+    
+    if (contentTypes.includes('pretest')) {
+        const soalPretestContainer = document.getElementById('soal-pretest-container');
+        if (soalPretestContainer.children.length === 0) {
+            warnings.push('Pretest harus memiliki minimal 1 soal');
+        }
+        
+        const durasiPretest = document.getElementById('durasi_pretest').value;
+        if (!durasiPretest || durasiPretest < 1) {
+            warnings.push('Durasi pretest harus diisi (minimal 1 menit)');
+        }
+    }
+    
+    if (contentTypes.includes('posttest')) {
+        const soalPosttestContainer = document.getElementById('soal-posttest-container');
+        if (soalPosttestContainer.children.length === 0) {
+            warnings.push('Posttest harus memiliki minimal 1 soal');
+        }
+        
+        const durasiPosttest = document.getElementById('durasi_posttest').value;
+        if (!durasiPosttest || durasiPosttest < 1) {
+            warnings.push('Durasi posttest harus diisi (minimal 1 menit)');
+        }
+    }
+    
+    // Validasi tidak boleh pilih pretest dan posttest bersamaan
+    if (contentTypes.includes('pretest') && contentTypes.includes('posttest')) {
+        warnings.push('Tidak dapat memilih pretest dan posttest bersamaan dalam satu materi');
+    }
+    
+    // Jika ada warnings, tampilkan konfirmasi
+    if (warnings.length > 0) {
+        const warningMessage = 'Perhatikan hal berikut:\n\n' + warnings.join('\n');
+        
+        Swal.fire({
+            title: 'Data Belum Lengkap',
+            text: warningMessage,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#1e3c72',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, Simpan',
+            cancelButtonText: 'Perbaiki Data'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Jika user memilih untuk lanjut, submit form
+                submitForm();
+            }
+        });
+    } else {
+        // Jika tidak ada warning, langsung submit
+        submitForm();
+    }
+});
+
+// Function untuk submit form
+function submitForm() {
+    const submitBtn = document.getElementById('submitBtn');
+    const originalText = submitBtn.innerHTML;
+    
+    // Disable button dan ubah text
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="mdi mdi-loading mdi-spin me-2"></i> Menyimpan...';
+    
+    // Jika ada video hosted, tampilkan progress
+    const videoType = document.getElementById('video_type').value;
+    if (videoType === 'hosted' && currentVideoFile) {
+        document.getElementById('upload-progress').style.display = 'block';
+        document.getElementById('upload-status').className = 'upload-status status-uploading';
+        document.getElementById('upload-status').innerHTML = 'Mengupload ke Google Drive...';
+        
+        // Simulasi progress (di backend sebenarnya dihandle oleh Laravel)
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+            progress += 10;
+            document.getElementById('upload-progress-bar').style.width = progress + '%';
+            document.getElementById('upload-percentage').textContent = progress + '%';
+            
+            if (progress >= 100) {
+                clearInterval(progressInterval);
+                document.getElementById('upload-status').className = 'upload-status status-success';
+                document.getElementById('upload-status').innerHTML = 'Upload berhasil!';
+            }
+        }, 200);
+    }
+    
+    // Submit form
+    document.getElementById('materialForm').submit();
 }
 </script>
 @endsection

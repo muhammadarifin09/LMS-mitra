@@ -491,43 +491,56 @@
                 @endif
 
                 <!-- Video Pelatihan -->
-                @if($material['has_video'] ?? false)
-                    @php 
-                        $hasContent = true; 
-                        $canWatchVideo = $material['status'] == 'current' && 
-                                        ($material['material_status'] == 'completed' || !($material['has_material'] ?? false)) &&
-                                        ($material['attendance_status'] == 'completed' || !($material['attendance_required'] ?? true));
-                    @endphp
-                    <div class="sub-task">
-                        <div class="task-icon" id="video-icon-{{ $material['id'] }}"
-                             style="background: {{ $material['video_status'] == 'completed' ? '#28a745' : '#e9ecef' }}; 
-                                    color: {{ $material['video_status'] == 'completed' ? 'white' : '#6c757d' }};">
-                            <i class="fas fa-play-circle"></i>
-                        </div>
-                        <div class="task-info">
-                            <div class="task-name">Video Pelatihan</div>
-                            <div class="task-description">Tonton video materi</div>
-                        </div>
-                        <div class="task-action">
-                            @if($material['video_status'] == 'completed')
-                            <span class="btn-simple btn-success" id="video-button-{{ $material['id'] }}">
-                                <i class="fas fa-check"></i> Selesai
-                            </span>
-                            @elseif($canWatchVideo)
-                            <a href="{{ route('mitra.kursus.material.video', ['kursus' => $kursus->id, 'material' => $material['id']]) }}" 
-                               class="btn-simple btn-primary"
-                               id="video-link-{{ $material['id'] }}"
-                               onclick="handleVideoWatch(event, {{ $material['id'] }}, {{ $kursus->id }})">
-                                <i class="fas fa-play"></i> Tonton Video
-                            </a>
-                            @else
-                            <button class="btn-simple btn-secondary" disabled id="locked-video-{{ $material['id'] }}">
-                                <i class="fas fa-lock"></i>
-                            </button>
-                            @endif
-                        </div>
-                    </div>
-                @endif
+                <!-- Video Pelatihan -->
+@if($material['has_video'] ?? false)
+    @php 
+        $canWatchVideo = $material['status'] == 'current' && 
+                        ($material['material_status'] == 'completed' || !($material['has_material'] ?? false)) &&
+                        ($material['attendance_status'] == 'completed' || !($material['attendance_required'] ?? true));
+    @endphp
+    <div class="sub-task">
+        <div class="task-icon" id="video-icon-{{ $material['id'] }}"
+             style="background: {{ $material['video_status'] == 'completed' ? '#28a745' : '#e9ecef' }}; 
+                    color: {{ $material['video_status'] == 'completed' ? 'white' : '#6c757d' }};">
+            <i class="fas fa-play-circle"></i>
+        </div>
+        <div class="task-info">
+            <div class="task-name">Video Pelatihan</div>
+            <div class="task-description">Tonton video materi</div>
+            @if(isset($material['video_type']) && $material['video_type'] == 'hosted')
+                <small class="text-muted">
+                    <i class="fas fa-cloud me-1"></i> Video dari Google Drive
+                </small>
+            @elseif(isset($material['video_type']) && $material['video_type'] == 'youtube')
+                <small class="text-muted">
+                    <i class="fab fa-youtube me-1"></i> Video YouTube
+                </small>
+            @elseif(isset($material['video_type']) && $material['video_type'] == 'vimeo')
+                <small class="text-muted">
+                    <i class="fab fa-vimeo me-1"></i> Video Vimeo
+                </small>
+            @endif
+        </div>
+        <div class="task-action">
+            @if($material['video_status'] == 'completed')
+            <span class="btn-simple btn-success" id="video-button-{{ $material['id'] }}">
+                <i class="fas fa-check"></i> Selesai
+            </span>
+            @elseif($canWatchVideo)
+            <a href="{{ route('mitra.kursus.material.video', ['kursus' => $kursus->id, 'material' => $material['id']]) }}" 
+               class="btn-simple btn-primary"
+               id="video-link-{{ $material['id'] }}"
+               onclick="handleVideoWatch(event, {{ $material['id'] }}, {{ $kursus->id }})">
+                <i class="fas fa-play"></i> Tonton Video
+            </a>
+            @else
+            <button class="btn-simple btn-secondary" disabled id="locked-video-{{ $material['id'] }}">
+                <i class="fas fa-lock"></i>
+            </button>
+            @endif
+        </div>
+    </div>
+@endif
 
                 @if(!$hasContent)
                     <div class="no-content-message">

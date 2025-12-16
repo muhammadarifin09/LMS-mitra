@@ -91,74 +91,76 @@ Route::middleware(['auth', 'role:mitra'])->group(function () {
     Route::prefix('mitra')->name('mitra.')->group(function () {
         // Kursus Routes
         Route::get('/kursus', [MitraKursusController::class, 'index'])->name('kursus.index');
-        Route::get('/kursus/{id}', [MitraKursusController::class, 'show'])->name('kursus.show');
-        Route::post('/kursus/{id}/enroll', [MitraKursusController::class, 'enroll'])->name('kursus.enroll');
+        Route::get('/kursus/{kursus}', [MitraKursusController::class, 'show'])->name('kursus.show');
+        Route::post('/kursus/{kursus}/enroll', [MitraKursusController::class, 'enroll'])->name('kursus.enroll');
         Route::get('/kursus-saya', [MitraKursusController::class, 'kursusSaya'])->name('kursus.saya');
         
-        // PERBAIKAN: Route untuk myCourses (alternatif)
+        // Route untuk myCourses (alternatif)
         Route::get('/my-courses', [MitraKursusController::class, 'myCourses'])->name('kursus.my');
         
-        // Material Routes untuk Mitra
+        // Material Routes untuk Mitra - REORGANIZED UNTUK MENGHINDARI DUPLIKASI
         Route::prefix('kursus/{kursus}')->group(function () {
-            // PERBAIKAN: Hanya ada SATU route untuk download
+            // Download File
             Route::get('/materials/{material}/download', [MitraKursusController::class, 'downloadMaterialFile'])
                 ->name('kursus.material.download');
-            
-            // PERBAIKAN: Hapus route duplikat untuk specific file
-            // TIDAK PERLU: Route::get('/materials/{material}/download/{fileIndex}', ...)
-            
-            // View video
-            Route::get('/materials/{material}/video', [MitraKursusController::class, 'viewMaterialVideo'])
-                ->name('kursus.material.video');
             
             // Show material files (optional)
             Route::get('/materials/{material}/files', [MitraKursusController::class, 'showMaterialFiles'])
                 ->name('kursus.material.files');
-
-            // API untuk tracking progress
-            Route::post('/materials/{material}/record-video', [MitraKursusController::class, 'recordVideoWatched'])
-                ->name('kursus.material.record-video');
-            
-            // Mark video as watched
-            Route::post('/materials/{material}/mark-video', [MitraKursusController::class, 'markVideoAsWatched'])
-                ->name('kursus.material.mark-video');
             
             // Test Routes
             Route::get('/test/{material}/{testType}', [MitraKursusController::class, 'showTest'])
-        ->name('kursus.test.show');
-    Route::post('/test/{material}/{testType}/submit', [MitraKursusController::class, 'submitTest'])
-        ->name('kursus.test.submit');
+                ->name('kursus.test.show');
+            Route::post('/test/{material}/{testType}/submit', [MitraKursusController::class, 'submitTest'])
+                ->name('kursus.test.submit');
             
             // Recap Routes
             Route::get('/recap/{material}', [MitraKursusController::class, 'showRecap'])
                 ->name('kursus.recap.show');
             
-            // PERBAIKAN: Route attendance
+            // Route attendance
             Route::post('/materials/{material}/attendance', [MitraKursusController::class, 'markAttendance'])
                 ->name('kursus.material.attendance');
             
-            // PERBAIKAN: Route untuk complete material (DIPERLUKAN oleh JavaScript)
+            // Route untuk complete material
             Route::post('/materials/{material}/complete', [MitraKursusController::class, 'completeMaterial'])
                 ->name('kursus.material.complete');
 
-                Route::get('/materials/{material}/refresh-status', [MitraKursusController::class, 'refreshMaterialStatus'])
-        ->name('kursus.material.refresh-status');
+            Route::get('/materials/{material}/refresh-status', [MitraKursusController::class, 'refreshMaterialStatus'])
+                ->name('kursus.material.refresh-status');
     
-    // Route untuk get status semua material setelah update
-    Route::get('/materials/refresh-all-status', [MitraKursusController::class, 'refreshAllMaterialsStatus'])
-        ->name('kursus.materials.refresh-all-status');
+            // Route untuk get status semua material setelah update
+            Route::get('/materials/refresh-all-status', [MitraKursusController::class, 'refreshAllMaterialsStatus'])
+                ->name('kursus.materials.refresh-all-status');
             
-            // PERBAIKAN: Route untuk subtasks
+            // Route untuk subtasks
             Route::get('/materials/{material}/subtasks', [MitraKursusController::class, 'getMaterialSubtasks'])
                 ->name('kursus.material.subtasks');
             
-            // PERBAIKAN: API untuk real-time progress
+            // API untuk real-time progress
             Route::get('/progress', [MitraKursusController::class, 'getProgress'])
                 ->name('kursus.progress');
             
-            // Hapus route yang tidak ada di controller:
-            // TIDAK PERLU: Route::get('/materials/{material}/status', ...)
-            // TIDAK PERLU: Route::post('/materials/{material}/record-download', ...)
+            // ============================
+            // VIDEO ROUTES - PERBAIKAN BESAR
+            // ============================
+            
+            // Route untuk menampilkan video player
+            Route::get('/materials/{material}/video', [MitraKursusController::class, 'viewMaterialVideo'])
+                ->name('kursus.material.video');
+            
+            // Route untuk video progress tracking
+            Route::post('/materials/{material}/video/progress', [MitraKursusController::class, 'updateVideoProgress'])
+                ->name('kursus.material.video.progress');
+                Route::post('/materials/{material}/video/complete', [MitraKursusController::class, 'markVideoAsComplete'])
+            ->name('kursus.material.video.complete');
+            
+        Route::post('/materials/{material}/video/progress', [MitraKursusController::class, 'updateVideoProgress'])
+            ->name('kursus.material.video.progress');
+            
+            // Route untuk menandai video sudah ditonton
+            Route::post('/materials/{material}/video/watched', [MitraKursusController::class, 'markVideoAsWatched'])
+                ->name('kursus.material.video.watched');
         });
     });
 });

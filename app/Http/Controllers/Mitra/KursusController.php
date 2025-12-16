@@ -110,7 +110,7 @@ class KursusController extends Controller
         foreach ($enrollments as $enrollment) {
             if ($enrollment->kursus && $enrollment->kursus->materials) {
                 // Gunakan method yang sama dengan halaman detail
-                $materials = $this->getMaterialsWithStatus($enrollment->kursus->materials, Auth::user());
+                $materials = $this->getMaterialsWithStatus($enrollment->kursus->materials, Auth::user(), $enrollment->kursus_id);
                 
                 $totalMaterials = count($materials);
                 $completedMaterials = collect($materials)->where('status', 'completed')->count();
@@ -158,6 +158,24 @@ class KursusController extends Controller
             if ($hasMaterial) {
                 $filePaths = json_decode($material->file_path, true) ?? [$material->file_path];
                 $totalFiles = count($filePaths);
+            }
+            
+            // **PERBAIKAN PENTING: Cek apakah memiliki video**
+            // Video bisa dari video_url (YouTube/Vimeo) atau video_file (Google Drive)
+            $hasVideo = false;
+            $videoData = null;
+            
+            if (!empty($material->video_url) || !empty($material->video_file)) {
+                $hasVideo = true;
+                
+                // Jika ada video_file (Google Drive), parse data
+                if (!empty($material->video_file)) {
+                    try {
+                        $videoData = json_decode($material->video_file, true);
+                    } catch (\Exception $e) {
+                        Log::error('Error parsing video_file data: ' . $e->getMessage());
+                    }
+                }
             }
             
             // **PERBAIKAN KRUSIAL: Tentukan apakah material ini bisa diakses**
@@ -215,7 +233,6 @@ class KursusController extends Controller
             
             // Determine available content types
             $hasAttendance = $material->attendance_required ?? true;
-            $hasVideo = !empty($material->video_url);
             
             $processedMaterials[] = [
                 'id' => $material->id,
@@ -236,13 +253,16 @@ class KursusController extends Controller
                 'passing_grade' => $material->passing_grade,
                 'file_path' => $material->file_path,
                 'video_url' => $material->video_url,
+                'video_type' => $material->video_type,
+                'video_file' => $videoData, // Data video dari Google Drive
+                'player_config' => $material->player_config,
                 'description' => $material->description,
                 'downloaded_files' => $downloadedFiles,
                 'total_files' => $totalFiles,
                 // Tambahan untuk menentukan konten yang tersedia
                 'attendance_required' => $hasAttendance,
                 'has_material' => $hasMaterial,
-                'has_video' => $hasVideo,
+                'has_video' => $hasVideo, // PERBAIKAN: Sekarang termasuk video dari Google Drive
                 'file_paths' => $filePaths
             ];
         }
@@ -298,9 +318,12 @@ class KursusController extends Controller
             return true; // Recap selalu bisa diakses setelah terbuka
         } else {
             // Untuk material reguler, cek semua status yang diperlukan
+            
+            // PERBAIKAN: Tentukan apakah memiliki video (termasuk dari Google Drive)
+            $hasVideo = !empty($material->video_url) || !empty($material->video_file);
+            
             $attendanceRequired = $material->attendance_required ?? true;
             $hasMaterial = !empty($material->file_path);
-            $hasVideo = !empty($material->video_url);
             
             $attendanceCompleted = !$attendanceRequired || $progress->attendance_status === 'completed';
             $videoCompleted = !$hasVideo || $progress->video_status === 'completed';
@@ -332,6 +355,7 @@ class KursusController extends Controller
             return $attendanceCompleted && $materialCompleted && $videoCompleted;
         }
     }
+
 
     /**
      * Enroll to course
@@ -916,7 +940,7 @@ class KursusController extends Controller
 
     public function viewMaterialVideo($kursus, $material)
     {
-        Log::info('View Material Video:', [
+        Log::info('View Material Video - PERBAIKAN:', [
             'kursus' => $kursus,
             'material' => $material,
             'user_id' => Auth::id()
@@ -936,7 +960,8 @@ class KursusController extends Controller
             ->firstOrFail();
 
         // Cek apakah materi memiliki video
-        if (!$materialRecord->video_url || empty($materialRecord->video_url)) {
+        // PERBAIKAN: Cek baik video_url maupun video_file (Google Drive)
+        if (empty($materialRecord->video_url) && empty($materialRecord->video_file)) {
             abort(404, 'Video materi tidak tersedia');
         }
 
@@ -964,13 +989,245 @@ class KursusController extends Controller
         // Update enrollment progress
         $this->updateEnrollmentProgress($user->id, $kursus);
 
-        // Tampilkan halaman view video
-        return view('mitra.video-viewer', [
+        // **PERBAIKAN PENTING: Siapkan data video berdasarkan tipe**
+        $videoData = $this->prepareVideoData($materialRecord);
+        
+        // Load video questions jika ada
+        $videoQuestions = [];
+        if ($materialRecord->has_video_questions) {
+            $videoQuestions = \App\Models\VideoQuestion::where('material_id', $materialRecord->id)
+                ->orderBy('order')
+                ->get();
+        }
+
+        // **Tampilkan halaman view video yang sudah diperbaiki**
+        return view('mitra.kursus.video-player', [
             'kursus' => $enrollment->kursus,
             'material' => $materialRecord,
-            'videoUrl' => $materialRecord->video_url
+            'videoData' => $videoData,
+            'videoQuestions' => $videoQuestions,
+            'progress' => $progress
         ]);
     }
+
+    private function prepareVideoData($material)
+{
+    $videoData = [
+        'type' => $material->video_type ?? 'external',
+        'url' => $material->video_url,
+        'embed_url' => null,
+        'is_hosted' => false,
+        'drive_data' => null,
+        'player_config' => $material->player_config ? json_decode($material->player_config, true) : [],
+    ];
+    
+    // **PERBAIKAN: Video dari Google Drive (hosted)**
+    if ($material->video_type === 'hosted' && $material->video_file) {
+        try {
+            $videoInfo = is_string($material->video_file) 
+                ? json_decode($material->video_file, true) 
+                : $material->video_file;
+            
+            if ($videoInfo) {
+                $videoData['is_hosted'] = true;
+                $videoData['drive_data'] = $videoInfo;
+                
+                // **PERBAIKAN UTAMA: Pastikan embed URL benar**
+                if (isset($videoInfo['embed_link'])) {
+                    // Jika sudah ada embed_link langsung di data
+                    $videoData['embed_url'] = $videoInfo['embed_link'];
+                } elseif (isset($videoInfo['web_view_link'])) {
+                    // Coba beberapa format embed
+                    $originalUrl = $videoInfo['web_view_link'];
+                    
+                    // Cek berbagai format Google Drive URL
+                    if (strpos($originalUrl, '/file/d/') !== false) {
+                        // Format: https://drive.google.com/file/d/FILE_ID/view
+                        $embedUrl = str_replace('/view', '/preview', $originalUrl);
+                        $videoData['embed_url'] = $embedUrl;
+                    } elseif (isset($videoInfo['id'])) {
+                        // Gunakan file ID langsung
+                        $videoData['embed_url'] = 'https://drive.google.com/file/d/' . $videoInfo['id'] . '/preview';
+                    } else {
+                        // Fallback ke web_view_link
+                        $videoData['embed_url'] = $originalUrl;
+                    }
+                    
+                    // **PERBAIKAN TAMBAHAN: Tambahkan parameter untuk mencegah akses ditolak**
+                    if ($videoData['embed_url'] && strpos($videoData['embed_url'], 'preview') !== false) {
+                        $videoData['embed_url'] .= '?authuser=0&embedded=true';
+                    }
+                }
+                
+                $videoData['url'] = $videoInfo['web_view_link'] ?? $material->video_url;
+                
+                Log::info('Google Drive video prepared:', [
+                    'video_info' => $videoInfo,
+                    'embed_url' => $videoData['embed_url']
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error parsing video_file data: ' . $e->getMessage());
+        }
+    }
+    
+    // **Untuk YouTube**
+    if ($material->video_type === 'youtube' && $material->video_url) {
+        $videoId = $this->extractYouTubeId($material->video_url);
+        if ($videoId) {
+            $videoData['embed_url'] = 'https://www.youtube.com/embed/' . $videoId . '?rel=0&showinfo=0&controls=1';
+        }
+    }
+    
+    // **Untuk Vimeo**
+    if ($material->video_type === 'vimeo' && $material->video_url) {
+        $videoId = $this->extractVimeoId($material->video_url);
+        if ($videoId) {
+            $videoData['embed_url'] = 'https://player.vimeo.com/video/' . $videoId;
+        }
+    }
+    
+    // **Untuk video eksternal lainnya**
+    if (!$videoData['embed_url'] && $material->video_url) {
+        $videoData['embed_url'] = $material->video_url;
+    }
+    
+    return $videoData;
+}
+    private function extractYouTubeId($url)
+    {
+        preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', $url, $matches);
+        return $matches[1] ?? null;
+    }
+
+    /**
+     * Extract Vimeo video ID from URL
+     */
+    private function extractVimeoId($url)
+    {
+        preg_match('/vimeo\.com\/(?:video\/)?(\d+)/', $url, $matches);
+        return $matches[1] ?? null;
+    }
+
+    public function updateVideoProgress(Request $request, $kursus, $material)
+    {
+        try {
+            $user = Auth::user();
+            
+            $request->validate([
+                'progress_percentage' => 'required|numeric|min:0|max:100',
+                'current_time' => 'required|numeric',
+                'duration' => 'required|numeric',
+            ]);
+            
+            // Cek apakah video sudah selesai berdasarkan persentase
+            $materialRecord = Materials::where('is_active', true)
+                ->where('id', $material)
+                ->first();
+            
+            if (!$materialRecord) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Material tidak ditemukan'
+                ], 404);
+            }
+            
+            // Update atau buat progress
+            $progress = MaterialProgress::where('user_id', $user->id)
+                ->where('material_id', $material)
+                ->first();
+            
+            $minWatchPercentage = 90; // Default 90%
+            
+            if ($materialRecord->player_config) {
+                $playerConfig = json_decode($materialRecord->player_config, true);
+                $minWatchPercentage = $playerConfig['min_watch_percentage'] ?? 90;
+            }
+            
+            $isCompleted = $request->progress_percentage >= $minWatchPercentage;
+            
+            if ($progress) {
+                $progress->video_status = $isCompleted ? 'completed' : 'in_progress';
+                $progress->video_progress = $request->progress_percentage;
+                $progress->video_current_time = $request->current_time;
+                $progress->video_duration = $request->duration;
+                $progress->save();
+            } else {
+                $progress = MaterialProgress::create([
+                    'user_id' => $user->id,
+                    'material_id' => $material,
+                    'video_status' => $isCompleted ? 'completed' : 'in_progress',
+                    'video_progress' => $request->progress_percentage,
+                    'video_current_time' => $request->current_time,
+                    'video_duration' => $request->duration,
+                    'material_status' => 'pending',
+                    'attendance_status' => 'pending'
+                ]);
+            }
+            
+            // Jika video selesai, cek dan unlock material berikutnya
+            if ($isCompleted && $progress->video_status === 'completed') {
+                $this->checkAndUnlockNextMaterial($user->id, $material, $kursus);
+                $this->updateEnrollmentProgress($user->id, $kursus);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'progress' => $progress,
+                'is_completed' => $isCompleted
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error updating video progress:', [
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id(),
+                'material' => $material
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal update progress video'
+            ], 500);
+        }
+    }
+
+// Tambahkan method ini di controller
+private function validateAndFixDriveUrl($url)
+{
+    if (!$url) {
+        return null;
+    }
+    
+    // Jika URL tidak valid, coba perbaiki
+    if (!filter_var($url, FILTER_VALIDATE_URL)) {
+        // Coba extract file ID dari berbagai format
+        preg_match('/\/d\/([a-zA-Z0-9_-]+)/', $url, $matches);
+        if (isset($matches[1])) {
+            return 'https://drive.google.com/file/d/' . $matches[1] . '/preview';
+        }
+        return null;
+    }
+    
+    // Pastikan URL menggunakan HTTPS
+    $url = str_replace('http://', 'https://', $url);
+    
+    // Jika sudah preview, return as is
+    if (strpos($url, '/preview') !== false) {
+        return $url;
+    }
+    
+    // Ubah view ke preview
+    if (strpos($url, '/view') !== false) {
+        return str_replace('/view', '/preview', $url);
+    }
+    
+    // Tambahkan /preview jika belum ada
+    if (strpos($url, '/file/d/') !== false && !strpos($url, '/preview') && !strpos($url, '/view')) {
+        return $url . '/preview';
+    }
+    
+    return $url;
+}
 
     public function markVideoAsWatched(Request $request, $kursus, $material)
     {

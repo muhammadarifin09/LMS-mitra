@@ -19,9 +19,21 @@ return new class extends Migration
             
             // Kolom konten
             $table->integer('duration')->nullable();
+            $table->boolean('auto_duration')->default(true);
             $table->json('file_path')->nullable();
             $table->string('video_url')->nullable();
-            $table->integer('duration_video')->nullable();
+            
+            // Video control columns (Google Drive integrated)
+            $table->enum('video_type', ['youtube', 'vimeo', 'hosted', 'external'])->default('external');
+            $table->text('video_file')->nullable()->comment('JSON for Google Drive file info');
+            $table->boolean('allow_skip')->default(false);
+            $table->json('player_config')->nullable();
+            $table->boolean('has_video_questions')->default(false);
+            $table->boolean('require_video_completion')->default(false);
+            
+            // Video questions stats
+            $table->integer('question_count')->default(0);
+            $table->integer('total_video_points')->default(0);
             
             // Kolom status
             $table->boolean('is_active')->default(true);
@@ -40,12 +52,19 @@ return new class extends Migration
             $table->integer('durasi_posttest')->nullable();
             $table->boolean('is_posttest')->default(false);
             
+            // Tracking columns
+            $table->integer('total_views')->default(0);
+            $table->integer('total_completions')->default(0);
+            $table->decimal('avg_completion_time', 8, 2)->nullable();
+            
             // Timestamps
             $table->timestamps();
             
-            // Index
+            // Indexes
             $table->index(['course_id', 'order']);
             $table->index(['course_id', 'is_active']);
+            $table->index(['course_id', 'type']);
+            $table->index(['material_type']);
         });
     }
 

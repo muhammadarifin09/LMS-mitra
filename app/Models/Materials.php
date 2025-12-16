@@ -2,24 +2,29 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Materials extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
         'course_id',
-        'title', 
+        'title',
         'type',
         'order',
-        'material_type', // Gunakan material_type saja
+        'material_type',
         'description',
+        'duration',
+        'auto_duration',
         'file_path',
         'video_url',
-        'duration',
-        'duration_video',
+        'video_type',
+        'video_file',
+        'allow_skip',
+        'player_config',
+        'has_video_questions',
+        'require_video_completion',
+        'question_count',
+        'total_video_points',
         'is_active',
         'attendance_required',
         'learning_objectives',
@@ -28,169 +33,61 @@ class Materials extends Model
         'is_pretest',
         'soal_posttest',
         'durasi_posttest',
-        'is_posttest'
+        'is_posttest',
+        'total_views',
+        'total_completions',
+        'avg_completion_time',
     ];
 
     protected $casts = [
-        'duration' => 'integer',
-        'duration_video' => 'integer',
-        'is_active' => 'boolean',
-        'order' => 'integer',
-        'durasi_pretest' => 'integer',
-        'durasi_posttest' => 'integer',
-        'is_pretest' => 'boolean',
-        'is_posttest' => 'boolean',
+        'file_path' => 'array',
         'soal_pretest' => 'array',
         'soal_posttest' => 'array',
         'learning_objectives' => 'array',
-        'file_path' => 'array'
+        'player_config' => 'array',
+        'video_file' => 'array', // Cast video_file as array for JSON
+        'is_active' => 'boolean',
+        'attendance_required' => 'boolean',
+        'allow_skip' => 'boolean',
+        'has_video_questions' => 'boolean',
+        'require_video_completion' => 'boolean',
+        'is_pretest' => 'boolean',
+        'is_posttest' => 'boolean',
+        'auto_duration' => 'boolean',
     ];
 
+    // Relationships
     public function kursus()
     {
         return $this->belongsTo(Kursus::class, 'course_id');
     }
 
-    public function progress()
+    public function videoQuestions()
     {
-        return $this->hasMany(MaterialProgress::class, 'material_id');
+        return $this->hasMany(VideoQuestion::class);
     }
 
-    // Scope untuk materi aktif
-    public function scopeActive($query)
+    public function userProgress()
     {
-        return $query->where('is_active', true);
+        return $this->hasMany(UserVideoProgress::class);
     }
 
-    public function scopeAllStatus($query)
+    // Helper methods untuk Google Drive
+    public function getGoogleDriveFileId()
     {
-        return $query; // Tidak ada filter
-    }
-
-    // Scope untuk urutan
-    public function scopeOrdered($query)
-    {
-        return $query->orderBy('order');
-    }
-
-    // Scope untuk pretest
-    public function scopePretest($query)
-    {
-        return $query->where('is_pretest', true);
-    }
-
-    // Scope untuk posttest
-    public function scopePosttest($query)
-    {
-        return $query->where('type', 'post_test');
-    }
-
-    // Cek apakah material adalah pretest
-    public function getIsPretestMaterialAttribute()
-    {
-        return $this->is_pretest || $this->type === 'pre_test';
-    }
-
-    // Cek apakah material adalah posttest
-    public function getIsPosttestMaterialAttribute()
-    {
-        return $this->type === 'post_test';
-    }
-
-    // Get jumlah soal berdasarkan jenis test
-    public function getJumlahSoalAttribute()
-    {
-        if ($this->type === 'pre_test') {
-            return $this->soal_pretest ? count($this->soal_pretest) : 0;
-        } elseif ($this->type === 'post_test') {
-            return $this->soal_posttest ? count($this->soal_posttest) : 0;
+        if ($this->video_type === 'hosted' && $this->video_file) {
+            $videoData = is_array($this->video_file) ? $this->video_file : json_decode($this->video_file, true);
+            return $videoData['file_id'] ?? null;
         }
-        return 0;
+        return null;
     }
 
-    // Get durasi berdasarkan jenis test
-    public function getDurasiTestAttribute()
+    public function getGoogleDriveEmbedUrl()
     {
-        if ($this->type === 'pre_test') {
-            return $this->durasi_pretest;
-        } elseif ($this->type === 'post_test') {
-            return $this->durasi_posttest;
+        $fileId = $this->getGoogleDriveFileId();
+        if ($fileId) {
+            return "https://drive.google.com/file/d/{$fileId}/preview";
         }
-        return 0;
-    }
-
-    // Get soal berdasarkan jenis test
-    public function getSoalTestAttribute()
-    {
-        if ($this->type === 'pre_test') {
-            return $this->soal_pretest;
-        } elseif ($this->type === 'post_test') {
-            return $this->soal_posttest;
-        }
-        return [];
-    }
-
-    public function hasContentType($type)
-    {
-        // Jika material_type disimpan sebagai string comma separated
-        if (is_string($this->material_type)) {
-            return in_array($type, explode(',', $this->material_type));
-        }
-        
-        // Jika learning_objectives digunakan untuk menyimpan content types
-        if ($this->learning_objectives && is_array($this->learning_objectives)) {
-            return in_array($type, $this->learning_objectives);
-        }
-        
-        return false;
-    }
-
-    public function getContentTypesAttribute()
-    {
-        // Prioritaskan learning_objectives jika ada
-        if ($this->learning_objectives && is_array($this->learning_objectives)) {
-            return $this->learning_objectives;
-        }
-        
-        // Fallback ke material_type jika learning_objectives tidak ada
-        if (is_string($this->material_type)) {
-            return explode(',', $this->material_type);
-        }
-        
-        return [];
-    }
-
-    // Helper method untuk cek apakah materi memiliki file
-    public function hasFile()
-    {
-        return !empty($this->file_path);
-    }
-
-    // Helper method untuk cek apakah materi memiliki video
-    public function hasVideo()
-    {
-        return !empty($this->video_url);
-    }
-
-    // Helper method untuk cek apakah materi memiliki pretest
-    public function hasPretest()
-    {
-        return !empty($this->soal_pretest) && is_array($this->soal_pretest) && count($this->soal_pretest) > 0;
-    }
-
-    // Helper method untuk cek apakah materi memiliki posttest
-    public function hasPosttest()
-    {
-        return !empty($this->soal_posttest) && is_array($this->soal_posttest) && count($this->soal_posttest) > 0;
-    }
-
-    // Get file paths sebagai array
-    public function getFilePathsAttribute()
-    {
-        if (is_string($this->file_path)) {
-            return json_decode($this->file_path, true) ?? [];
-        }
-        
-        return $this->file_path ?? [];
+        return null;
     }
 }
