@@ -14,6 +14,7 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Mitra\BerandaController;
 use App\Http\Controllers\Mitra\KursusController as MitraKursusController;
 use App\Http\Controllers\Mitra\DashboardController;
+use App\Http\Controllers\Mitra\CertificateController;
 
 // Login
 Route::get('/', fn() => view('login'))->name('login.page');
@@ -171,4 +172,19 @@ Route::middleware(['auth'])->prefix('profil')->group(function () {
     Route::get('/edit', [ProfilController::class, 'edit'])->name('profil.edit');
     Route::put('/update', [ProfilController::class, 'update'])->name('profil.update');
     Route::delete('/hapus-foto', [ProfilController::class, 'hapusFoto'])->name('profil.hapus-foto');
+});
+
+// Sertifikat Routes
+// Route::middleware(['auth'])->prefix('certificates')->group(function () {
+//     Route::get('/', [CertificateController::class, 'index'])->name('index');
+//     Route::get('/{certificate}', [CertificateController::class, 'show'])->name('show');
+//     Route::get('/{certificate}/unduh', [CertificateController::class, 'download'])->name('download');
+//     Route::get('/{certificate}/preview', [CertificateController::class, 'preview'])->name('preview');
+//     Route::get('/kursus/{kursus}/cek', [CertificateController::class, 'checkCertificate'])->name('check');
+// });
+
+Route::middleware(['auth'])->prefix('sertifikat')->name('sertifikat.')->group(function () {
+        Route::get('/', [CertificateController::class, 'index'])->name('index');
+        Route::get('/{certificate}', [CertificateController::class, 'show'])->name('show');
+        Route::get('/{certificate}/unduh', [CertificateController::class, 'download'])->name('download');
 });

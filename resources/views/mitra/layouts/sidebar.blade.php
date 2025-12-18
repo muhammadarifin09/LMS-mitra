@@ -213,9 +213,9 @@
             <i class="fas fa-chart-line"></i>
             <span>Nilai</span>
         </a>
-        <a href="#" class="sidebar-item">
-            <i class="fas fa-flag"></i>
-            <span>Laporan</span>
+        <a href="{{ route('sertifikat.index') }}" class="sidebar-item {{ request()->routeIs('sertifikat.*') ? 'active' : '' }}">
+            <i class="fas fa-certificate"></i>
+            <span>Sertifikat</span>
         </a>
         <a href="#" class="sidebar-item text-danger" onclick="event.preventDefault(); if(confirm('Apakah Anda yakin ingin keluar?')) document.getElementById('logout-form').submit();">
             <i class="fas fa-sign-out-alt"></i>
@@ -248,13 +248,13 @@
             <div class="mobile-nav-label">Nilai</div>
         </a>
         
-        <a href="#" 
-           class="mobile-nav-item"
-           title="Laporan">
+        <a href="{{ route('sertifikat.index') }}" 
+        class="mobile-nav-item {{ request()->routeIs('sertifikat.*') ? 'active' : '' }}"
+           title="Sertifikat">
             <div class="mobile-nav-icon">
-                <i class="fas fa-flag"></i>
+                <i class="fas fa-certificate"></i>
             </div>
-            <div class="mobile-nav-label">Laporan</div>
+            <div class="mobile-nav-label">Sertifikat</div>
         </a>
         
         <a href="#" 

@@ -55,4 +55,9 @@ class Enrollment extends Model
             'status' => ($completed == $total && $total > 0) ? 'completed' : 'in_progress'
         ]);
     }
+
+    public function certificate()
+    {
+        return $this->hasOne(Certificate::class);
+    }
 }
