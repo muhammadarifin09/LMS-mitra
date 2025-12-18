@@ -1,3 +1,8 @@
+@php
+    use Illuminate\Support\Str;
+@endphp
+
+
 @extends('mitra.layouts.app')
 
 @section('title', 'MOCC BPS - Kursus Tersedia')

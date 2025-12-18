@@ -1,3 +1,7 @@
+@php
+    use Illuminate\Support\Str;
+@endphp
+
 @extends('layouts.admin')
 
 @section('title', 'MOCC BPS - Tambah Materi')

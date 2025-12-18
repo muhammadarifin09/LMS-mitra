@@ -221,9 +221,9 @@
 <!-- Welcome Section dengan Nama Admin -->
 <div class="welcome-section">
     <div class="admin-badge">
-        <i class="fas fa-shield-alt me-2"></i>{{ ucfirst(Auth::user()->role) }}
+        <i class="fas fa-shield-alt me-2"></i>{{ ucfirst(auth()->user()->role) }}
     </div>
-    <h1 class="welcome-title">Selamat Datang, {{ Auth::user()->biodata->nama_lengkap ?? Auth::user()->name }}!</h1>
+    <h1 class="welcome-title">Selamat Datang, {{ auth()->user()->biodata->nama_lengkap ?? auth()->user()->name }}!</h1>
     <p class="welcome-subtitle">
         Kelola sistem MOCC BPS dengan mudah dan efisien. Pantau aktivitas, kelola pengguna, dan optimalkan pengalaman belajar.
     </p>

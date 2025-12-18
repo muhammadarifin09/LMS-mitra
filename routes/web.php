@@ -174,6 +174,105 @@ Route::middleware(['auth'])->prefix('profil')->group(function () {
     Route::delete('/hapus-foto', [ProfilController::class, 'hapusFoto'])->name('profil.hapus-foto');
 });
 
+use App\Http\Controllers\Admin\LaporanController;
+use Barryvdh\DomPDF\Facade\Pdf;
+
+Route::prefix('admin')
+    ->name('admin.')
+    ->middleware(['auth', 'role:admin'])
+    ->group(function () {
+
+        Route::prefix('laporan')->name('laporan.')->group(function () {
+
+            // ======================
+            // LIST KURSUS
+            // ======================
+            Route::get('/kursus', [LaporanController::class, 'kursusIndex'])
+                ->name('kursus');
+
+            // ======================
+            // DETAIL KURSUS
+            // ======================
+            Route::get('/kursus/{kursus}', [LaporanController::class, 'kursusDetail'])
+                ->name('kursus.detail');
+
+            // ======================
+            // EXPORT PDF RINGKAS (dari halaman index)
+            // ======================
+            Route::get('/kursus/{kursus}/pdf-ringkas', [LaporanController::class, 'exportKursusPdfRingkas'])
+                ->name('kursus.pdf.ringkas');
+
+            // ======================
+            // EXPORT PDF DETAIL (dari halaman detail)
+            // ======================
+            Route::get('/kursus/{kursus}/pdf-detail', [LaporanController::class, 'exportKursusPdfDetail'])
+                ->name('kursus.pdf.detail');
+
+            // ======================
+            // EXPORT PDF (LEGACY - bisa dihapus jika tidak diperlukan)
+            // ======================
+            Route::get('/kursus/{kursus}/pdf', [LaporanController::class, 'exportKursusPdf'])
+                ->name('kursus.pdf');
+
+            // ======================
+            // TEST PDF (SEMENTARA)
+            // ======================
+            Route::get('/test-pdf', function () {
+                return Pdf::loadHTML('
+                    <h2 style="font-family: DejaVu Sans, sans-serif;">
+                        ✅ DomPDF LMS BERHASIL
+                    </h2>
+                    <p>Export PDF sudah aktif di modul laporan.</p>
+                    <p><strong>Versi:</strong> Dual PDF (Ringkas & Detail)</p>
+                    <ul>
+                        <li><strong>/admin/laporan/kursus/{id}/pdf-ringkas</strong> - PDF Ringkas</li>
+                        <li><strong>/admin/laporan/kursus/{id}/pdf-detail</strong> - PDF Detail Lengkap</li>
+                    </ul>
+                ')->stream('test-laporan.pdf');
+            })->name('test.pdf');
+
+        });
+    });
+
+//     Route::prefix('admin/laporan')->name('admin.laporan.')->group(function () {
+
+//     Route::get('/kursus/export-excel', [LaporanController::class, 'exportKursusExcel'])
+//         ->name('kursus.excel');
+
+//     Route::get('/kursus/{kursus}/export-excel', [LaporanController::class, 'exportKursusDetailExcel'])
+//         ->name('kursus.detail.excel');   
+// });
+
+Route::prefix('admin/laporan')->name('admin.laporan.')->group(function () {
+
+    // =====================
+    // CSV (HARUS DI ATAS)
+    // =====================
+    Route::get('/kursus/export-csv', [LaporanController::class, 'exportKursusCsv'])
+        ->name('kursus.csv');
+
+    Route::get('/kursus/{kursus}/export-csv', [LaporanController::class, 'exportKursusDetailCsv'])
+        ->name('kursus.detail.csv');
+
+    // =====================
+    // VIEW (DI BAWAH)
+    // =====================
+    Route::get('/kursus', [LaporanController::class, 'kursusIndex'])
+        ->name('kursus');
+
+    Route::get('/kursus/{kursus}', [LaporanController::class, 'kursusDetail'])
+        ->name('kursus.detail');
+});
+
+
+
+
+Route::get('/test-csv', [\App\Http\Controllers\Admin\LaporanController::class, 'exportKursusCsv']);
+Route::get('/test-csv', [\App\Http\Controllers\Admin\LaporanController::class, 'exportKursusCsv'])
+    ->name('test.csv');
+
+
+
 // Sertifikat Routes
 // Route::middleware(['auth'])->prefix('certificates')->group(function () {
 //     Route::get('/', [CertificateController::class, 'index'])->name('index');
