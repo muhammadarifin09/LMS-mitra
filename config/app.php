@@ -123,4 +123,11 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'aliases' => [
+
+    // alias lain
+    'Pdf' => Barryvdh\DomPDF\Facade\Pdf::class,
+
+],
+
 ];
