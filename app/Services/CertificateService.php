@@ -8,6 +8,7 @@ use App\Models\Kursus;
 use App\Models\M_User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class CertificateService
 {
@@ -28,38 +29,47 @@ class CertificateService
      */
     public function generateCertificatePDF(Certificate $certificate)
     {
-        // Load data dengan relasi
-        $certificate->load(['user', 'kursus', 'enrollment']);
-        
-        $data = [
-            'certificate' => $certificate,
-            'user' => $certificate->user,
-            'kursus' => $certificate->kursus,
-            'enrollment' => $certificate->enrollment,
-        ];
-        
-        // Generate PDF
-        $pdf = Pdf::loadView('mitra.sertifikat.template', $data)
-            ->setPaper('a4', 'portrait')
-            ->setOptions([
-                'isHtml5ParserEnabled' => true,
-                'isRemoteEnabled' => true,
-                'defaultFont' => 'Times New Roman'
+        try {
+            // Load data dengan relasi
+            $certificate->load(['user', 'kursus', 'enrollment']);
+            
+            $data = [
+                'certificate' => $certificate,
+                'user' => $certificate->user,
+                'kursus' => $certificate->kursus,
+                'enrollment' => $certificate->enrollment,
+            ];
+            
+            // Generate PDF
+            $pdf = Pdf::loadView('mitra.sertifikat.template', $data)
+                ->setPaper('a4', 'portrait')
+                ->setOptions([
+                    'isHtml5ParserEnabled' => true,
+                    'isRemoteEnabled' => true,
+                    'defaultFont' => 'Times New Roman'
+                ]);
+            
+            // Simpan ke storage
+            $filename = "certificate_{$certificate->certificate_number}.pdf";
+            $path = "certificates/{$certificate->user_id}/{$filename}";
+            
+            Storage::put($path, $pdf->output());
+            
+            // Update path di database
+            $certificate->update([
+                'file_path' => $path,
+                'download_url' => route('sertifikat.download', $certificate),
             ]);
-        
-        // Simpan ke storage
-        $filename = "certificate_{$certificate->certificate_number}.pdf";
-        $path = "certificates/{$certificate->user_id}/{$filename}";
-        
-        Storage::put($path, $pdf->output());
-        
-        // Update path di database
-        $certificate->update([
-            'file_path' => $path,
-            'download_url' => route('sertifikat.download', $certificate),
-        ]);
-        
-        return $pdf;
+            
+            return $pdf;
+
+        } catch (\Exception $e) {
+            Log::error('Error generating certificate PDF', [
+                'certificate_id' => $certificate->id,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
     }
 
     /**
@@ -98,23 +108,23 @@ class CertificateService
     /**
      * Check enrollment progress and issue certificate if completed
      */
-    public function checkAndIssueCertificate(Enrollment $enrollment): ?Certificate
-    {
-        // Jika progress 100% dan status belum completed, update status
-        if ($enrollment->progress_percentage >= 100 && $enrollment->status !== 'completed') {
-            $enrollment->update([
-                'status' => 'completed',
-                'completed_at' => now(),
-            ]);
-        }
+    // public function checkAndIssueCertificate(Enrollment $enrollment): ?Certificate
+    // {
+    //     // Jika progress 100% dan status belum completed, update status
+    //     if ($enrollment->progress_percentage >= 100 && $enrollment->status !== 'completed') {
+    //         $enrollment->update([
+    //             'status' => 'completed',
+    //             'completed_at' => now(),
+    //         ]);
+    //     }
         
-        // Jika status completed, buat sertifikat
-        if ($enrollment->status === 'completed') {
-            return $this->createCertificate($enrollment);
-        }
+    //     // Jika status completed, buat sertifikat
+    //     if ($enrollment->status === 'completed') {
+    //         return $this->createCertificate($enrollment);
+    //     }
         
-        return null;
-    }
+    //     return null;
+    // }
 
     /**
      * Bulk check for all enrollments that are 100% but no certificate
@@ -134,4 +144,70 @@ class CertificateService
         
         return $certificates;
     }
+
+    /**
+     * Create certificate for completed enrollment
+     */
+    // public function createCertificateRecord(Enrollment $enrollment): ?Certificate
+    // {
+    //     try {
+    //         // Pastikan enrollment sudah completed
+    //         if ($enrollment->status !== 'completed') {
+    //             Log::warning('Enrollment not completed, cannot create certificate', [
+    //                 'enrollment_id' => $enrollment->id,
+    //                 'status' => $enrollment->status,
+    //             ]);
+    //             return null;
+    //         }
+
+    //         // Cek apakah sudah ada sertifikat
+    //         if ($enrollment->certificate) {
+    //             Log::info('Certificate already exists for enrollment', [
+    //                 'enrollment_id' => $enrollment->id,
+    //                 'certificate_id' => $enrollment->certificate->id,
+    //             ]);
+    //             return $enrollment->certificate;
+    //         }
+
+    //         // Generate certificate number
+    //         $certificateNumber = $this->generateCertificateNumber($enrollment);
+            
+    //         Log::info('Creating certificate record', [
+    //             'enrollment_id' => $enrollment->id,
+    //             'certificate_number' => $certificateNumber,
+    //         ]);
+
+    //         // Buat record sertifikat
+    //         $certificate = Certificate::create([
+    //             'certificate_number' => $certificateNumber,
+    //             'enrollment_id' => $enrollment->id,
+    //             'user_id' => $enrollment->user_id,
+    //             'kursus_id' => $enrollment->kursus_id,
+    //             'issued_at' => now(),
+    //         ]);
+
+    //         // Generate PDF (bisa di-queue nanti)
+    //         try {
+    //             $this->generateCertificatePDF($certificate);
+    //             Log::info('PDF generated for certificate', [
+    //                 'certificate_id' => $certificate->id,
+    //             ]);
+    //         } catch (\Exception $e) {
+    //             Log::error('Failed to generate PDF, but certificate record created', [
+    //                 'certificate_id' => $certificate->id,
+    //                 'error' => $e->getMessage(),
+    //             ]);
+    //         }
+
+    //         return $certificate;
+
+    //     } catch (\Exception $e) {
+    //         Log::error('Error creating certificate record', [
+    //             'enrollment_id' => $enrollment->id,
+    //             'error' => $e->getMessage(),
+    //             'trace' => $e->getTraceAsString(),
+    //         ]);
+    //         return null;
+    //     }
+    // }
 }

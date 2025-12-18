@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Enrollment;
 use App\Services\CertificateService;
+use Illuminate\Support\Facades\Log;
 
 class EnrollmentObserver
 {
@@ -12,33 +13,61 @@ class EnrollmentObserver
     public function __construct(CertificateService $certificateService)
     {
         $this->certificateService = $certificateService;
+        
     }
     
     /**
-     * Handle the Enrollment "updated" event.
+     * Handle the Enrollment "saved" event.
      */
-    public function updated(Enrollment $enrollment): void
+    public function saved(Enrollment $enrollment): void
     {
-        // Cek jika progress berubah
-        if ($enrollment->isDirty('progress_percentage')) {
-            $this->certificateService->checkAndIssueCertificate($enrollment);
+        // Debug log
+        Log::info('=== ENROLLMENT OBSERVER FIRED ===', [
+            'id' => $enrollment->id,
+            'progress' => $enrollment->progress_percentage,
+            'status' => $enrollment->status,
+            'has_cert' => $enrollment->certificate_id ? 'YES' : 'NO',
+        ]);
+        
+        // Auto-update status jika progress 100%
+        if ($enrollment->progress_percentage >= 100 && $enrollment->status !== 'completed') {
+            Log::info('Auto-updating status to completed', [
+                'enrollment_id' => $enrollment->id,
+            ]);
+            
+            // Use query builder to avoid infinite loop
+            Enrollment::where('id', $enrollment->id)->update([
+                'status' => 'completed',
+                'completed_at' => now(),
+            ]);
+            
+            // Refresh model
+            $enrollment->refresh();
         }
         
-        // Jika status berubah menjadi completed
-        if ($enrollment->isDirty('status') && $enrollment->status === 'completed') {
-            $this->certificateService->createCertificate($enrollment);
-        }
-    }
-    
-    /**
-     * Handle the Enrollment "updating" event.
-     */
-    public function updating(Enrollment $enrollment): void
-    {
-        // Otomatis update status ke completed jika progress 100%
-        if ($enrollment->progress_percentage >= 100 && $enrollment->status !== 'completed') {
-            $enrollment->status = 'completed';
-            $enrollment->completed_at = now();
+        // Buat sertifikat jika eligible
+        if ($enrollment->progress_percentage >= 100 
+            && $enrollment->status === 'completed' 
+            && !$enrollment->certificate) {
+            
+            Log::info('Creating certificate for enrollment', [
+                'enrollment_id' => $enrollment->id,
+            ]);
+            
+            try {
+                $certificate = $this->certificateService->createCertificate($enrollment);
+                
+                if ($certificate) {
+                    Log::info('✅ Certificate created', [
+                        'certificate_id' => $certificate->id,
+                        'certificate_number' => $certificate->certificate_number,
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to create certificate', [
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
     }
 }
