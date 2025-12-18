@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MOCC BPS - Beranda</title>
+    <title>MOOC BPS - Beranda</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -58,7 +58,7 @@
             color: #2a5298;
         }
         
-        /* Logo MOCC BPS sebagai gambar */
+        /* Logo MOOC BPS sebagai gambar */
         .logo-image {
             height: 50px;
             width: auto;
@@ -308,7 +308,7 @@
         }
         
         
-        .mocc-badge {
+        .MOOC-badge {
             background: rgba(255, 255, 255, 0.2);
             color: white;
             padding: 12px 30px;
@@ -876,7 +876,7 @@
                 margin-bottom: 25px !important;
             }
             
-            .mocc-badge {
+            .MOOC-badge {
                 font-size: 0.9rem !important;
                 padding: 10px 20px !important;
             }
@@ -1138,7 +1138,7 @@
             }
             
             /* URUTAN SESUAI KEINGINAN ANDA */
-            .mocc-badge {
+            .MOOC-badge {
                 order: 1 !important;
                 grid-row: 1 !important;
             }
@@ -1303,9 +1303,9 @@
     <nav class="main-nav">
         <div class="d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center">
-                <!-- Logo MOCC BPS sebagai gambar -->
+                <!-- Logo MOOC BPS sebagai gambar -->
                 <a href="#" class="nav-brand">
-                    <img src="{{ asset('img/Logo_E-Learning.png') }}" alt="MOCC BPS Logo" class="logo-image">
+                    <img src="{{ asset('img/Logo_E-Learning.png') }}" alt="MOOC BPS Logo" class="logo-image">
                 </a>
                 <div class="nav-menu ms-5">
                     <a href="#" class="nav-item active">Beranda</a>
@@ -1386,12 +1386,12 @@
                     <div class="slide-content">
                         <!-- Text Content -->
                         <div class="text-content">
-                            <div class="mocc-badge">
-                                MOCC BPS - Massive Online Coaching Course
+                            <div class="MOOC-badge">
+                                MOOC BPS - Massive Open Online Course
                             </div>
                             
                             <h1 class="welcome-title">
-                                Selamat Datang, di MOCC BPS!
+                                Selamat Datang, di MOOC BPS!
                             </h1>
                             
                             <p class="welcome-subtitle">
@@ -1423,7 +1423,7 @@
                             <div class="profile-image-container">
                                 <div class="image-decoration"></div>
                                 <!-- GANTI PATH GAMBAR DI BAWAH INI -->
-                                <img src="/img/foto.png" alt="Mentor MOCC BPS" class="profile-image">
+                                <img src="/img/foto.webp" alt="Mentor MOOC BPS" class="profile-image">
                             </div>
                         </div>
                     </div>
@@ -1434,8 +1434,8 @@
                     <div class="slide-content">
                         <!-- Text Content -->
                         <div class="text-content">
-                            <div class="mocc-badge">
-                                Fitur Unggulan MOCC BPS
+                            <div class="MOOC-badge">
+                                Fitur Unggulan MOOC BPS
                             </div>
                             
                             <h1 class="welcome-title">
@@ -1471,7 +1471,7 @@
                             <div class="profile-image-container">
                                 <div class="image-decoration"></div>
                                 <!-- GANTI PATH GAMBAR DI BAWAH INI -->
-                                <img src="/img/foto1.png" alt="Fitur MOCC BPS" class="profile-image">
+                                <img src="/img/foto1.webp" alt="Fitur MOOC BPS" class="profile-image">
                             </div>
                         </div>
                     </div>
@@ -1482,7 +1482,7 @@
                     <div class="slide-content">
                         <!-- Text Content -->
                         <div class="text-content">
-                            <div class="mocc-badge">
+                            <div class="MOOC-badge">
                                 Progress Pembelajaran
                             </div>
                             
@@ -1519,7 +1519,7 @@
                             <div class="profile-image-container">
                                 <div class="image-decoration"></div>
                                 <!-- GANTI PATH GAMBAR DI BAWAH INI -->
-                                <img src="img/foto_dua.png" alt="Komunitas MOCC BPS" class="profile-image">
+                                <img src="img/foto2.webp" alt="Komunitas MOOC BPS" class="profile-image">
                             </div>
                         </div>
                     </div>
@@ -1626,7 +1626,7 @@
 
             <div class="footer-bottom">
                 <div class="copyright">
-                    Hak Cipta © 2023 Badan Pusat Statistik
+                    Hak Cipta © 2025 Badan Pusat Statistik
                 </div>
             </div>
         </div>
