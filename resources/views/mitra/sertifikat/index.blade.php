@@ -108,9 +108,9 @@
                     </td>
                     <td class="text-center">
                         <a href="{{ route('sertifikat.download', $certificate) }}" 
-                        class="btn-action btn-download"
+                        class="btn btn-primary btn-sm"
                         title="Unduh Sertifikat">
-                            <i class="fas fa-download"></i>
+                            <i class="fas fa-download"></i> Unduh Sertifikat
                         </a>
                     </td>
                 </tr>
