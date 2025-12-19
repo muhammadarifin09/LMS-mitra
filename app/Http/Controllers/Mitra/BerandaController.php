@@ -16,7 +16,7 @@ class BerandaController extends Controller
         $pesertaAktif = Biodata::count();
         
         // Hitung jumlah kursus tersedia (status aktif dan belum penuh)
-        $kursusTersedia = Kursus::tersedia()->count();
+        $kursusTersedia = Kursus::where('status', 'aktif')->count();
         
         // Hitung jumlah materi online (type material)
         $materiOnline = Materials::where('type', 'material')->count();

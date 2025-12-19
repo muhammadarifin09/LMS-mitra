@@ -88,11 +88,11 @@
         <table class="table table-hover">
             <thead>
                 <tr>
-                    <th>No</th>
-                    <th>Judul Kursus</th>
-                    <th>Penerbit</th>
-                    <th>Tanggal Terbit</th>
-                    <th class="text-center">Aksi</th>
+                    <th style="width: 5%">No</th>
+                    <th style="width: 35%">Judul Kursus</th>
+                    <th style="width: 20%">Penerbit</th>
+                    <th style="width: 15%">Tanggal Terbit</th>
+                    <th style="width: 15%" class="text-center">Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -108,9 +108,9 @@
                     </td>
                     <td class="text-center">
                         <a href="{{ route('sertifikat.download', $certificate) }}" 
-                        class="btn btn-primary btn-sm"
+                        class="btn btn-primary btn-sm" style="background-color: #1e3c72;"
                         title="Unduh Sertifikat">
-                            <i class="fas fa-download"></i> Unduh Sertifikat
+                            <i class="fas fa-download"></i> Unduh
                         </a>
                     </td>
                 </tr>
