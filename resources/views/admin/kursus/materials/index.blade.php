@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'MOCC BPS - Materi Kursus: ' . $kursus->judul_kursus)
+@section('title', 'MOOC BPS - Materi Kursus: ' . $kursus->judul_kursus)
 
 @section('styles')
 <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css" rel="stylesheet">

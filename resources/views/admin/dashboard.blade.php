@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'MOCC BPS - Admin Dashboard')
+@section('title', 'MOOC BPS - Admin Dashboard')
 
 @section('styles')
 <style>
@@ -225,7 +225,7 @@
     </div>
     <h1 class="welcome-title">Selamat Datang, {{ auth()->user()->biodata->nama_lengkap ?? auth()->user()->name }}!</h1>
     <p class="welcome-subtitle">
-        Kelola sistem MOCC BPS dengan mudah dan efisien. Pantau aktivitas, kelola pengguna, dan optimalkan pengalaman belajar.
+        Kelola sistem MOOC BPS dengan mudah dan efisien. Pantau aktivitas, kelola pengguna, dan optimalkan pengalaman belajar.
     </p>
 </div>
 
@@ -326,7 +326,7 @@
 <!-- Copyright -->
 <div class="text-center mt-5 pt-4 border-top">
     <p style="color: #5a6c7d; font-size: 0.9rem;">
-        Copyright © 2025 | MOCC BPS - Admin Dashboard
+        Copyright © 2025 | MOOC BPS - Admin Dashboard
     </p>
 </div>
 @endsection

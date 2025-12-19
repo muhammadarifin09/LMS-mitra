@@ -1,7 +1,7 @@
 {{-- resources/views/profil/index.blade.php --}}
 @extends('mitra.layouts.app')
 
-@section('title', 'Profil - MOCC BPS')
+@section('title', 'Profil - MOOC BPS')
 
 @section('content')
 
@@ -71,20 +71,24 @@
             <div class="card shadow-sm border-0 mt-3">
                 <div class="card-body">
                     <h6 class="card-title mb-3">Aktivitas</h6>
+
                     <div class="d-flex justify-content-between mb-2">
                         <span>Kursus Diikuti:</span>
-                        <strong>5</strong>
+                        <strong>{{ $totalKursus }}</strong>
                     </div>
+
                     <div class="d-flex justify-content-between mb-2">
                         <span>Sertifikat:</span>
-                        <strong>3</strong>
+                        <strong>{{ $totalSertifikat }}</strong>
                     </div>
+
                     <div class="d-flex justify-content-between">
                         <span>Progress Rata-rata:</span>
-                        <strong>78%</strong>
+                        <strong>{{ $avgProgress }}%</strong>
                     </div>
                 </div>
             </div>
+
         </div>
 
         <!-- Detail Profil -->

@@ -4,7 +4,7 @@
 
 @extends('layouts.admin')
 
-@section('title', 'MOCC BPS - Tambah Materi')
+@section('title', 'MOOC BPS - Tambah Materi')
 
 @section('styles')
 <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css" rel="stylesheet">

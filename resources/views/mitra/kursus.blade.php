@@ -5,7 +5,7 @@
 
 @extends('mitra.layouts.app')
 
-@section('title', 'MOCC BPS - Kursus Tersedia')
+@section('title', 'MOOC BPS - Kursus Tersedia')
 
 @section('content')
 <style>

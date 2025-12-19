@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Tambah User - MOCC BPS')
+@section('title', 'Tambah User - MOOC BPS')
 
 @section('styles')
     <style>

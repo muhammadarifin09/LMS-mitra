@@ -6,6 +6,9 @@ use App\Models\Biodata;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Enrollment;
+use App\Models\Certificate;
+
 
 class ProfilController extends Controller
 {
@@ -14,8 +17,28 @@ class ProfilController extends Controller
         $user = Auth::user();
         $biodata = Biodata::where('user_id', $user->id)->first();
 
-        return view('profil.index', compact('user', 'biodata'));
+        // 🔹 Kursus diikuti
+        $totalKursus = Enrollment::where('user_id', $user->id)->count();
+
+        // 🔹 Sertifikat dimiliki
+        $totalSertifikat = Certificate::where('user_id', $user->id)->count();
+
+        // 🔹 Progress rata-rata
+        $avgProgress = Enrollment::where('user_id', $user->id)
+            ->avg('progress_percentage');
+
+        // Biar rapi & aman
+        $avgProgress = $avgProgress ? round($avgProgress) : 0;
+
+        return view('profil.index', compact(
+            'user',
+            'biodata',
+            'totalKursus',
+            'totalSertifikat',
+            'avgProgress'
+        ));
     }
+
 
     public function edit()
     {

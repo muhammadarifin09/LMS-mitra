@@ -1,7 +1,7 @@
 {{-- resources/views/mitra/kursus-detail.blade.php --}}
 @extends('mitra.layouts.app')
 
-@section('title', 'MOCC BPS - Detail Kursus')
+@section('title', 'MOOC BPS - Detail Kursus')
 
 @section('content')
 <style>
