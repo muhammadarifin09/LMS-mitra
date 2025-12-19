@@ -16,7 +16,7 @@
                        <!-- TAMBAH: Tombol Export Excel -->
                        <a href="{{ route('test.csv') }}"
                         class="btn btn-sm btn-success">
-                            <i class="fas fa-file-csv"></i> Export CSV
+                            <i class="fas fa-file-csv"></i> Export Excel
                         </a>
 
                     </div>

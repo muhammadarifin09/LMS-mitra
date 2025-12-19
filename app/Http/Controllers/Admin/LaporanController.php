@@ -10,6 +10,9 @@ use Illuminate\Support\Str; // TAMBAHKAN INI
 // use App\Exports\KursusExport;
 // use App\Exports\KursusPesertaExport;
 // use Maatwebsite\Excel\Facades\Excel;
+use App\Models\LaporanKursus;
+use Carbon\Carbon;
+
 
 
 class LaporanController extends Controller
@@ -134,46 +137,51 @@ public function exportKursusDetailCsv(Kursus $kursus)
     // DETAIL KURSUS
     // ======================
     public function kursusDetail(Kursus $kursus)
-    {
-        $kursus->load(['enrollments.user', 'materials']);
+{
+    $kursus->load(['enrollments.user', 'materials']);
+    
+    // Hitung statistik untuk setiap peserta
+    $pesertaData = [];
+    foreach ($kursus->enrollments as $enrollment) {
+        $user = $enrollment->user;
+        $nilai = $this->hitungNilai($user->id, $kursus);
         
-        // Hitung statistik untuk setiap peserta
-        $pesertaData = [];
-        foreach ($kursus->enrollments as $enrollment) {
-            $user = $enrollment->user;
-            $progress = $this->hitungProgress($enrollment);
-            $nilai = $this->hitungNilai($user->id, $kursus);
-            
-            // HITUNG PROGRESS BERDASARKAN MATERI YANG SELESAI
-            $totalMaterials = $kursus->materials->where('is_active', true)->count();
-            $completedMaterials = $this->hitungMateriSelesai($user->id, $kursus);
-            $progressPercentage = $totalMaterials > 0 
-                ? round(($completedMaterials / $totalMaterials) * 100) 
-                : 0;
-            
-            $pesertaData[] = [
-                'user' => $user,
-                'enrollment' => $enrollment,
-                'progress_percentage' => $progressPercentage,
-                'completed_materials' => $completedMaterials,
-                'total_materials' => $totalMaterials,
-                'nilai' => $nilai
-            ];
-        }
+        $totalMaterials = $kursus->materials->where('is_active', true)->count();
+        $completedMaterials = $this->hitungMateriSelesai($user->id, $kursus);
+        $progressPercentage = $totalMaterials > 0 
+            ? round(($completedMaterials / $totalMaterials) * 100) 
+            : 0;
         
-        // Hitung statistik keseluruhan
-        $totalProgress = collect($pesertaData)->avg('progress_percentage');
-        $totalNilai = collect($pesertaData)->avg('nilai');
-        $pesertaSelesai = collect($pesertaData)->where('progress_percentage', 100)->count();
-        
-        return view('laporan.admin.kursus.detail', compact(
-            'kursus', 
-            'pesertaData', 
-            'totalProgress', 
-            'totalNilai', 
-            'pesertaSelesai'
-        ));
+        $pesertaData[] = [
+            'user' => $user,
+            'enrollment' => $enrollment,
+            'progress_percentage' => $progressPercentage,
+            'completed_materials' => $completedMaterials,
+            'total_materials' => $totalMaterials,
+            'nilai' => $nilai
+        ];
     }
+    
+    // Hitung statistik keseluruhan
+    $totalProgress = collect($pesertaData)->avg('progress_percentage');
+    $totalNilai = collect($pesertaData)->avg('nilai');
+    $pesertaSelesai = collect($pesertaData)->where('progress_percentage', 100)->count();
+
+    // 🔵 AMBIL DATA LAPORAN YANG SUDAH DISIMPAN
+    $laporan = LaporanKursus::where('kursus_id', $kursus->id)
+        ->latest('periode')
+        ->first();
+
+    return view('laporan.admin.kursus.detail', compact(
+        'kursus', 
+        'pesertaData', 
+        'totalProgress', 
+        'totalNilai', 
+        'pesertaSelesai',
+        'laporan' // 🔵 WAJIB DIKIRIM
+    ));
+}
+
 
     // ======================
     // HITUNG MATERI YANG SUDAH SELESAI
@@ -272,8 +280,8 @@ public function exportKursusDetailCsv(Kursus $kursus)
         }
 
         return $totalTest > 0
-            ? round($totalScore / $totalTest, 2)
-            : 0;
+        ? round($totalScore / $totalTest, 2)
+        : null; // ✅ GANTI DI SINI
     }
 
     // ======================
@@ -410,6 +418,58 @@ public function exportKursusPdfRingkas(Kursus $kursus)
         
         return $pdf->download($fileName);
     }
+
+
+    public function generateLaporanKursus(Kursus $kursus)
+{
+    $kursus->load(['enrollments.user', 'materials']);
+
+    $totalPeserta = $kursus->enrollments->count();
+    $pesertaSelesai = 0;
+    $totalProgress = 0;
+    $totalNilai = 0;
+    $jumlahNilai = 0;
+
+    foreach ($kursus->enrollments as $enrollment) {
+        $progress = $this->hitungProgress($enrollment);
+        $nilai = $this->hitungNilai($enrollment->user_id, $kursus);
+
+        $totalProgress += $progress;
+
+        if ($progress === 100) {
+            $pesertaSelesai++;
+        }
+
+        // NULL = belum ada nilai, 0 = nilai valid
+        if ($nilai !== null) {
+            $totalNilai += $nilai;
+            $jumlahNilai++;
+        }
+    }
+
+    $rataProgress = $totalPeserta > 0
+        ? round($totalProgress / $totalPeserta, 2)
+        : 0;
+
+    $rataNilai = $jumlahNilai > 0
+        ? round($totalNilai / $jumlahNilai, 2)
+        : null;
+
+    // ✅ SIMPAN DATA (TANPA RETURN)
+    LaporanKursus::create([
+        'kursus_id' => $kursus->id,
+        'periode' => now()->format('Y-m'),
+        'total_peserta' => $totalPeserta,
+        'peserta_selesai' => $pesertaSelesai,
+        'rata_rata_progress' => $rataProgress,
+        'rata_rata_nilai' => $rataNilai ?? 0,
+    ]);
+
+    // ✅ BARU REDIRECT
+    return redirect()
+        ->route('admin.laporan.kursus.detail', $kursus->id)
+        ->with('success', 'Laporan kursus berhasil disimpan ke arsip.');
+}
 
 
 }

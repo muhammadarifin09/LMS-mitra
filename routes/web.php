@@ -270,6 +270,10 @@ Route::prefix('admin/laporan')->name('admin.laporan.')->group(function () {
 Route::get('/test-csv', [\App\Http\Controllers\Admin\LaporanController::class, 'exportKursusCsv']);
 Route::get('/test-csv', [\App\Http\Controllers\Admin\LaporanController::class, 'exportKursusCsv'])
     ->name('test.csv');
+Route::post(
+    '/admin/laporan/kursus/{kursus}/generate',
+    [LaporanController::class, 'generateLaporanKursus']
+)->name('admin.laporan.kursus.generate');
 
 
 
@@ -287,3 +291,4 @@ Route::middleware(['auth'])->prefix('sertifikat')->name('sertifikat.')->group(fu
         Route::get('/{certificate}', [CertificateController::class, 'show'])->name('show');
         Route::get('/{certificate}/unduh', [CertificateController::class, 'download'])->name('download');
 });
+

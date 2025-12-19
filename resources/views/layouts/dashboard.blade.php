@@ -321,9 +321,9 @@
                     <div class="user-avatar">
                         @auth
                             @php
-                                $user = Auth::user();
+                               $user = auth()->user(); // ✅ FIX
                                 $biodata = $user->biodata ?? null;
-                                $initials = strtoupper(substr($user->name, 0, 2));
+                                $initials = strtoupper(substr($user->nama, 0, 2));
                             @endphp
                             
                             @if($biodata && $biodata->foto_profil)
@@ -339,7 +339,7 @@
                     </div>
                     <div class="user-info">
                         <div class="user-name">
-                            {{ Auth::user()->biodata->nama_lengkap ?? Auth::user()->name }}
+                            {{ auth()->user()->biodata?->nama_lengkap ?? auth()->user()->name }}
                         </div>
                         <div class="user-status">
                             <span class="status-dot"></span>

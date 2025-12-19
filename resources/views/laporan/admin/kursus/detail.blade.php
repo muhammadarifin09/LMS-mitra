@@ -13,11 +13,22 @@
                         Detail Laporan Kursus: {{ $kursus->judul_kursus }}
                     </h3>
                     <div class="card-tools">
-                        <!-- PERBAIKAN: route ke list kursus, bukan pdf ringkas -->
+                        {{-- 🔵 TOMBOL BARU --}}
                         <a href="{{ route('admin.laporan.kursus') }}" 
                            class="btn btn-sm btn-secondary mr-2">
                             <i class="fas fa-arrow-left"></i> Kembali
                         </a>
+                        <form action="{{ route('admin.laporan.kursus.generate', $kursus->id) }}"
+                            method="POST"
+                            class="d-inline"
+                            onsubmit="return confirm('Generate dan simpan laporan kursus ini?')">
+                            @csrf
+                            <button class="btn btn-sm btn-primary mr-2">
+                                <i class="fas fa-database"></i> Simpan ke Arsip
+                            </button>
+                        </form>
+                        <!-- PERBAIKAN: route ke list kursus, bukan pdf ringkas -->
+                    
                         <!-- TAMBAH: tombol import excel -->
                         <a href="{{ route('admin.laporan.kursus.detail.csv', $kursus->id) }}" 
                         class="btn btn-sm btn-success mr-2">
@@ -31,6 +42,8 @@
                         </a>
                     </div>
                 </div>
+             
+
                 <div class="card-body">
                     <!-- Course Information Card -->
                     <div class="row mb-4">
@@ -40,7 +53,7 @@
                                     <h3 class="card-title">Informasi Kursus</h3>
                                 </div>
                                 <div class="card-body">
-                                    <div class="row">
+                                   <div class="row">
                                         <div class="col-md-6">
                                             <table class="table table-sm table-borderless">
                                                 <tr>
@@ -53,6 +66,7 @@
                                                 </tr>
                                             </table>
                                         </div>
+
                                         <div class="col-md-6">
                                             <table class="table table-sm table-borderless">
                                                 <tr>
@@ -63,9 +77,22 @@
                                                     <th>Tanggal Dibuat</th>
                                                     <td>{{ $kursus->created_at->format('d M Y H:i') }}</td>
                                                 </tr>
+                                                <!-- <tr>
+                                                    <th>Rata-rata Nilai</th>
+                                                    <td>
+                                                        <strong>
+                                                            @if (optional($laporan)->rata_rata_nilai === null)
+                                                                <span class="text-muted fst-italic">Belum ada nilai</span>
+                                                            @else
+                                                                {{ number_format(optional($laporan)->rata_rata_nilai, 1) }}
+                                                            @endif
+                                                        </strong>
+                                                    </td>
+                                                </tr> -->
                                             </table>
                                         </div>
                                     </div>
+
                                     @if($kursus->deskripsi_singkat)
                                     <div class="row mt-2">
                                         <div class="col-md-12">
@@ -177,7 +204,11 @@
                                                             border-radius: 50px;
                                                             display: inline-block;
                                                         ">
-                                                            {{ number_format($data['nilai'], 1) }}
+                                                            @if ($data['nilai'] === null)
+                                                                <span class="text-muted fst-italic">Belum ada nilai</span>
+                                                            @else
+                                                                {{ number_format($data['nilai'], 1) }}
+                                                            @endif
                                                         </span>
                                                     </td>
                                                 </tr>
@@ -295,7 +326,22 @@
 @endsection
 
 @section('scripts')
+@if(session('success'))
+<script>
+    Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: '{{ session('success') }}',
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#3085d6',
+        allowOutsideClick: false
+    });
+</script>
+@endif
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
     $(document).ready(function() {
         // Inisialisasi DataTable untuk tabel peserta
