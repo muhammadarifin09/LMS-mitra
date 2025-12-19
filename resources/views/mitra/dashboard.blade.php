@@ -1,6 +1,6 @@
 @extends('mitra.layouts.app')
 
-@section('title', 'MOCC BPS - Dashboard Mitra')
+@section('title', 'MOOC BPS - Dashboard Mitra')
 
 @section('content')
 <style>
@@ -240,7 +240,7 @@
 
     <!-- Welcome Section -->
     <div class="welcome-section">
-        <h1 class="welcome-title">Selamat Datang di MOCC BPS!</h1>
+        <h1 class="welcome-title">Selamat Datang di MOOC BPS!</h1>
         <p class="welcome-subtitle">
             Platform pembelajaran mandiri bagi Mitra Statistik untuk mempersiapkan diri sebelum pelatihan tatap muka dan penugasan di lapangan dengan sistem belajar adaptif.
         </p>

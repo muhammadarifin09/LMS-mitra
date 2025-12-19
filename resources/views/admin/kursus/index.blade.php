@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Manajemen Kursus - MOCC BPS')
+@section('title', 'Manajemen Kursus - MOOC BPS')
 
 @section('styles')
 <style>
@@ -308,7 +308,7 @@
 <div class="welcome-section">
     <h1 class="welcome-title">Manajemen Kursus</h1>
     <p class="welcome-subtitle">
-        Kelola semua kursus yang tersedia di platform MOCC BPS. Tambah, edit, atau hapus kursus sesuai kebutuhan.
+        Kelola semua kursus yang tersedia di platform MOOC BPS. Tambah, edit, atau hapus kursus sesuai kebutuhan.
     </p>
 </div>
 

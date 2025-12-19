@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Manajemen User - MOCC BPS')
+@section('title', 'Manajemen User - MOOC BPS')
 
 @section('styles')
 <style>
@@ -180,7 +180,7 @@
 <div class="welcome-section">
     <h1 class="welcome-title">Manajemen User</h1>
     <p class="welcome-subtitle">
-        Kelola data user sistem MOCC BPS dengan mudah. Lihat, edit, atau hapus data user sesuai kebutuhan.
+        Kelola data user sistem MOOC BPS dengan mudah. Lihat, edit, atau hapus data user sesuai kebutuhan.
     </p>
 </div>
 

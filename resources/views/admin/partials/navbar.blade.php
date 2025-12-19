@@ -2,7 +2,7 @@
     <div class="d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center">
             <a href="{{ route('admin.dashboard') }}" class="nav-brand">
-                <img src="{{ asset('img/Logo_E-Learning.png') }}" alt="MOCC BPS Logo" class="logo-image">
+                <img src="{{ asset('img/Logo_E-Learning.png') }}" alt="MOOC BPS Logo" class="logo-image">
             </a>
             <div class="nav-menu ms-5">
                 <a href="{{ route('admin.dashboard') }}" class="nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">Dashboard</a>
@@ -25,7 +25,7 @@
                 <div class="user-avatar">
                     @auth
                         @php
-                            $user = Auth::user();
+                           $user = auth()->user();
                             // Ambil nama dari biodata jika ada, atau dari user nama
                             $displayNama = $user->biodata->nama_lengkap ?? $user->nama;
                             
@@ -48,11 +48,11 @@
                 </div>
                 <div class="user-info">
                     <div class="user-nama">
-                        {{ Auth::user()->biodata->nama_lengkap ?? Auth::user()->nama }}
+                       {{ $user->biodata->nama_lengkap ?? $user->nama ?? $user->name }}
                     </div>
                     <div class="user-status">
                         <span class="status-dot"></span>
-                        {{ ucfirst(Auth::user()->role) }}
+                        {{ ucfirst($user->role) }}
                     </div>
                 </div>
                 <i class="fas fa-chevron-down ms-2" style="font-size: 0.8rem; color: #6c757d;"></i>
@@ -65,7 +65,7 @@
                         <div class="dropdown-avatar">
                             @auth
                                 @php
-                                    $user = Auth::user();
+                                    $user = auth()->user();
                                     $displayNama = $user->biodata->nama_lengkap ?? $user->nama;
                                     
                                     // Generate inisial yang sama untuk dropdown
@@ -84,9 +84,10 @@
                             @endauth
                         </div>
                         <div class="dropdown-user-details">
-                            <div class="dropdown-user-nama">{{ Auth::user()->biodata->nama_lengkap ?? Auth::user()->nama }}</div>
-                            <div class="dropdown-user-email">{{ Auth::user()->email }}</div>
-                            <div class="dropdown-user-role">{{ ucfirst(Auth::user()->role) }}</div>
+                            <div class="dropdown-user-nama">{{ $displayNama }}</div>
+<div class="dropdown-user-email">{{ $user->email }}</div>
+    <div class="dropdown-user-role">{{ ucfirst($user->role) }}</div>
+
                         </div>
                     </div>
                 </div>

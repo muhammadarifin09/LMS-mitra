@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'MOCC BPS')</title>
+    <title>@yield('title', 'MOOC BPS')</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -58,7 +58,7 @@
             color: #2a5298;
         }
         
-        /* Logo MOCC BPS sebagai gambar */
+        /* Logo MOOC BPS sebagai gambar */
         .logo-image {
             height: 50px;
             width: auto;
@@ -291,9 +291,9 @@
 <nav class="main-nav">
         <div class="d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center">
-                <!-- Logo MOCC BPS sebagai gambar -->
+                <!-- Logo MOOC BPS sebagai gambar -->
                 <a href="#" class="nav-brand">
-                    <img src="{{ asset('img/Logo_E-Learning.png') }}" alt="MOCC BPS Logo" class="logo-image">
+                    <img src="{{ asset('img/Logo_E-Learning.png') }}" alt="MOOC BPS Logo" class="logo-image">
                 </a>
                 <div class="nav-menu ms-5">
                     <a href="/beranda" class="nav-item">Beranda</a>
@@ -321,9 +321,9 @@
                     <div class="user-avatar">
                         @auth
                             @php
-                                $user = Auth::user();
+                               $user = auth()->user(); // ✅ FIX
                                 $biodata = $user->biodata ?? null;
-                                $initials = strtoupper(substr($user->name, 0, 2));
+                                $initials = strtoupper(substr($user->nama, 0, 2));
                             @endphp
                             
                             @if($biodata && $biodata->foto_profil)
@@ -339,7 +339,7 @@
                     </div>
                     <div class="user-info">
                         <div class="user-name">
-                            {{ Auth::user()->biodata->nama_lengkap ?? Auth::user()->name }}
+                            {{ auth()->user()->biodata?->nama_lengkap ?? auth()->user()->name }}
                         </div>
                         <div class="user-status">
                             <span class="status-dot"></span>

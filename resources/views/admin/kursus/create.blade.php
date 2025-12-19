@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Tambah Kursus Baru - MOCC BPS')
+@section('title', 'Tambah Kursus Baru - MOOC BPS')
 
 @section('styles')
 <style>
@@ -152,7 +152,7 @@
 <div class="welcome-section">
     <h1 class="welcome-title">Tambah Kursus Baru</h1>
     <p class="welcome-subtitle">
-        Isi form berikut untuk menambahkan kursus baru ke platform MOCC BPS.
+        Isi form berikut untuk menambahkan kursus baru ke platform MOOC BPS.
     </p>
 </div>
 

@@ -14,7 +14,7 @@ class DashboardController extends Controller
     {
         // Ambil data yang SAMA PERSIS dengan BerandaController
         $pesertaAktif = Biodata::count();
-        $kursusTersedia = Kursus::tersedia()->count();
+        $kursusTersedia = Kursus::where('status', 'aktif')->count();
         $materiOnline = Materials::where('type', 'material')->count();
         
         return view('mitra.dashboard', compact('pesertaAktif', 'kursusTersedia', 'materiOnline'));

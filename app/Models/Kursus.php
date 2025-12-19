@@ -85,4 +85,9 @@ class Kursus extends Model
         });
     }
 
+    public function certificates()
+    {
+        return $this->hasMany(Certificate::class);
+    }
+
 }

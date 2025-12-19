@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Reset Password - LMS MOCC Mitra</title>
+    <title>Reset Password - LMS MOOC Mitra</title>
     <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -16,7 +16,7 @@
     <div class="container">
         <div class="header">
             <h2>BPS Kabupaten Tanah Laut</h2>
-            <p>Learning Management System MOCC Mitra</p>
+            <p>Learning Management System MOOC Mitra</p>
         </div>
         
         <div class="content">
@@ -24,7 +24,7 @@
             
             <p>Halo,</p>
             
-            <p>Kami menerima permintaan untuk mereset password akun LMS MOCC Mitra dengan username: <strong>{{ $username }}</strong></p>
+            <p>Kami menerima permintaan untuk mereset password akun LMS MOOC Mitra dengan username: <strong>{{ $username }}</strong></p>
             
             <p>Silakan klik tombol di bawah ini untuk mereset password Anda:</p>
             
@@ -36,7 +36,7 @@
             
             <p>Jika Anda tidak meminta reset password, abaikan email ini.</p>
             
-            <p>Salam,<br>Tim LMS MOCC Mitra<br>BPS Kabupaten Tanah Laut</p>
+            <p>Salam,<br>Tim LMS MOOC Mitra<br>BPS Kabupaten Tanah Laut</p>
         </div>
         
         <div class="footer">

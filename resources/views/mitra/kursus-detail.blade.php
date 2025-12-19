@@ -1,7 +1,7 @@
 {{-- resources/views/mitra/kursus-detail.blade.php --}}
 @extends('mitra.layouts.app')
 
-@section('title', 'MOCC BPS - Detail Kursus')
+@section('title', 'MOOC BPS - Detail Kursus')
 
 @section('content')
 <style>
@@ -308,6 +308,19 @@
         color: #6c757d;
         font-style: italic;
     }
+
+    .score-pass {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .score-fail {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
 </style>
 
 <div class="container-fluid py-4">
@@ -608,8 +621,13 @@
                             </span>
                         </button>
                     @elseif($material['is_test_completed'])
-                        <span class="btn-simple btn-success">
-                            <i class="fas fa-check"></i> Selesai (Nilai: {{ $material['test_score'] }}%)
+                        @php
+                            $score = $material['test_score'];
+                            $scoreClass = $score >= 60 ? 'score-pass' : 'score-fail';
+                        @endphp
+
+                        <span class="btn-simple {{ $scoreClass }}">
+                            Nilai: {{ number_format($score, 2) }}%
                         </span>
                     @else
                         <a href="{{ route('mitra.kursus.test.show', ['kursus' => $kursus->id, 'material' => $material['id'], 'testType' => $material['type']]) }}" 

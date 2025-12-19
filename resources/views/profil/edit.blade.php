@@ -1,6 +1,6 @@
 @extends('layouts.dashboard')
 
-@section('title', 'Edit Profil - MOCC BPS')
+@section('title', 'Edit Profil - MOOC BPS')
 
 @section('content')
 <div class="main-content">

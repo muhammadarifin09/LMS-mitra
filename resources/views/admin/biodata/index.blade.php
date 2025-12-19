@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'MOCC BPS - Manajemen Biodata Mitra')
+@section('title', 'MOOC BPS - Manajemen Biodata Mitra')
 
 @section('styles')
 
@@ -200,7 +200,7 @@
 <!-- Copyright -->
 <div class="text-center mt-5 pt-4 border-top">
     <p style="color: #5a6c7d; font-size: 0.9rem;">
-        Copyright © 2025 | MOCC BPS - Admin Dashboard
+        Copyright © 2025 | MOOC BPS
     </p>
 </div>
 @endsection

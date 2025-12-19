@@ -1,6 +1,11 @@
+@php
+    use Illuminate\Support\Str;
+@endphp
+
+
 @extends('mitra.layouts.app')
 
-@section('title', 'MOCC BPS - Kursus Tersedia')
+@section('title', 'MOOC BPS - Kursus Tersedia')
 
 @section('content')
 <style>
@@ -326,6 +331,56 @@
         }
     }
 
+    /* Empty State */
+    .empty-state-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 300px;
+        text-align: center;
+        padding: 40px 20px;
+        width: 100%;
+    }
+    
+    .kursus-saya-container > div > div:last-child {
+        padding: 20px 10px !important;
+    }
+    
+    .kursus-saya-container i.fa-book-open {
+        font-size: 2rem !important;
+        color: #667eea !important;
+        margin-bottom: 15px !important;
+    }
+    
+    .kursus-saya-container h4 {
+        font-size: 1.2rem !important;
+        color: #1e3c72 !important;
+        margin-bottom: 10px !important;
+    }
+    
+    .kursus-saya-container p {
+        font-size: 0.9rem !important;
+        color: #6c757d !important;
+        margin-bottom: 20px !important;
+    }
+    
+    .kursus-saya-container a.btn-empty-state {
+        background: #1e3c72 !important;
+        color: white !important;
+        padding: 8px 20px !important;
+        border-radius: 5px !important;
+        text-decoration: none !important;
+        font-size: 0.9rem !important;
+        display: inline-block;
+        transition: all 0.3s ease;
+    }
+    
+    .kursus-saya-container a.btn-empty-state:hover {
+        background: #152c5b !important;
+        transform: translateY(-2px);
+    }
+
     /* ===== RESPONSIVE DESIGN UNTUK MOBILE KECIL (≤400px) ===== */
     @media (max-width: 400px) {
         /* Header Kursus */
@@ -594,8 +649,8 @@
 </div>
 
 <!-- Course Grid from Database -->
-<div class="course-grid">
-    @if(isset($kursus) && $kursus->count() > 0)
+@if(isset($kursus) && $kursus->count() > 0)
+    <div class="course-grid">
         @foreach($kursus as $item)
             @if($item->status == 'aktif')
             <div class="modern-course-card">
@@ -849,12 +904,21 @@
             @endif
         @endforeach
     @else
-        <tr>
-            <td colspan="8" class="text-center py-4">
-                <i class="fas fa-book me-2"></i>
-                Tidak ada data kursus
-            </td>
-        </tr>
+        <!-- Empty State Simple -->
+        <div style="text-align: center;">
+            <i class="fas fa-book-open" style="font-size: 3rem; color: #667eea; margin-bottom: 15px;"></i>
+            <h4 style="color: #1e3c72; margin-bottom: 10px;">Tidak Ada Kursus</h4>
+            <p style="color: #6c757d; margin-bottom: 20px;">Lihat kursus pertama Anda</p>
+            <a href="{{ route('mitra.kursus.saya') }}" style="
+                background: #1e3c72; 
+                color: white; 
+                padding: 8px 20px; 
+                border-radius: 5px; 
+                text-decoration: none;
+            ">
+                Lihat Kursus
+            </a>
+        </div>
     @endif
 </div>
 
