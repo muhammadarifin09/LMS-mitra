@@ -29,7 +29,7 @@ class VideoQuestion extends Model
 
     public function material()
     {
-        return $this->belongsTo(Materials::class);
+        return $this->belongsTo(Materials::class, 'material_id'); // Pastikan foreign key benar
     }
 
     public function getFormattedOptionsAttribute()
