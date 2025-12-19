@@ -18,6 +18,9 @@
                         class="btn btn-sm btn-success">
                             <i class="fas fa-file-csv"></i> Export Excel
                         </a>
+                        
+                        
+                 
 
                     </div>
                 </div>
@@ -61,33 +64,28 @@
                                             {{ $item->enrollments_count }} <small>Peserta</small>
                                         </div>
                                     </td>
-                                    <td style="text-align: center; vertical-align: middle;">
-                                        <div class="btn-group btn-group-sm" role="group">
-                                            <!-- DETAIL: ke halaman detail -->
-                                            <a href="{{ route('admin.laporan.kursus.detail', $item->id) }}" 
-                                               class="btn btn-info" 
-                                               title="Detail Laporan"
-                                               style="border-radius: 4px 0 0 4px; padding: 5px 10px;">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                            <!-- PDF RINGKAS: export ringkas -->
-                                            <a href="{{ route('admin.laporan.kursus.pdf.ringkas', $item->id) }}" 
-                                               class="btn btn-warning" 
-                                               title="Export Ringkasan PDF"
-                                               target="_blank"
-                                               style="border-radius: 0; padding: 5px 10px;">
-                                                <i class="fas fa-file-alt"></i>
-                                            </a>
-                                            <!-- PDF DETAIL: export detail -->
-                                            <a href="{{ route('admin.laporan.kursus.pdf.detail', $item->id) }}" 
-                                               class="btn btn-danger" 
-                                               title="Export Detail PDF"
-                                               target="_blank"
-                                               style="border-radius: 0 4px 4px 0; padding: 5px 10px;">
-                                                <i class="fas fa-file-pdf"></i>
-                                            </a>
-                                        </div>
-                                    </td>
+                                <td style="text-align: center; vertical-align: middle;">
+                                    <div class="btn-group btn-group-sm" role="group" style="gap: 10px;">
+                                        <!-- DETAIL: ke halaman detail -->
+                                        <a href="{{ route('admin.laporan.kursus.detail', $item->id) }}" 
+                                        class="btn btn-info" 
+                                        title="Detail Laporan"
+                                        style="border-radius: 6px; padding: 0.5px 8px; display: flex; align-items: center; gap: 4px;">
+                                            <i class="fas fa-eye"></i>
+                                            <span>Detail</span>
+                                        </a>
+                                        
+                                        <!-- PDF RINGKAS: export ringkas -->
+                                        <a href="{{ route('admin.laporan.kursus.pdf.ringkas', $item->id) }}" 
+                                        class="btn btn-warning" 
+                                        title="Export Ringkasan PDF"
+                                        target="_blank"
+                                        style="border-radius: 6px; padding: 0.5px 8px; display: flex; align-items: center; gap: 6px;">
+                                            <i class="fas fa-file-pdf" style="color: white; background-color: #dc3545; padding: 4px; border-radius: 3px; font-size: 1em;"></i>
+                                            <span>Export PDF</span>
+                                        </a>
+                                    </div>
+                                </td>
                                 </tr>
                                 @endforeach
                             </tbody>

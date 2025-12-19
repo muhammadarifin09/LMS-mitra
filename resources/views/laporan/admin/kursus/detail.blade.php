@@ -326,21 +326,20 @@
 @endsection
 
 @section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 @if(session('success'))
 <script>
     Swal.fire({
         icon: 'success',
         title: 'Berhasil!',
-        text: '{{ session('success') }}',
+        text: "{{ session('success') }}",
         confirmButtonText: 'OK',
         confirmButtonColor: '#3085d6',
         allowOutsideClick: false
     });
 </script>
 @endif
-
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
     $(document).ready(function() {
