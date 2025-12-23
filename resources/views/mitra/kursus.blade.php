@@ -672,10 +672,10 @@
                     
                     <!-- Level Badge -->
                     <div class="course-badge level-badge 
-                        @if($item->tingkat_kesulitan == 'pemula') level-pemula
-                        @elseif($item->tingkat_kesulitan == 'menengah') level-menengah
+                        @if($item->kategori == 'pemula') level-pemula
+                        @elseif($item->kategori == 'menengah') level-menengah
                         @else level-lanjutan @endif">
-                        {{ $item->tingkat_kesulitan }}
+                        {{ $item->kategori }}
                     </div>
                 </div>
 
@@ -694,7 +694,7 @@
 
                     <!-- Category/Publisher -->
                     <div class="course-category">
-                        {{ $item->penerbit }}
+                        {{ $item->pelaksana }}
                     </div>
 
                     <!-- Description -->
@@ -705,8 +705,8 @@
                     <!-- Meta Information -->
                     <div class="course-meta-grid">
                         <div class="meta-card">
-                            <div class="meta-value">{{ $item->durasi_jam }}h</div>
-                            <div class="meta-label">Durasi</div>
+                            <div class="meta-value">{{ $item->durasi_jam }} JP</div>
+                            <div class="meta-label"></div>
                         </div>
                         <div class="meta-card">
                             <div class="meta-value">{{ $item->peserta_terdaftar }}</div>
@@ -760,12 +760,12 @@
                             <div class="row mb-4">
                                 <div class="col-md-6">
                                     <div class="info-item">
-                                        <strong><i class="fas fa-user-tie me-2"></i>Penerbit:</strong>
-                                        <span>{{ $item->penerbit }}</span>
+                                        <strong><i class="fas fa-user-tie me-2"></i>Pelaksana:</strong>
+                                        <span>{{ $item->pelaksana }}</span>
                                     </div>
                                     <div class="info-item">
-                                        <strong><i class="fas fa-clock me-2"></i>Durasi:</strong>
-                                        <span>{{ $item->durasi_jam }} jam</span>
+                                        <strong><i class="fas fa-clock me-2"></i>JP:</strong>
+                                        <span>{{ $item->durasi_jam }} JP</span>
                                     </div>
                                     <div class="info-item">
                                         <strong><i class="fas fa-users me-2"></i>Peserta:</strong>
@@ -780,11 +780,11 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="info-item">
-                                        <strong><i class="fas fa-chart-line me-2"></i>Kesulitan:</strong>
+                                        <strong><i class="fas fa-chart-line me-2"></i>Kategori:</strong>
                                         <span>
-                                            @if($item->tingkat_kesulitan == 'pemula')
+                                            @if($item->kategori == 'pemula')
                                                 <span class="badge bg-primary">Pemula</span>
-                                            @elseif($item->tingkat_kesulitan == 'menengah')
+                                            @elseif($item->kategori == 'menengah')
                                                 <span class="badge bg-warning">Menengah</span>
                                             @else
                                                 <span class="badge bg-danger">Lanjutan</span>
