@@ -339,7 +339,7 @@
                     <th>Judul Kursus</th>
                     <th>Pelaksana</th>
                     <th>Kategori</th>
-                    <th>Durasi</th>
+                    <th>Jam Pelajaran (JP) </th>
                     <th>Status</th>
                     <th>Peserta</th>
                     <th>Aksi</th>
@@ -363,7 +363,7 @@
                                 <span class="badge bg-danger">Lanjutan</span>
                             @endif
                         </td>
-                        <td>{{ $item->durasi_jam }} jam</td>
+                        <td>{{ $item->durasi_jam }} JP</td>
                         <td>
                             @if($item->status == 'aktif')
                                 <span class="status-badge status-aktif">Aktif</span>
@@ -446,8 +446,8 @@
                                                 <span>{{ $item->pelaksana }}</span>
                                             </div>
                                             <div class="info-item">
-                                                <strong><i class="fas fa-clock me-2"></i>Durasi:</strong>
-                                                <span>{{ $item->durasi_jam }} jam</span>
+                                                <strong><i class="fas fa-clock me-2"></i>JP:</strong>
+                                                <span>{{ $item->durasi_jam }} JP</span>
                                             </div>
                                             <div class="info-item">
                                                 <strong><i class="fas fa-users me-2"></i>Peserta:</strong>

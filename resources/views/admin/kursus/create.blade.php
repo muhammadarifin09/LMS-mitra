@@ -211,11 +211,11 @@
 
                     <!-- Durasi -->
                     <div class="form-group">
-                        <label for="durasi_jam" class="form-label required">Durasi (Jam)</label>
+                        <label for="durasi_jam" class="form-label required">Jam Pelajaran (JP) </label>
                         <input type="number" class="form-control" id="durasi_jam" name="durasi_jam" 
                                value="{{ old('durasi_jam', 0) }}" min="0" required 
                                placeholder="Masukkan durasi dalam jam">
-                        <div class="form-text">Durasi total kursus dalam jam</div>
+                        <div class="form-text">1 JP adalah 45 menit</div>
                         @error('durasi_jam')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
