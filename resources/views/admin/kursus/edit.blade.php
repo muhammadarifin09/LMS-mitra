@@ -185,27 +185,27 @@
                         @enderror
                     </div>
 
-                    <!-- Penerbit -->
+                    <!-- Pelaksana -->
                     <div class="form-group">
-                        <label for="penerbit" class="form-label required">Penerbit</label>
-                        <input type="text" class="form-control" id="penerbit" name="penerbit" 
-                               value="{{ old('penerbit', $kursus->penerbit) }}" required 
-                               placeholder="Masukkan nama penerbit">
-                        @error('penerbit')
+                        <label for="pelaksana" class="form-label required">Pelaksana</label>
+                        <input type="text" class="form-control" id="pelaksana" name="pelaksana" 
+                               value="{{ old('pelaksana', $kursus->pelaksana) }}" required 
+                               placeholder="Masukkan nama pelaksana">
+                        @error('pelaksana')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
                     </div>
 
-                    <!-- Tingkat Kesulitan -->
+                    <!-- Kategori -->
                     <div class="form-group">
-                        <label for="tingkat_kesulitan" class="form-label required">Tingkat Kesulitan</label>
-                        <select class="form-select" id="tingkat_kesulitan" name="tingkat_kesulitan" required>
-                            <option value="">Pilih Tingkat Kesulitan</option>
-                            <option value="pemula" {{ old('tingkat_kesulitan', $kursus->tingkat_kesulitan) == 'pemula' ? 'selected' : '' }}>Pemula</option>
-                            <option value="menengah" {{ old('tingkat_kesulitan', $kursus->tingkat_kesulitan) == 'menengah' ? 'selected' : '' }}>Menengah</option>
-                            <option value="lanjutan" {{ old('tingkat_kesulitan', $kursus->tingkat_kesulitan) == 'lanjutan' ? 'selected' : '' }}>Lanjutan</option>
+                        <label for="kategori" class="form-label required">Kategori</label>
+                        <select class="form-select" id="kategori" name="kategori" required>
+                            <option value="">Pilih Kategori</option>
+                            <option value="pemula" {{ old('kategori', $kursus->kategori) == 'pemula' ? 'selected' : '' }}>Pemula</option>
+                            <option value="menengah" {{ old('kategori', $kursus->kategori) == 'menengah' ? 'selected' : '' }}>Menengah</option>
+                            <option value="lanjutan" {{ old('kategori', $kursus->kategori) == 'lanjutan' ? 'selected' : '' }}>Lanjutan</option>
                         </select>
-                        @error('tingkat_kesulitan')
+                        @error('kategori')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
                     </div>
@@ -377,11 +377,11 @@
     // Form Validation
     document.getElementById('kursusForm').addEventListener('submit', function(e) {
         const judul = document.getElementById('judul_kursus').value.trim();
-        const penerbit = document.getElementById('penerbit').value.trim();
-        const tingkat = document.getElementById('tingkat_kesulitan').value;
+        const pelaksana = document.getElementById('pelaksana').value.trim();
+        const kategori = document.getElementById('kategori').value;
         const status = document.getElementById('status').value;
         
-        if (!judul || !penerbit || !tingkat || !status) {
+        if (!judul || !pelaksana || !kategori || !status) {
             e.preventDefault();
             Swal.fire({
                 title: 'Data Belum Lengkap!',

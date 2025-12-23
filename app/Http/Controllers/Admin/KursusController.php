@@ -42,8 +42,8 @@ class KursusController extends Controller
         $validated = $request->validate([
             'judul_kursus' => 'required|string|max:255',
             'deskripsi_kursus' => 'required|string',
-            'penerbit' => 'required|string|max:255',
-            'tingkat_kesulitan' => 'required|in:pemula,menengah,lanjutan',
+            'pelaksana' => 'required|string|max:255',
+            'kategori' => 'required|in:pemula,menengah,lanjutan',
             'gambar_kursus' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'durasi_jam' => 'required|integer|min:0',
             'status' => 'required|in:draft,aktif,nonaktif',
@@ -100,8 +100,8 @@ class KursusController extends Controller
         $validated = $request->validate([
             'judul_kursus' => 'required|string|max:255',
             'deskripsi_kursus' => 'required|string',
-            'penerbit' => 'required|string|max:255',
-            'tingkat_kesulitan' => 'required|in:pemula,menengah,lanjutan',
+            'pelaksana' => 'required|string|max:255',
+            'kategori' => 'required|in:pemula,menengah,lanjutan',
             'gambar_kursus' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'durasi_jam' => 'required|integer|min:0',
             'status' => 'required|in:draft,aktif,nonaktif',
