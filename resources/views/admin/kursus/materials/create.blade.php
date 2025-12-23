@@ -346,10 +346,70 @@
         font-size: 48px;
     }
     
+    /* Import Excel Styles */
+    .excel-preview-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+    
+    .excel-preview-table th {
+        background: #1e3c72;
+        color: white;
+        padding: 8px;
+        text-align: left;
+        font-size: 12px;
+    }
+    
+    .excel-preview-table td {
+        border: 1px solid #dee2e6;
+        padding: 6px;
+        font-size: 11px;
+    }
+    
+    .excel-preview-table tr:nth-child(even) {
+        background: #f8f9fa;
+    }
+    
+    .question-imported {
+        background: #e8f5e9 !important;
+        border-left: 4px solid #34a853 !important;
+        animation: pulse 0.5s ease;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+        100% { transform: scale(1); }
+    }
+    
+    .disabled-option {
+        opacity: 0.5;
+        cursor: not-allowed !important;
+    }
+    
+    .disabled-option:hover {
+        border-color: #e9ecef !important;
+    }
+    
+    
     /* Responsive adjustments */
     @media (max-width: 768px) {
         .player-config-grid {
             grid-template-columns: 1fr;
+        }
+        
+        .content-type-option {
+            padding: 10px;
+        }
+        
+        .soal-item {
+            padding: 10px;
+        }
+        
+        .btn-primary, .btn-secondary {
+            padding: 10px 20px;
+            font-size: 14px;
         }
     }
 </style>
@@ -408,7 +468,6 @@
                 <div class="card-body">
                     <form action="{{ route('admin.kursus.materials.store', $kursus) }}" method="POST" enctype="multipart/form-data" id="materialForm">
                         @csrf
-                        
 
                         <!-- Informasi Dasar Materi -->
                         <div class="row mb-3">
@@ -834,6 +893,70 @@
                                 </div>
                             </div>
 
+                            <!-- IMPORT SOAL EXCEL -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <div class="card border-primary">
+                                        <div class="card-header bg-primary text-white">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <h6 class="card-title mb-0">
+                                                    <i class="mdi mdi-microsoft-excel me-2"></i>Import Soal dari Excel
+                                                </h6>
+                                                <button type="button" class="btn btn-sm btn-light" onclick="downloadTemplate()">
+                                                    <i class="mdi mdi-download me-1"></i> Download Template
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="card-body">
+                                        <div class="alert alert-info">
+    <strong>Format Excel:</strong> Gunakan template di atas. Kolom wajib: PERTANYAAN, PILIHAN_A, PILIHAN_B, PILIHAN_C, PILIHAN_D, JAWABAN_BENAR
+</div>
+                                            
+                                            <div class="row">
+                                                <div class="col-md-8">
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">Upload File Excel</label>
+                                                        <div class="input-group">
+                                                            <input type="file" class="form-control" 
+                                                                   id="excel_file" accept=".xlsx,.xls,.csv"
+                                                                   onchange="previewExcelFile(this)">
+                                                            <button class="btn btn-success" type="button" 
+                                                                    onclick="importSoal('pretest')" id="import-btn-pretest">
+                                                                <i class="mdi mdi-upload me-2"></i> Import Soal
+                                                            </button>
+                                                        </div>
+                                                        <small class="text-muted">
+                                                            Format: .xlsx, .xls, .csv | Maksimal: 5MB | Maksimal: 500 soal
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-check mt-4">
+                                                        <input class="form-check-input" type="checkbox" 
+                                                               id="replace_existing_pretest" checked>
+                                                        <label class="form-check-label fw-bold" for="replace_existing_pretest">
+                                                            Ganti soal yang ada
+                                                        </label>
+                                                        <small class="text-muted d-block">
+                                                            Jika dicentang, semua soal lama akan diganti
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Preview Area -->
+                                            <div id="excel-preview-pretest" class="mt-3" style="display: none;">
+                                                <h6><i class="mdi mdi-eye me-2"></i>Preview Data</h6>
+                                                <div id="preview-content-pretest"></div>
+                                            </div>
+                                            
+                                            <!-- Result Area -->
+                                            <div id="import-result-pretest" class="mt-3"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Soal Pretest -->
                             <div class="mb-3">
                                 <div class="d-flex justify-content-between align-items-center">
@@ -842,6 +965,7 @@
                                         <i class="mdi mdi-plus"></i> Tambah Soal
                                     </button>
                                 </div>
+                                <small class="text-muted">Tambahkan soal pretest untuk mengukur pengetahuan awal peserta</small>
                             </div>
 
                             <div id="soal-pretest-container">
@@ -872,6 +996,70 @@
                                 </div>
                             </div>
 
+                            <!-- IMPORT SOAL EXCEL -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <div class="card border-primary">
+                                        <div class="card-header bg-primary text-white">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <h6 class="card-title mb-0">
+                                                    <i class="mdi mdi-microsoft-excel me-2"></i>Import Soal dari Excel
+                                                </h6>
+                                                <button type="button" class="btn btn-sm btn-light" onclick="downloadTemplate()">
+                                                    <i class="mdi mdi-download me-1"></i> Download Template
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="card-body">
+                                        <div class="alert alert-info">
+    <strong>Format Excel:</strong> Gunakan template di atas. Kolom wajib: PERTANYAAN, PILIHAN_A, PILIHAN_B, PILIHAN_C, PILIHAN_D, JAWABAN_BENAR
+</div>
+                                            
+                                            <div class="row">
+                                                <div class="col-md-8">
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">Upload File Excel</label>
+                                                        <div class="input-group">
+                                                            <input type="file" class="form-control" 
+                                                                   id="excel_file_posttest" accept=".xlsx,.xls,.csv"
+                                                                   onchange="previewExcelFilePosttest(this)">
+                                                            <button class="btn btn-success" type="button" 
+                                                                    onclick="importSoal('posttest')" id="import-btn-posttest">
+                                                                <i class="mdi mdi-upload me-2"></i> Import Soal
+                                                            </button>
+                                                        </div>
+                                                        <small class="text-muted">
+                                                            Format: .xlsx, .xls, .csv | Maksimal: 5MB | Maksimal: 500 soal
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-check mt-4">
+                                                        <input class="form-check-input" type="checkbox" 
+                                                               id="replace_existing_posttest" checked>
+                                                        <label class="form-check-label fw-bold" for="replace_existing_posttest">
+                                                            Ganti soal yang ada
+                                                        </label>
+                                                        <small class="text-muted d-block">
+                                                            Jika dicentang, semua soal lama akan diganti
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Preview Area -->
+                                            <div id="excel-preview-posttest" class="mt-3" style="display: none;">
+                                                <h6><i class="mdi mdi-eye me-2"></i>Preview Data</h6>
+                                                <div id="preview-content-posttest"></div>
+                                            </div>
+                                            
+                                            <!-- Result Area -->
+                                            <div id="import-result-posttest" class="mt-3"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Soal Posttest -->
                             <div class="mb-3">
                                 <div class="d-flex justify-content-between align-items-center">
@@ -880,6 +1068,7 @@
                                         <i class="mdi mdi-plus"></i> Tambah Soal
                                     </button>
                                 </div>
+                                <small class="text-muted">Tambahkan soal posttest untuk mengukur pemahaman peserta setelah belajar</small>
                             </div>
 
                             <div id="soal-posttest-container">
@@ -935,16 +1124,588 @@
 let soalPretestCounter = 0;
 let soalPosttestCounter = 0;
 let videoQuestionCounter = 0;
+let currentExcelFilePretest = null;
+let currentExcelFilePosttest = null;
 
 // Variabel untuk menyimpan file yang dipilih
 let selectedFiles = [];
 let currentVideoFile = null;
+
+// Helper untuk escape HTML
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Preview file Excel untuk pretest
+function previewExcelFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+    
+    currentExcelFilePretest = file;
+    
+    // Validasi file
+    const validExtensions = ['xlsx', 'xls', 'csv'];
+    const fileExtension = file.name.split('.').pop().toLowerCase();
+    
+    if (!validExtensions.includes(fileExtension)) {
+        Swal.fire({
+            title: 'Format Tidak Valid',
+            text: 'Hanya file Excel (.xlsx, .xls, .csv) yang didukung',
+            icon: 'error',
+            confirmButtonColor: '#1e3c72'
+        });
+        input.value = '';
+        currentExcelFilePretest = null;
+        return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) {
+        Swal.fire({
+            title: 'File Terlalu Besar',
+            text: 'Maksimal ukuran file adalah 5MB',
+            icon: 'error',
+            confirmButtonColor: '#1e3c72'
+        });
+        input.value = '';
+        currentExcelFilePretest = null;
+        return;
+    }
+    
+    // Show preview
+    showFilePreview(file, 'pretest');
+}
+
+// Preview file Excel untuk posttest
+function previewExcelFilePosttest(input) {
+    const file = input.files[0];
+    if (!file) return;
+    
+    currentExcelFilePosttest = file;
+    
+    // Validasi file
+    const validExtensions = ['xlsx', 'xls', 'csv'];
+    const fileExtension = file.name.split('.').pop().toLowerCase();
+    
+    if (!validExtensions.includes(fileExtension)) {
+        Swal.fire({
+            title: 'Format Tidak Valid',
+            text: 'Hanya file Excel (.xlsx, .xls, .csv) yang didukung',
+            icon: 'error',
+            confirmButtonColor: '#1e3c72'
+        });
+        input.value = '';
+        currentExcelFilePosttest = null;
+        return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) {
+        Swal.fire({
+            title: 'File Terlalu Besar',
+            text: 'Maksimal ukuran file adalah 5MB',
+            icon: 'error',
+            confirmButtonColor: '#1e3c72'
+        });
+        input.value = '';
+        currentExcelFilePosttest = null;
+        return;
+    }
+    
+    // Show preview
+    showFilePreview(file, 'posttest');
+}
+
+// Tampilkan preview file
+function showFilePreview(file, type) {
+    const previewDiv = document.getElementById(`excel-preview-${type}`);
+    const previewContent = document.getElementById(`preview-content-${type}`);
+    
+    if (!previewDiv || !previewContent) return;
+    
+    const fileSize = (file.size / (1024 * 1024)).toFixed(2);
+    
+    previewContent.innerHTML = `
+        <div class="alert alert-success">
+            <div class="d-flex align-items-center">
+                <i class="mdi mdi-file-excel mdi-24px me-3 text-success"></i>
+                <div>
+                    <strong>${escapeHtml(file.name)}</strong><br>
+                    <small>Size: ${fileSize} MB | Type: ${file.type || 'Excel file'}</small>
+                </div>
+            </div>
+        </div>
+        <p class="text-muted">
+            <i class="mdi mdi-information me-1"></i>
+            File siap untuk diimport. Klik "Import Soal" untuk melanjutkan.
+        </p>
+    `;
+    
+    previewDiv.style.display = 'block';
+}
+
+// Download template
+function downloadTemplate() {
+    Swal.fire({
+        title: 'Mengunduh Template',
+        text: 'Sedang menyiapkan template Excel...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    // Create download link
+    const link = document.createElement('a');
+    link.href = "/admin/template-soal";
+    link.download = 'template-soal.xlsx';
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    
+    // Trigger download
+    setTimeout(() => {
+        link.click();
+        document.body.removeChild(link);
+        
+        Swal.close();
+        
+        Swal.fire({
+            title: 'Template Berhasil Diunduh',
+            html: `
+                <div class="text-center">
+                    <i class="mdi mdi-check-circle text-success mdi-48px mb-3"></i>
+                    <p>Template Excel telah berhasil diunduh.</p>
+                    <p class="text-muted small">
+                        Silakan buka file dan isi dengan soal-soal Anda sesuai format.
+                    </p>
+                </div>
+            `,
+            icon: 'success',
+            confirmButtonColor: '#1e3c72',
+            confirmButtonText: 'Mengerti'
+        });
+    }, 1000);
+}
+
+// Import soal dari Excel
+// Import soal dari Excel
+// Import soal dari Excel
+async function importSoal(type) {
+    let currentExcelFile;
+    let importBtn;
+    let replaceExisting;
+    
+    if (type === 'pretest') {
+        currentExcelFile = currentExcelFilePretest;
+        importBtn = document.getElementById('import-btn-pretest');
+        replaceExisting = document.getElementById('replace_existing_pretest').checked;
+    } else {
+        currentExcelFile = currentExcelFilePosttest;
+        importBtn = document.getElementById('import-btn-posttest');
+        replaceExisting = document.getElementById('replace_existing_posttest').checked;
+    }
+    
+    if (!currentExcelFile) {
+        Swal.fire({
+            title: 'Peringatan',
+            text: 'Pilih file Excel terlebih dahulu',
+            icon: 'warning',
+            confirmButtonColor: '#1e3c72'
+        });
+        return;
+    }
+    
+    // Disable import button
+    if (importBtn) {
+        importBtn.disabled = true;
+        importBtn.innerHTML = '<i class="mdi mdi-loading mdi-spin me-2"></i> Memproses...';
+    }
+    
+    // Show loading
+    Swal.fire({
+        title: 'Mengimport Soal',
+        html: 'Sedang membaca dan memproses soal dari Excel...<br><small>Harap tunggu, ini mungkin memerlukan waktu beberapa saat</small>',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    try {
+        // Prepare form data
+        const formData = new FormData();
+        formData.append('file', currentExcelFile);
+        formData.append('type', type);
+        formData.append('_token', getCsrfToken());
+        
+        // Send to server dengan timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 detik timeout
+        
+        const response = await fetch("{{ route('admin.kursus.materials.import-soal', $kursus) }}", {
+            method: 'POST',
+            body: formData,
+            signal: controller.signal,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': getCsrfToken()
+            }
+        });
+        
+        clearTimeout(timeoutId);
+        
+        const result = await response.json();
+        
+        Swal.close();
+        
+        if (response.ok && result.success) {
+            // Tampilkan konfirmasi
+            const actionText = replaceExisting ? 'mengganti' : 'menambahkan';
+            
+            const confirmResult = await Swal.fire({
+                title: 'Import Berhasil!',
+                html: `
+                    <div class="text-center">
+                        <i class="mdi mdi-check-circle text-success mdi-48px mb-3"></i>
+                        <h5 class="mt-2">${result.count} Soal Ditemukan</h5>
+                        <p>Berhasil membaca ${result.count} soal dari file Excel.</p>
+                        <p class="mb-0">Apakah Anda ingin ${actionText} soal yang ada?</p>
+                    </div>
+                `,
+                icon: 'success',
+                showCancelButton: true,
+                confirmButtonColor: '#1e3c72',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Lanjutkan',
+                cancelButtonText: 'Batal',
+                reverseButtons: true
+            });
+            
+            if (confirmResult.isConfirmed) {
+                // Proses data hasil import
+                processImportedData(result.data, replaceExisting, type);
+                
+                // Tampilkan notifikasi sukses
+                showImportSuccess(result.count, replaceExisting, type);
+            }
+            
+        } else {
+            throw new Error(result.message || 'Gagal mengimport soal');
+        }
+        
+    } catch (error) {
+        Swal.close();
+        
+        console.error('Import error:', error);
+        
+        let errorMessage = 'Terjadi kesalahan saat mengimport soal';
+        
+        if (error.name === 'AbortError') {
+            errorMessage = 'Request timeout - proses terlalu lama. Silakan coba lagi dengan file yang lebih kecil.';
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        
+        Swal.fire({
+            title: 'Import Gagal',
+            html: `
+                <p>${escapeHtml(errorMessage)}</p>
+                <small class="text-muted">
+                    <strong>Pastikan:</strong>
+                    <ul class="text-start small mt-2">
+                        <li>File menggunakan format template yang benar</li>
+                        <li>Kolom header sesuai (PERTANYAAN, PILIHAN_A, dll)</li>
+                        <li>Jawaban Benar berisi A, B, C, atau D</li>
+                        <li>Ukuran file tidak melebihi 5MB</li>
+                    </ul>
+                </small>
+            `,
+            icon: 'error',
+            confirmButtonColor: '#1e3c72'
+        });
+    } finally {
+        // Re-enable import button
+        if (importBtn) {
+            importBtn.disabled = false;
+            importBtn.innerHTML = '<i class="mdi mdi-upload me-2"></i> Import Soal';
+        }
+    }
+}
+
+// Proses data hasil import
+function processImportedData(data, replaceExisting, type) {
+    if (replaceExisting) {
+        // Ganti semua soal
+        replaceAllSoal(type, data);
+    } else {
+        // Tambahkan saja
+        addImportedSoal(type, data);
+    }
+}
+
+// Ganti semua soal
+function replaceAllSoal(type, data) {
+    const container = document.getElementById(`soal-${type}-container`);
+    if (!container) return;
+    
+    // Hapus semua soal yang ada
+    container.innerHTML = '';
+    
+    // Reset counter
+    if (type === 'pretest') {
+        soalPretestCounter = 0;
+    } else {
+        soalPosttestCounter = 0;
+    }
+    
+    // Tambahkan soal baru
+    addImportedSoal(type, data);
+}
+
+// Tambahkan soal dari data import
+// Tambahkan soal dari data import
+function addImportedSoal(type, data) {
+    if (!data || !Array.isArray(data) || data.length === 0) {
+        console.error('Data import kosong atau tidak valid');
+        return;
+    }
+    
+    const container = document.getElementById(`soal-${type}-container`);
+    if (!container) return;
+    
+    data.forEach((soal, index) => {
+        const counter = type === 'pretest' ? soalPretestCounter : soalPosttestCounter;
+        
+        // Buat elemen soal baru dengan animasi
+        const newSoal = document.createElement('div');
+        newSoal.className = 'soal-item card mb-3 question-imported';
+        newSoal.innerHTML = `
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-10">
+                        <label class="form-label">Pertanyaan ${counter + 1}</label>
+                        <textarea class="form-control" name="${type}_soal[${counter}][pertanyaan]" 
+                                  required>${escapeHtml(soal.pertanyaan)}</textarea>
+                    </div>
+                    <div class="col-2 text-end">
+                        <div class="mt-4">
+                            <button type="button" class="btn btn-danger btn-sm" onclick="removeSoal(this, '${type}')" title="Hapus Soal">
+                                <i class="mdi mdi-delete"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    ${soal.pilihan.map((pilihan, i) => `
+                    <div class="col-md-6 mb-2">
+                        <div class="input-group">
+                            <div class="input-group-text">
+                                <input type="radio" name="${type}_soal[${counter}][jawaban_benar]" 
+                                       value="${i}" ${i == soal.jawaban_benar ? 'checked' : ''} required>
+                            </div>
+                            <input type="text" class="form-control" name="${type}_soal[${counter}][pilihan][]" 
+                                   value="${escapeHtml(pilihan)}" placeholder="Pilihan ${String.fromCharCode(65 + i)}" required>
+                        </div>
+                    </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(newSoal);
+        
+        if (type === 'pretest') {
+            soalPretestCounter++;
+        } else {
+            soalPosttestCounter++;
+        }
+    });
+    
+    // Hapus class animasi setelah beberapa detik
+    setTimeout(() => {
+        container.querySelectorAll('.question-imported').forEach(el => {
+            el.classList.remove('question-imported');
+        });
+    }, 2000);
+}
+
+// Tampilkan notifikasi sukses
+function showImportSuccess(count, replaced, type) {
+    const resultDiv = document.getElementById(`import-result-${type}`);
+    if (!resultDiv) return;
+    
+    const actionText = replaced ? 'mengganti' : 'menambahkan';
+    
+    resultDiv.innerHTML = `
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="mdi mdi-check-circle me-3 mdi-24px"></i>
+                <div>
+                    <h5 class="alert-heading mb-1">Import Berhasil!</h5>
+                    <p class="mb-0">Berhasil ${actionText} <strong>${count} soal</strong> dari file Excel.</p>
+                    <small class="text-muted">Soal telah ditambahkan ke form. Anda dapat mengeditnya jika diperlukan.</small>
+                </div>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    `;
+    
+    // Auto hide after 10 seconds
+    setTimeout(() => {
+        const alert = resultDiv.querySelector('.alert');
+        if (alert) {
+            alert.classList.remove('show');
+            setTimeout(() => {
+                resultDiv.innerHTML = '';
+            }, 300);
+        }
+    }, 10000);
+}
+
+// Validasi kombinasi content types
+function validateContentTypes(selectedTypes) {
+    const errors = [];
+    
+    // Jika memilih pretest
+    if (selectedTypes.includes('pretest')) {
+        if (selectedTypes.length > 1) {
+            errors.push('Jika memilih Pretest, tidak bisa memilih konten lain');
+        }
+    }
+    
+    // Jika memilih posttest
+    if (selectedTypes.includes('posttest')) {
+        if (selectedTypes.length > 1) {
+            errors.push('Jika memilih Posttest, tidak bisa memilih konten lain');
+        }
+    }
+    
+    // Jika memilih file (PDF/PPT)
+    if (selectedTypes.includes('file')) {
+        const allowedWithFile = ['video']; // File bisa dikombinasikan dengan video
+        selectedTypes.forEach(type => {
+            if (type !== 'file' && !allowedWithFile.includes(type)) {
+                if (type === 'pretest' || type === 'posttest') {
+                    errors.push(`File tidak bisa dikombinasikan dengan ${type === 'pretest' ? 'Pretest' : 'Posttest'}`);
+                }
+            }
+        });
+        
+        // Cek apakah kombinasi file dan video valid
+        if (selectedTypes.length > 2 || (selectedTypes.length === 2 && !selectedTypes.includes('video'))) {
+            errors.push('File hanya bisa dikombinasikan dengan Video');
+        }
+    }
+    
+    // Jika memilih video
+    if (selectedTypes.includes('video')) {
+        const allowedWithVideo = ['file']; // Video bisa dikombinasikan dengan file
+        selectedTypes.forEach(type => {
+            if (type !== 'video' && !allowedWithVideo.includes(type)) {
+                if (type === 'pretest' || type === 'posttest') {
+                    errors.push(`Video tidak bisa dikombinasikan dengan ${type === 'pretest' ? 'Pretest' : 'Posttest'}`);
+                }
+            }
+        });
+        
+        // Cek apakah kombinasi video valid
+        if (selectedTypes.length > 2 || (selectedTypes.length === 2 && !selectedTypes.includes('file'))) {
+            errors.push('Video hanya bisa dikombinasikan dengan File');
+        }
+    }
+    
+    return errors;
+}
+
+// Fungsi untuk mengupdate UI berdasarkan pilihan content types
+function updateContentTypeUI() {
+    const contentTypes = Array.from(document.querySelectorAll('input[name="content_types[]"]:checked'))
+        .map(cb => cb.value);
+    
+    // Reset semua checkbox enable
+    document.querySelectorAll('input[name="content_types[]"]').forEach(cb => {
+        cb.disabled = false;
+        if (cb.closest('.content-type-option')) {
+            cb.closest('.content-type-option').classList.remove('disabled-option');
+        }
+    });
+    
+    // Jika pretest dipilih
+    if (contentTypes.includes('pretest')) {
+        document.querySelectorAll('input[name="content_types[]"]').forEach(cb => {
+            if (cb.value !== 'pretest') {
+                cb.disabled = true;
+                if (cb.closest('.content-type-option')) {
+                    cb.closest('.content-type-option').classList.add('disabled-option');
+                }
+            }
+        });
+    }
+    // Jika posttest dipilih
+    else if (contentTypes.includes('posttest')) {
+        document.querySelectorAll('input[name="content_types[]"]').forEach(cb => {
+            if (cb.value !== 'posttest') {
+                cb.disabled = true;
+                if (cb.closest('.content-type-option')) {
+                    cb.closest('.content-type-option').classList.add('disabled-option');
+                }
+            }
+        });
+    }
+    // Jika file dipilih
+    else if (contentTypes.includes('file')) {
+        // Nonaktifkan pretest dan posttest
+        document.querySelectorAll('input[name="content_types[]"]').forEach(cb => {
+            if (cb.value === 'pretest' || cb.value === 'posttest') {
+                cb.disabled = true;
+                if (cb.closest('.content-type-option')) {
+                    cb.closest('.content-type-option').classList.add('disabled-option');
+                }
+            }
+        });
+    }
+    // Jika video dipilih
+    else if (contentTypes.includes('video')) {
+        // Nonaktifkan pretest dan posttest
+        document.querySelectorAll('input[name="content_types[]"]').forEach(cb => {
+            if (cb.value === 'pretest' || cb.value === 'posttest') {
+                cb.disabled = true;
+                if (cb.closest('.content-type-option')) {
+                    cb.closest('.content-type-option').classList.add('disabled-option');
+                }
+            }
+        });
+    }
+}
 
 // Toggle content type selection
 function toggleContentType(type) {
     const checkbox = document.getElementById(`content_type_${type}`);
     const option = checkbox.closest('.content-type-option');
     
+    // Dapatkan semua content types yang sudah dipilih
+    const selectedTypes = Array.from(document.querySelectorAll('input[name="content_types[]"]:checked'))
+        .map(cb => cb.value);
+    
+    // Jika checkbox akan dicentang
+    if (!checkbox.checked) {
+        const newSelectedTypes = [...selectedTypes, type];
+        const errors = validateContentTypes(newSelectedTypes);
+        
+        if (errors.length > 0) {
+            Swal.fire({
+                title: 'Kombinasi Tidak Diperbolehkan',
+                html: errors.join('<br>'),
+                icon: 'warning',
+                confirmButtonColor: '#1e3c72'
+            });
+            return;
+        }
+    }
+    
+    // Toggle checkbox jika valid
     checkbox.checked = !checkbox.checked;
     
     if (checkbox.checked) {
@@ -952,6 +1713,9 @@ function toggleContentType(type) {
     } else {
         option.classList.remove('selected');
     }
+    
+    // Update UI
+    updateContentTypeUI();
     
     // Tampilkan/sembunyikan section yang sesuai
     toggleContentSection(type, checkbox.checked);
@@ -985,6 +1749,10 @@ function toggleContentSection(type, isVisible) {
     }
 }
 
+// ============================================
+// FUNGSI VIDEO
+// ============================================
+
 // Toggle video type sections
 function toggleVideoType() {
     const videoType = document.getElementById('video_type').value;
@@ -994,31 +1762,37 @@ function toggleVideoType() {
     const videoUrlInput = document.getElementById('video_url');
     
     // Reset
-    urlSection.style.display = 'none';
-    fileSection.style.display = 'none';
-    document.getElementById('video-preview').style.display = 'none';
-    document.getElementById('upload-progress').style.display = 'none';
-    videoUrlInput.placeholder = 'Masukkan URL video';
+    if (urlSection) urlSection.style.display = 'none';
+    if (fileSection) fileSection.style.display = 'none';
+    const videoPreview = document.getElementById('video-preview');
+    if (videoPreview) videoPreview.style.display = 'none';
+    const uploadProgress = document.getElementById('upload-progress');
+    if (uploadProgress) uploadProgress.style.display = 'none';
+    if (videoUrlInput) videoUrlInput.placeholder = 'Masukkan URL video';
     
     // Show appropriate section
     if (videoType === 'youtube') {
-        urlSection.style.display = 'block';
-        urlHelp.textContent = 'Format: https://youtube.com/watch?v=ID_VIDEO atau https://youtu.be/ID_VIDEO';
-        videoUrlInput.placeholder = 'Contoh: https://youtube.com/watch?v=dQw4w9WgXcQ';
-        document.getElementById('duration-display').textContent = 'Durasi akan dideteksi dari YouTube';
+        if (urlSection) urlSection.style.display = 'block';
+        if (urlHelp) urlHelp.textContent = 'Format: https://youtube.com/watch?v=ID_VIDEO atau https://youtu.be/ID_VIDEO';
+        if (videoUrlInput) videoUrlInput.placeholder = 'Contoh: https://youtube.com/watch?v=dQw4w9WgXcQ';
+        const durationDisplay = document.getElementById('duration-display');
+        if (durationDisplay) durationDisplay.textContent = 'Durasi akan dideteksi dari YouTube';
     } else if (videoType === 'vimeo') {
-        urlSection.style.display = 'block';
-        urlHelp.textContent = 'Format: https://vimeo.com/ID_VIDEO';
-        videoUrlInput.placeholder = 'Contoh: https://vimeo.com/123456789';
-        document.getElementById('duration-display').textContent = 'Durasi akan dideteksi dari Vimeo';
+        if (urlSection) urlSection.style.display = 'block';
+        if (urlHelp) urlHelp.textContent = 'Format: https://vimeo.com/ID_VIDEO';
+        if (videoUrlInput) videoUrlInput.placeholder = 'Contoh: https://vimeo.com/123456789';
+        const durationDisplay = document.getElementById('duration-display');
+        if (durationDisplay) durationDisplay.textContent = 'Durasi akan dideteksi dari Vimeo';
     } else if (videoType === 'external') {
-        urlSection.style.display = 'block';
-        urlHelp.textContent = 'Masukkan URL embed video (iframe src)';
-        videoUrlInput.placeholder = 'Contoh: https://example.com/embed/video';
-        document.getElementById('duration-display').textContent = 'Masukkan durasi manual jika diperlukan';
+        if (urlSection) urlSection.style.display = 'block';
+        if (urlHelp) urlHelp.textContent = 'Masukkan URL embed video (iframe src)';
+        if (videoUrlInput) videoUrlInput.placeholder = 'Contoh: https://example.com/embed/video';
+        const durationDisplay = document.getElementById('duration-display');
+        if (durationDisplay) durationDisplay.textContent = 'Masukkan durasi manual jika diperlukan';
     } else if (videoType === 'hosted') {
-        fileSection.style.display = 'block';
-        document.getElementById('duration-display').textContent = 'Durasi akan dideteksi otomatis setelah upload';
+        if (fileSection) fileSection.style.display = 'block';
+        const durationDisplay = document.getElementById('duration-display');
+        if (durationDisplay) durationDisplay.textContent = 'Durasi akan dideteksi otomatis setelah upload';
     }
 }
 
@@ -1033,36 +1807,42 @@ function previewVideoFile(input) {
         currentVideoFile = file;
         
         // Show preview
-        preview.style.display = 'block';
-        uploadProgress.style.display = 'none';
+        if (preview) preview.style.display = 'block';
+        if (uploadProgress) uploadProgress.style.display = 'none';
         
         // Show file info
         const fileSize = (file.size / (1024 * 1024)).toFixed(2);
-        fileInfo.innerHTML = `
-            <strong>${file.name}</strong><br>
-            Size: ${fileSize} MB | Type: ${file.type}<br>
-            Video akan diupload ke Google Drive secara otomatis.
-        `;
+        if (fileInfo) {
+            fileInfo.innerHTML = `
+                <strong>${escapeHtml(file.name)}</strong><br>
+                Size: ${fileSize} MB | Type: ${file.type}<br>
+                Video akan diupload ke Google Drive secara otomatis.
+            `;
+        }
         
         // Reset progress bar
-        document.getElementById('upload-progress-bar').style.width = '0%';
-        document.getElementById('upload-percentage').textContent = '0%';
-        document.getElementById('upload-status').className = 'upload-status';
-        document.getElementById('upload-status').innerHTML = '';
+        const progressBar = document.getElementById('upload-progress-bar');
+        const percentage = document.getElementById('upload-percentage');
+        const status = document.getElementById('upload-status');
+        
+        if (progressBar) progressBar.style.width = '0%';
+        if (percentage) percentage.textContent = '0%';
+        if (status) {
+            status.className = 'upload-status';
+            status.innerHTML = '';
+        }
     } else {
-        preview.style.display = 'none';
+        if (preview) preview.style.display = 'none';
         currentVideoFile = null;
     }
 }
 
-// Update percentage value display
-document.getElementById('min_watch_percentage').addEventListener('input', function() {
-    document.getElementById('percentage-value').textContent = this.value + '%';
-});
-
+// Tambah soal baru
 // Tambah soal baru
 function addSoal(type) {
     const container = document.getElementById(`soal-${type}-container`);
+    if (!container) return;
+    
     const counter = type === 'pretest' ? soalPretestCounter : soalPosttestCounter;
     const soalId = counter + 1;
     
@@ -1071,15 +1851,17 @@ function addSoal(type) {
     newSoal.innerHTML = `
         <div class="card-body">
             <div class="row mb-3">
-                <div class="col-11">
+                <div class="col-10">
                     <label class="form-label">Pertanyaan ${soalId}</label>
                     <textarea class="form-control" name="${type}_soal[${counter}][pertanyaan]" 
                               placeholder="Tulis pertanyaan di sini..." required></textarea>
                 </div>
-                <div class="col-1">
-                    <button type="button" class="btn btn-danger btn-sm mt-4" onclick="removeSoal(this, '${type}')" title="Hapus Soal">
-                        <i class="mdi mdi-delete"></i>
-                    </button>
+                <div class="col-2 text-end">
+                    <div class="mt-4">
+                        <button type="button" class="btn btn-danger btn-sm" onclick="removeSoal(this, '${type}')" title="Hapus Soal">
+                            <i class="mdi mdi-delete"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
             
@@ -1112,6 +1894,8 @@ function addSoal(type) {
 // Tambah pertanyaan video baru
 function addVideoQuestion() {
     const container = document.getElementById('video-questions-container');
+    if (!container) return;
+    
     const questionId = videoQuestionCounter;
     
     const newQuestion = document.createElement('div');
@@ -1168,7 +1952,7 @@ function addVideoQuestion() {
         <div class="row">
             <div class="col-12">
                 <label class="form-label">Penjelasan (Opsional)</label>
-                                <textarea class="form-control" name="video_questions[${questionId}][explanation]" 
+                <textarea class="form-control" name="video_questions[${questionId}][explanation]" 
                           rows="2" placeholder="Penjelasan jawaban yang benar"></textarea>
             </div>
         </div>
@@ -1188,18 +1972,13 @@ function addVideoQuestion() {
     
     container.appendChild(newQuestion);
     videoQuestionCounter++;
-    
-    // Update dynamic IDs for checkboxes
-    const checkbox = newQuestion.querySelector(`[id^="required_"]`);
-    if (checkbox) {
-        checkbox.id = `required_${questionId}`;
-        checkbox.nextElementSibling.setAttribute('for', `required_${questionId}`);
-    }
 }
 
 // Hapus soal
 function removeSoal(button, type) {
     const container = document.getElementById(`soal-${type}-container`);
+    if (!container) return;
+    
     if (container.children.length > 1) {
         button.closest('.soal-item').remove();
         reindexSoal(type);
@@ -1216,6 +1995,8 @@ function removeSoal(button, type) {
 // Hapus pertanyaan video
 function removeVideoQuestion(button) {
     const container = document.getElementById('video-questions-container');
+    if (!container) return;
+    
     if (container.children.length > 0) {
         button.closest('.video-question-item').remove();
         reindexVideoQuestions();
@@ -1225,11 +2006,14 @@ function removeVideoQuestion(button) {
 // Reindex soal setelah hapus
 function reindexSoal(type) {
     const container = document.getElementById(`soal-${type}-container`);
+    if (!container) return;
+    
     const soalItems = container.querySelectorAll('.soal-item');
     
     soalItems.forEach((item, index) => {
         // Update label pertanyaan
-        item.querySelector('label').textContent = `Pertanyaan ${index + 1}`;
+        const label = item.querySelector('label');
+        if (label) label.textContent = `Pertanyaan ${index + 1}`;
         
         // Update semua input names
         const inputs = item.querySelectorAll('[name]');
@@ -1250,6 +2034,8 @@ function reindexSoal(type) {
 // Reindex video questions
 function reindexVideoQuestions() {
     const container = document.getElementById('video-questions-container');
+    if (!container) return;
+    
     const questions = container.querySelectorAll('.video-question-item');
     
     questions.forEach((item, index) => {
@@ -1271,15 +2057,21 @@ function reindexVideoQuestions() {
         const checkbox = item.querySelector('[id^="required_"]');
         if (checkbox) {
             checkbox.id = `required_${index}`;
-            checkbox.nextElementSibling.setAttribute('for', `required_${index}`);
+            const label = checkbox.nextElementSibling;
+            if (label && label.tagName === 'LABEL') {
+                label.setAttribute('for', `required_${index}`);
+            }
         }
     });
     
     videoQuestionCounter = questions.length;
 }
 
-// Handle file selection - tambahkan file baru ke daftar tanpa menghapus yang lama
-// GANTI fungsi handleFileSelection yang ada dengan ini:
+// ============================================
+// FUNGSI FILE HANDLING
+// ============================================
+
+// Handle file selection
 function handleFileSelection(files) {
     if (files.length > 0) {
         // Clear existing files array
@@ -1303,6 +2095,8 @@ function updateFilePreview() {
     const previewContainer = document.getElementById('file-preview');
     const fileList = document.getElementById('file-list');
     
+    if (!previewContainer || !fileList) return;
+    
     if (selectedFiles.length > 0) {
         fileList.innerHTML = '';
         
@@ -1312,7 +2106,7 @@ function updateFilePreview() {
             fileItem.innerHTML = `
                 <div class="flex-grow-1">
                     <i class="mdi mdi-file-document me-2"></i>
-                    ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)
+                    ${escapeHtml(file.name)} (${(file.size / 1024 / 1024).toFixed(2)} MB)
                 </div>
                 <div class="file-actions">
                     <button type="button" class="btn btn-sm btn-danger" onclick="removeFile(${index})" title="Hapus File">
@@ -1337,9 +2131,10 @@ function removeFile(index) {
 }
 
 // Update hidden file inputs untuk form submission
-// GANTI fungsi updateFileInputs yang ada dengan ini:
 function updateFileInputs() {
     const container = document.getElementById('file-inputs-container');
+    if (!container) return;
+    
     container.innerHTML = '';
     
     // Buat DataTransfer object untuk multiple files
@@ -1362,40 +2157,9 @@ function updateFileInputs() {
     container.appendChild(newInput);
 }
 
-// Initialize form berdasarkan nilai yang sudah dipilih sebelumnya
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize selected options
-    const contentTypes = ['file', 'video', 'pretest', 'posttest'];
-    contentTypes.forEach(type => {
-        const checkbox = document.getElementById(`content_type_${type}`);
-        if (checkbox.checked) {
-            checkbox.closest('.content-type-option').classList.add('selected');
-            toggleContentSection(type, true);
-            
-            // Jika video sudah dipilih, init video type
-            if (type === 'video') {
-                setTimeout(() => {
-                    const videoType = document.getElementById('video_type').value;
-                    if (videoType) {
-                        toggleVideoType();
-                    }
-                }, 100);
-            }
-        }
-    });
-
-    // Initialize percentage display
-    const percentageSlider = document.getElementById('min_watch_percentage');
-    if (percentageSlider) {
-        document.getElementById('percentage-value').textContent = percentageSlider.value + '%';
-    }
-
-    // Initialize Bootstrap tooltips
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-});
+// ============================================
+// FUNGSI HELPER
+// ============================================
 
 // Fungsi untuk validasi URL sederhana
 function isValidUrl(string) {
@@ -1407,138 +2171,329 @@ function isValidUrl(string) {
     }
 }
 
-// Validasi form sebelum submit
-document.getElementById('materialForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const contentTypes = Array.from(document.querySelectorAll('input[name="content_types[]"]:checked'))
-        .map(cb => cb.value);
-    
-    if (contentTypes.length === 0) {
-        Swal.fire({
-            title: 'Peringatan',
-            text: 'Pilih minimal satu jenis konten materi',
-            icon: 'warning',
-            confirmButtonColor: '#1e3c72'
-        });
+function getCsrfToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.content || 
+           document.querySelector('input[name="_token"]')?.value ||
+           '{{ csrf_token() }}';
+}
+
+// Helper untuk escape HTML
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Fungsi untuk validasi URL sederhana
+function isValidUrl(string) {
+    try {
+        new URL(string);
+        return true;
+    } catch (_) {
         return false;
     }
+}
+
+// Fungsi untuk simulasi progress bar
+function simulateProgressBar() {
+    let progress = 0;
+    const progressBar = document.getElementById('upload-progress-bar');
+    const percentage = document.getElementById('upload-percentage');
+    const status = document.getElementById('upload-status');
     
-    // Validasi untuk setiap konten yang dipilih
-    let warnings = [];
+    if (!progressBar || !percentage || !status) return;
     
-    if (contentTypes.includes('file') && selectedFiles.length === 0) {
-        warnings.push('File materi untuk konten PDF/PPT belum dipilih');
+    const interval = setInterval(() => {
+        progress += 1;
+        progressBar.style.width = progress + '%';
+        percentage.textContent = progress + '%';
+        
+        if (progress >= 100) {
+            clearInterval(interval);
+            status.className = 'upload-status status-success';
+            status.innerHTML = 'Upload berhasil!';
+        }
+    }, 100); // Update setiap 100ms
+}
+
+// Fungsi untuk submit form dengan monitoring progress
+async function submitFormWithProgress() {
+    const form = document.getElementById('materialForm');
+    if (!form) return;
+    
+    const formData = new FormData(form);
+    
+    // Tambahkan timeout header
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 menit timeout
+    
+    try {
+        const response = await fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            signal: controller.signal,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (response.ok) {
+            // Redirect ke halaman materi
+            window.location.href = response.url || "{{ route('admin.kursus.materials.index', $kursus) }}";
+        } else {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${response.statusText}\n${errorText}`);
+        }
+        
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            throw new Error('Request timeout - proses terlalu lama. Silakan coba lagi dengan file yang lebih kecil.');
+        }
+        throw error;
+    }
+}
+
+// Function untuk submit form
+async function submitForm() {
+    const submitBtn = document.getElementById('submitBtn');
+    const originalText = submitBtn ? submitBtn.innerHTML : '';
+    
+    // Disable button dan ubah text
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="mdi mdi-loading mdi-spin me-2"></i> Menyimpan...';
     }
     
-    if (contentTypes.includes('video')) {
-        const videoType = document.getElementById('video_type').value;
-        if (!videoType) {
-            warnings.push('Jenis video harus dipilih');
-        } else {
-            if (videoType === 'hosted') {
-                const videoFile = document.getElementById('video_file').value;
-                if (!videoFile) {
-                    warnings.push('File video harus diupload untuk Google Drive');
-                }
-            } else {
-                const videoUrl = document.getElementById('video_url').value;
-                if (!videoUrl) {
-                    warnings.push('URL video harus diisi');
-                } else if (!isValidUrl(videoUrl)) {
-                    warnings.push('URL video tidak valid');
-                }
+    // Show loading indicator
+    const formStatus = document.getElementById('form-status');
+    if (formStatus) {
+        formStatus.innerHTML = `
+            <div class="alert alert-info d-flex align-items-center" role="alert">
+                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                <div>Menyimpan materi, harap tunggu...</div>
+            </div>
+        `;
+    }
+    
+    // Jika ada video hosted, tampilkan progress
+    const videoType = document.getElementById('video_type');
+    if (videoType && videoType.value === 'hosted' && currentVideoFile) {
+        const uploadProgress = document.getElementById('upload-progress');
+        const uploadStatus = document.getElementById('upload-status');
+        
+        if (uploadProgress) uploadProgress.style.display = 'block';
+        if (uploadStatus) {
+            uploadStatus.className = 'upload-status status-uploading';
+            uploadStatus.innerHTML = 'Mengupload ke Google Drive...';
+        }
+        
+        // Simulasi progress
+        simulateProgressBar();
+    }
+    
+    try {
+        // Submit form dengan Fetch API untuk monitoring progress
+        await submitFormWithProgress();
+        
+    } catch (error) {
+        console.error('Error submitting form:', error);
+        
+        // Restore button
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+        
+        // Show error message
+        if (formStatus) {
+            formStatus.innerHTML = `
+                <div class="alert alert-danger" role="alert">
+                    <i class="mdi mdi-alert-circle me-2"></i>
+                    Gagal menyimpan: ${escapeHtml(error.message)}
+                </div>
+            `;
+        }
+        
+        // Show SweetAlert error
+        Swal.fire({
+            title: 'Gagal Menyimpan',
+            text: error.message,
+            icon: 'error',
+            confirmButtonColor: '#1e3c72'
+        });
+    }
+}
+
+// ============================================
+// EVENT LISTENERS & INITIALIZATION
+// ============================================
+
+// Update percentage value display
+document.addEventListener('DOMContentLoaded', function() {
+    const percentageSlider = document.getElementById('min_watch_percentage');
+    const percentageValue = document.getElementById('percentage-value');
+    
+    if (percentageSlider && percentageValue) {
+        percentageSlider.addEventListener('input', function() {
+            percentageValue.textContent = this.value + '%';
+        });
+        
+        // Set initial value
+        percentageValue.textContent = percentageSlider.value + '%';
+    }
+    
+    // Initialize selected options
+    const contentTypes = ['file', 'video', 'pretest', 'posttest'];
+    contentTypes.forEach(type => {
+        const checkbox = document.getElementById(`content_type_${type}`);
+        if (checkbox && checkbox.checked) {
+            const option = checkbox.closest('.content-type-option');
+            if (option) option.classList.add('selected');
+            toggleContentSection(type, true);
+            
+            // Jika video sudah dipilih, init video type
+            if (type === 'video') {
+                setTimeout(() => {
+                    const videoType = document.getElementById('video_type');
+                    if (videoType && videoType.value) {
+                        toggleVideoType();
+                    }
+                }, 100);
             }
         }
-    }
+    });
+
+    // Update UI
+    updateContentTypeUI();
+
+    // Initialize Bootstrap tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
     
-    if (contentTypes.includes('pretest')) {
-        const soalPretestContainer = document.getElementById('soal-pretest-container');
-        if (soalPretestContainer.children.length === 0) {
-            warnings.push('Pretest harus memiliki minimal 1 soal');
-        }
-        
-        const durasiPretest = document.getElementById('durasi_pretest').value;
-        if (!durasiPretest || durasiPretest < 1) {
-            warnings.push('Durasi pretest harus diisi (minimal 1 menit)');
-        }
-    }
-    
-    if (contentTypes.includes('posttest')) {
-        const soalPosttestContainer = document.getElementById('soal-posttest-container');
-        if (soalPosttestContainer.children.length === 0) {
-            warnings.push('Posttest harus memiliki minimal 1 soal');
-        }
-        
-        const durasiPosttest = document.getElementById('durasi_posttest').value;
-        if (!durasiPosttest || durasiPosttest < 1) {
-            warnings.push('Durasi posttest harus diisi (minimal 1 menit)');
-        }
-    }
-    
-    // Validasi tidak boleh pilih pretest dan posttest bersamaan
-    if (contentTypes.includes('pretest') && contentTypes.includes('posttest')) {
-        warnings.push('Tidak dapat memilih pretest dan posttest bersamaan dalam satu materi');
-    }
-    
-    // Jika ada warnings, tampilkan konfirmasi
-    if (warnings.length > 0) {
-        const warningMessage = 'Perhatikan hal berikut:\n\n' + warnings.join('\n');
-        
-        Swal.fire({
-            title: 'Data Belum Lengkap',
-            text: warningMessage,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#1e3c72',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Ya, Simpan',
-            cancelButtonText: 'Perbaiki Data'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Jika user memilih untuk lanjut, submit form
+    // Form submit event listener
+    const materialForm = document.getElementById('materialForm');
+    if (materialForm) {
+        materialForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const contentTypes = Array.from(document.querySelectorAll('input[name="content_types[]"]:checked'))
+                .map(cb => cb.value);
+            
+            if (contentTypes.length === 0) {
+                Swal.fire({
+                    title: 'Peringatan',
+                    text: 'Pilih minimal satu jenis konten materi',
+                    icon: 'warning',
+                    confirmButtonColor: '#1e3c72'
+                });
+                return false;
+            }
+            
+            // Validasi kombinasi content types
+            const typeErrors = validateContentTypes(contentTypes);
+            if (typeErrors.length > 0) {
+                Swal.fire({
+                    title: 'Kombinasi Konten Tidak Valid',
+                    html: typeErrors.join('<br>'),
+                    icon: 'error',
+                    confirmButtonColor: '#1e3c72'
+                });
+                return false;
+            }
+            
+            // Validasi: tidak boleh pilih pretest dan posttest bersamaan
+            if (contentTypes.includes('pretest') && contentTypes.includes('posttest')) {
+                Swal.fire({
+                    title: 'Peringatan',
+                    text: 'Tidak dapat memilih pretest dan posttest bersamaan dalam satu materi',
+                    icon: 'warning',
+                    confirmButtonColor: '#1e3c72'
+                });
+                return false;
+            }
+            
+            // Validasi untuk setiap konten yang dipilih
+            let warnings = [];
+            
+            if (contentTypes.includes('file') && selectedFiles.length === 0) {
+                warnings.push('File materi untuk konten PDF/PPT belum dipilih');
+            }
+            
+            if (contentTypes.includes('video')) {
+                const videoType = document.getElementById('video_type').value;
+                if (!videoType) {
+                    warnings.push('Jenis video harus dipilih');
+                } else {
+                    if (videoType === 'hosted') {
+                        const videoFile = document.getElementById('video_file').value;
+                        if (!videoFile) {
+                            warnings.push('File video harus diupload untuk Google Drive');
+                        }
+                    } else {
+                        const videoUrl = document.getElementById('video_url').value;
+                        if (!videoUrl) {
+                            warnings.push('URL video harus diisi');
+                        } else if (!isValidUrl(videoUrl)) {
+                            warnings.push('URL video tidak valid');
+                        }
+                    }
+                }
+            }
+            
+            if (contentTypes.includes('pretest')) {
+                const soalPretestContainer = document.getElementById('soal-pretest-container');
+                if (soalPretestContainer && soalPretestContainer.children.length === 0) {
+                    warnings.push('Pretest harus memiliki minimal 1 soal');
+                }
+                
+                const durasiPretest = document.getElementById('durasi_pretest');
+                if (durasiPretest && (!durasiPretest.value || durasiPretest.value < 1)) {
+                    warnings.push('Durasi pretest harus diisi (minimal 1 menit)');
+                }
+            }
+            
+            if (contentTypes.includes('posttest')) {
+                const soalPosttestContainer = document.getElementById('soal-posttest-container');
+                if (soalPosttestContainer && soalPosttestContainer.children.length === 0) {
+                    warnings.push('Posttest harus memiliki minimal 1 soal');
+                }
+                
+                const durasiPosttest = document.getElementById('durasi_posttest');
+                if (durasiPosttest && (!durasiPosttest.value || durasiPosttest.value < 1)) {
+                    warnings.push('Durasi posttest harus diisi (minimal 1 menit)');
+                }
+            }
+            
+            // Jika ada warnings, tampilkan konfirmasi
+            if (warnings.length > 0) {
+                const warningMessage = 'Perhatikan hal berikut:\n\n' + warnings.join('\n');
+                
+                Swal.fire({
+                    title: 'Data Belum Lengkap',
+                    text: warningMessage,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#1e3c72',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Ya, Simpan',
+                    cancelButtonText: 'Perbaiki Data'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Jika user memilih untuk lanjut, submit form
+                        submitForm();
+                    }
+                });
+            } else {
+                // Jika tidak ada warning, langsung submit
                 submitForm();
             }
         });
-    } else {
-        // Jika tidak ada warning, langsung submit
-        submitForm();
     }
 });
-
-// Function untuk submit form
-function submitForm() {
-    const submitBtn = document.getElementById('submitBtn');
-    const originalText = submitBtn.innerHTML;
-    
-    // Disable button dan ubah text
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="mdi mdi-loading mdi-spin me-2"></i> Menyimpan...';
-    
-    // Jika ada video hosted, tampilkan progress
-    const videoType = document.getElementById('video_type').value;
-    if (videoType === 'hosted' && currentVideoFile) {
-        document.getElementById('upload-progress').style.display = 'block';
-        document.getElementById('upload-status').className = 'upload-status status-uploading';
-        document.getElementById('upload-status').innerHTML = 'Mengupload ke Google Drive...';
-        
-        // Simulasi progress (di backend sebenarnya dihandle oleh Laravel)
-        let progress = 0;
-        const progressInterval = setInterval(() => {
-            progress += 10;
-            document.getElementById('upload-progress-bar').style.width = progress + '%';
-            document.getElementById('upload-percentage').textContent = progress + '%';
-            
-            if (progress >= 100) {
-                clearInterval(progressInterval);
-                document.getElementById('upload-status').className = 'upload-status status-success';
-                document.getElementById('upload-status').innerHTML = 'Upload berhasil!';
-            }
-        }, 200);
-    }
-    
-    // Submit form
-    document.getElementById('materialForm').submit();
-}
 </script>
 @endsection

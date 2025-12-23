@@ -14,6 +14,16 @@ use App\Models\UserVideoProgress;
 use Google\Client as GoogleClient;
 use Google\Service\Drive as GoogleDrive;
 use Illuminate\Support\Facades\File;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\SoalImport;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 
 class MaterialController extends Controller
 {
@@ -21,6 +31,37 @@ class MaterialController extends Controller
     {
         $materials = $kursus->materials()->orderBy('order')->get();
         return view('admin.kursus.materials.index', compact('kursus', 'materials'));
+    }
+
+    // TAMBAHKAN METHOD UPDATE ORDER INI
+    public function updateOrder(Request $request, Kursus $kursus)
+    {
+        try {
+            $request->validate([
+                'materials' => 'required|array',
+                'materials.*.id' => 'required|exists:materials,id',
+                'materials.*.order' => 'required|integer|min:1',
+            ]);
+
+            foreach ($request->materials as $item) {
+                Materials::where('id', $item['id'])
+                    ->where('course_id', $kursus->id)
+                    ->update(['order' => $item['order']]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Urutan materi berhasil diperbarui!'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error updating material order: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui urutan materi: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function create(Kursus $kursus)
@@ -51,7 +92,6 @@ class MaterialController extends Controller
             'video_type' => 'nullable|required_if:content_types,video|in:youtube,vimeo,hosted,external',
             'video_url' => 'nullable|required_if:video_type,external,youtube,vimeo|url',
             'video_file' => 'nullable|required_if:video_type,hosted|file|mimes:mp4,webm,avi,mov,wmv|max:102400',
-            // HAPUS: 'duration_video' => 'nullable|required_if:content_types,video|integer|min:1',
             'allow_skip' => 'boolean',
             
             // Player config validations
@@ -75,23 +115,26 @@ class MaterialController extends Controller
             'video_questions.*.required_to_continue' => 'boolean',
         ]);
 
-        // Validasi: pretest dan posttest tidak boleh bersamaan
-        if (in_array('pretest', $request->content_types) && in_array('posttest', $request->content_types)) {
+        // **LOGIKA VALIDASI KOMBINASI CONTENT TYPES**
+        $contentTypes = $request->content_types;
+        $errorMessage = $this->validateContentTypeCombination($contentTypes);
+        
+        if ($errorMessage) {
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Tidak dapat memilih pretest dan posttest bersamaan dalam satu materi.');
+                ->with('error', $errorMessage);
         }
 
         // Conditional validasi untuk file
-        if (in_array('file', $request->content_types)) {
+        if (in_array('file', $contentTypes)) {
             $request->validate([
-                'file_path' => 'required|array|min:1',
+                'file_path' => 'nullable|array',
                 'file_path.*' => 'file|mimes:pdf,doc,docx,ppt,pptx,jpg,jpeg,png|max:10240',
             ]);
         }
 
         // Conditional validasi untuk pretest
-        if (in_array('pretest', $request->content_types)) {
+        if (in_array('pretest', $contentTypes)) {
             $request->validate([
                 'durasi_pretest' => 'required|integer|min:1',
                 'pretest_soal' => 'required|array|min:1',
@@ -103,7 +146,7 @@ class MaterialController extends Controller
         }
 
         // Conditional validasi untuk posttest
-        if (in_array('posttest', $request->content_types)) {
+        if (in_array('posttest', $contentTypes)) {
             $request->validate([
                 'durasi_posttest' => 'required|integer|min:1',
                 'posttest_soal' => 'required|array|min:1',
@@ -116,7 +159,7 @@ class MaterialController extends Controller
 
         // Handle multiple file uploads (tetap di local storage)
         $filePaths = [];
-        if (in_array('file', $request->content_types) && $request->hasFile('file_path')) {
+        if (in_array('file', $contentTypes) && $request->hasFile('file_path')) {
             foreach ($request->file('file_path') as $file) {
                 $filePaths[] = $file->store('materials', 'public');
             }
@@ -124,22 +167,15 @@ class MaterialController extends Controller
 
         // Handle video upload ke Google Drive jika video_type = hosted
         $videoInfo = null;
-        $videoDuration = 0; // Durasi akan di-set otomatis nanti
+        $videoDuration = 0;
         
-        if (in_array('video', $request->content_types) && $request->video_type === 'hosted' && $request->hasFile('video_file')) {
+        if (in_array('video', $contentTypes) && $request->video_type === 'hosted' && $request->hasFile('video_file')) {
             try {
                 $videoFile = $request->file('video_file');
-                
-                // Upload ke Google Drive
                 $videoInfo = $this->uploadToGoogleDrive($videoFile);
                 
-                // Jika berhasil, dapatkan info video
                 if ($videoInfo) {
-                    // Simpan dalam format JSON
                     $videoInfo = json_encode($videoInfo);
-                    
-                    // Dapatkan durasi video (opsional - bisa diimplementasikan nanti)
-                    // $videoDuration = $this->getVideoDuration($videoFile);
                 } else {
                     throw new \Exception('Gagal upload video ke Google Drive');
                 }
@@ -157,25 +193,25 @@ class MaterialController extends Controller
 
         // Tentukan type berdasarkan content_types
         $type = 'material';
-        if (in_array('pretest', $request->content_types)) {
+        if (in_array('pretest', $contentTypes)) {
             $type = 'pre_test';
-        } elseif (in_array('posttest', $request->content_types)) {
+        } elseif (in_array('posttest', $contentTypes)) {
             $type = 'post_test';
         }
 
         // Tentukan material_type berdasarkan content_types yang dipilih
         $materialType = 'theory';
-        if (in_array('file', $request->content_types)) {
+        if (in_array('file', $contentTypes)) {
             $materialType = 'theory';
-        } elseif (in_array('video', $request->content_types)) {
+        } elseif (in_array('video', $contentTypes)) {
             $materialType = 'video';
-        } elseif (in_array('pretest', $request->content_types) || in_array('posttest', $request->content_types)) {
+        } elseif (in_array('pretest', $contentTypes) || in_array('posttest', $contentTypes)) {
             $materialType = 'quiz';
         }
 
-        // Format soal pretest
+        // Format soal pretest dengan field baru (penjelasan dan poin)
         $soalPretest = null;
-        if (in_array('pretest', $request->content_types) && !empty($request->pretest_soal)) {
+        if (in_array('pretest', $contentTypes) && !empty($request->pretest_soal)) {
             $soalFormatted = [];
             foreach ($request->pretest_soal as $index => $soal) {
                 // Validasi bahwa semua pilihan terisi
@@ -189,15 +225,16 @@ class MaterialController extends Controller
                     'id' => $index + 1,
                     'pertanyaan' => $soal['pertanyaan'] ?? '',
                     'pilihan' => $soal['pilihan'] ?? [],
-                    'jawaban_benar' => (int)($soal['jawaban_benar'] ?? 0)
+                    'jawaban_benar' => (int)($soal['jawaban_benar'] ?? 0),
+                    'poin' => (int)($soal['poin'] ?? 1)
                 ];
             }
             $soalPretest = $soalFormatted;
         }
 
-        // Format soal posttest
+        // Format soal posttest dengan field baru (penjelasan dan poin)
         $soalPosttest = null;
-        if (in_array('posttest', $request->content_types) && !empty($request->posttest_soal)) {
+        if (in_array('posttest', $contentTypes) && !empty($request->posttest_soal)) {
             $soalFormatted = [];
             foreach ($request->posttest_soal as $index => $soal) {
                 // Validasi bahwa semua pilihan terisi
@@ -211,7 +248,7 @@ class MaterialController extends Controller
                     'id' => $index + 1,
                     'pertanyaan' => $soal['pertanyaan'] ?? '',
                     'pilihan' => $soal['pilihan'] ?? [],
-                    'jawaban_benar' => (int)($soal['jawaban_benar'] ?? 0)
+                    'jawaban_benar' => (int)($soal['jawaban_benar'] ?? 0),
                 ];
             }
             $soalPosttest = $soalFormatted;
@@ -227,7 +264,6 @@ class MaterialController extends Controller
             'min_watch_percentage' => $request->input('min_watch_percentage', 90),
             'auto_pause_on_question' => $request->boolean('auto_pause_on_question', true),
             'require_question_completion' => $request->boolean('require_question_completion', false),
-            // Tambahkan untuk auto-detect duration
             'auto_detect_duration' => true,
         ];
 
@@ -236,7 +272,7 @@ class MaterialController extends Controller
         $questionCount = 0;
         $totalVideoPoints = 0;
 
-        if (in_array('video', $request->content_types) && $request->filled('video_questions')) {
+        if (in_array('video', $contentTypes) && $request->filled('video_questions')) {
             $hasVideoQuestions = true;
             $questionCount = count(array_filter($request->video_questions, function($q) {
                 return !empty($q['question']) && !empty($q['options']);
@@ -257,11 +293,11 @@ class MaterialController extends Controller
             'order' => $request->order,
             'type' => $type,
             'material_type' => $materialType,
-            'duration' => $duration, // Sementara 0, bisa diupdate nanti
+            'duration' => $duration,
             'file_path' => !empty($filePaths) ? json_encode($filePaths) : null,
             'video_url' => $request->video_url ?? '',
             'video_type' => $request->video_type ?? 'external',
-            'video_file' => $videoInfo, // Info Google Drive dalam JSON
+            'video_file' => $videoInfo,
             'allow_skip' => $request->boolean('allow_skip'),
             'player_config' => json_encode($playerConfig),
             'has_video_questions' => $hasVideoQuestions,
@@ -272,21 +308,17 @@ class MaterialController extends Controller
             'attendance_required' => $request->boolean('attendance_required'),
             'soal_pretest' => $soalPretest,
             'soal_posttest' => $soalPosttest,
-            'learning_objectives' => json_encode($request->content_types),
-            // Tambahkan flag untuk auto-duration
+            'learning_objectives' => json_encode($contentTypes),
             'auto_duration' => true,
         ];
 
-        // Tambahkan field durasi khusus jika ada (KECUALI duration_video)
-        if (in_array('pretest', $request->content_types)) {
+        // Tambahkan field durasi khusus
+        if (in_array('pretest', $contentTypes)) {
             $materialData['durasi_pretest'] = $request->durasi_pretest;
         }
-        if (in_array('posttest', $request->content_types)) {
+        if (in_array('posttest', $contentTypes)) {
             $materialData['durasi_posttest'] = $request->durasi_posttest;
         }
-
-        // Debug data sebelum disimpan
-        Log::info('Material Data to be stored:', $materialData);
 
         try {
             // Create material
@@ -344,12 +376,14 @@ class MaterialController extends Controller
     public function edit(Kursus $kursus, Materials $material)
     {
         $material->load('videoQuestions');
+        // Decode content types untuk form edit
+        $material->content_types_array = json_decode($material->learning_objectives ?? '[]', true);
         return view('admin.kursus.materials.edit', compact('kursus', 'material'));
     }
 
     public function update(Request $request, Kursus $kursus, Materials $material)
     {
-        // Validasi dasar - HAPUS duration_video
+        // Validasi dasar
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -359,11 +393,10 @@ class MaterialController extends Controller
             'attendance_required' => 'boolean',
             'is_active' => 'boolean',
             
-            // Video specific validations - HAPUS duration_video
+            // Video specific validations
             'video_type' => 'nullable|required_if:content_types,video|in:youtube,vimeo,hosted,external',
             'video_url' => 'nullable|required_if:video_type,external,youtube,vimeo|url',
             'video_file' => 'nullable|file|mimes:mp4,webm,avi,mov,wmv|max:102400',
-            // HAPUS: 'duration_video' => 'nullable|required_if:content_types,video|integer|min:1',
             'allow_skip' => 'boolean',
             
             // Player config validations
@@ -387,54 +420,31 @@ class MaterialController extends Controller
             'video_questions.*.required_to_continue' => 'boolean',
         ]);
 
-        // Validasi: pretest dan posttest tidak boleh bersamaan
-        if (in_array('pretest', $request->content_types) && in_array('posttest', $request->content_types)) {
+        // **LOGIKA VALIDASI KOMBINASI CONTENT TYPES**
+        $contentTypes = $request->content_types;
+        $errorMessage = $this->validateContentTypeCombination($contentTypes);
+        
+        if ($errorMessage) {
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Tidak dapat memilih pretest dan posttest bersamaan dalam satu materi.');
+                ->with('error', $errorMessage);
         }
 
-        // Conditional validasi untuk file
-        if (in_array('file', $request->content_types)) {
-            $request->validate([
-                'file_path' => 'nullable|array',
-                'file_path.*' => 'file|mimes:pdf,doc,docx,ppt,pptx,jpg,jpeg,png|max:10240',
-            ]);
+        // Validasi conditional berdasarkan jenis konten yang dipilih
+        $validationErrors = $this->validateConditionalFields($request, $contentTypes);
+        if ($validationErrors) {
+            return $validationErrors;
         }
 
-        // Conditional validasi untuk pretest
-        if (in_array('pretest', $request->content_types)) {
-            $request->validate([
-                'durasi_pretest' => 'required|integer|min:1',
-                'pretest_soal' => 'required|array|min:1',
-                'pretest_soal.*.pertanyaan' => 'required|string',
-                'pretest_soal.*.pilihan' => 'required|array|min:4|max:4',
-                'pretest_soal.*.pilihan.*' => 'required|string',
-                'pretest_soal.*.jawaban_benar' => 'required|integer|min:0|max:3',
-            ]);
-        }
-
-        // Conditional validasi untuk posttest
-        if (in_array('posttest', $request->content_types)) {
-            $request->validate([
-                'durasi_posttest' => 'required|integer|min:1',
-                'posttest_soal' => 'required|array|min:1',
-                'posttest_soal.*.pertanyaan' => 'required|string',
-                'posttest_soal.*.pilihan' => 'required|array|min:4|max:4',
-                'posttest_soal.*.pilihan.*' => 'required|string',
-                'posttest_soal.*.jawaban_benar' => 'required|integer|min:0|max:3',
-            ]);
-        }
-
-        // Handle multiple file uploads (tetap di local)
+        // Handle multiple file uploads
         $existingFiles = $material->file_path ? json_decode($material->file_path, true) : [];
         $newFilePaths = $existingFiles;
 
-        if (in_array('file', $request->content_types) && $request->hasFile('file_path')) {
+        if (in_array('file', $contentTypes) && $request->hasFile('file_path')) {
             foreach ($request->file('file_path') as $file) {
                 $newFilePaths[] = $file->store('materials', 'public');
             }
-        } elseif (!in_array('file', $request->content_types)) {
+        } elseif (!in_array('file', $contentTypes)) {
             // Jika file tidak dipilih, hapus semua file yang ada
             foreach ($existingFiles as $filePath) {
                 Storage::disk('public')->delete($filePath);
@@ -442,11 +452,11 @@ class MaterialController extends Controller
             $newFilePaths = [];
         }
 
-        // Handle video upload ke Google Drive jika video_type = hosted
+        // Handle video upload ke Google Drive
         $videoInfo = $material->video_file;
         $videoDuration = $material->duration;
         
-        if (in_array('video', $request->content_types) && $request->video_type === 'hosted' && $request->hasFile('video_file')) {
+        if (in_array('video', $contentTypes) && $request->video_type === 'hosted' && $request->hasFile('video_file')) {
             try {
                 // Delete old video file dari Google Drive jika ada
                 if ($material->video_file) {
@@ -457,17 +467,10 @@ class MaterialController extends Controller
                 }
                 
                 $videoFile = $request->file('video_file');
-                
-                // Upload ke Google Drive
                 $newVideoInfo = $this->uploadToGoogleDrive($videoFile);
                 
-                // Jika berhasil, dapatkan info video
                 if ($newVideoInfo) {
-                    // Simpan dalam format JSON
                     $videoInfo = json_encode($newVideoInfo);
-                    
-                    // Dapatkan durasi video (opsional)
-                    // $videoDuration = $this->getVideoDuration($videoFile);
                 } else {
                     throw new \Exception('Gagal upload video ke Google Drive');
                 }
@@ -483,64 +486,29 @@ class MaterialController extends Controller
         // Hitung total durasi
         $duration = $videoDuration;
 
-        // Tentukan type berdasarkan content_types
-        $type = 'material';
-        if (in_array('pretest', $request->content_types)) {
-            $type = 'pre_test';
-        } elseif (in_array('posttest', $request->content_types)) {
-            $type = 'post_test';
-        }
-
-        // Tentukan material_type
-        $materialType = 'theory';
-        if (in_array('file', $request->content_types)) {
-            $materialType = 'theory';
-        } elseif (in_array('video', $request->content_types)) {
-            $materialType = 'video';
-        } elseif (in_array('pretest', $request->content_types) || in_array('posttest', $request->content_types)) {
-            $materialType = 'quiz';
-        }
+        // Tentukan type dan material_type
+        list($type, $materialType) = $this->determineMaterialTypes($contentTypes);
 
         // Format soal pretest
         $soalPretest = null;
-        if (in_array('pretest', $request->content_types) && !empty($request->pretest_soal)) {
-            $soalFormatted = [];
-            foreach ($request->pretest_soal as $index => $soal) {
-                // Validasi bahwa semua pilihan terisi
-                if (count(array_filter($soal['pilihan'])) < 4) {
-                    return redirect()->back()
-                        ->withInput()
-                        ->with('error', 'Semua pilihan jawaban untuk setiap soal harus diisi.');
-                }
-
-                $soalFormatted[] = [
-                    'id' => $index + 1,
-                    'pertanyaan' => $soal['pertanyaan'] ?? '',
-                    'pilihan' => $soal['pilihan'] ?? [],
-                    'jawaban_benar' => (int)($soal['jawaban_benar'] ?? 0)
-                ];
+        if (in_array('pretest', $contentTypes) && !empty($request->pretest_soal)) {
+            $soalFormatted = $this->formatSoal($request->pretest_soal, 'pretest');
+            if (is_string($soalFormatted)) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', $soalFormatted);
             }
             $soalPretest = $soalFormatted;
         }
 
         // Format soal posttest
         $soalPosttest = null;
-        if (in_array('posttest', $request->content_types) && !empty($request->posttest_soal)) {
-            $soalFormatted = [];
-            foreach ($request->posttest_soal as $index => $soal) {
-                // Validasi bahwa semua pilihan terisi
-                if (count(array_filter($soal['pilihan'])) < 4) {
-                    return redirect()->back()
-                        ->withInput()
-                        ->with('error', 'Semua pilihan jawaban untuk setiap soal harus diisi.');
-                }
-
-                $soalFormatted[] = [
-                    'id' => $index + 1,
-                    'pertanyaan' => $soal['pertanyaan'] ?? '',
-                    'pilihan' => $soal['pilihan'] ?? [],
-                    'jawaban_benar' => (int)($soal['jawaban_benar'] ?? 0)
-                ];
+        if (in_array('posttest', $contentTypes) && !empty($request->posttest_soal)) {
+            $soalFormatted = $this->formatSoal($request->posttest_soal, 'posttest');
+            if (is_string($soalFormatted)) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', $soalFormatted);
             }
             $soalPosttest = $soalFormatted;
         }
@@ -555,27 +523,11 @@ class MaterialController extends Controller
             'min_watch_percentage' => $request->input('min_watch_percentage', 90),
             'auto_pause_on_question' => $request->boolean('auto_pause_on_question', true),
             'require_question_completion' => $request->boolean('require_question_completion', false),
-            // Tambahkan untuk auto-detect duration
             'auto_detect_duration' => true,
         ];
 
         // Calculate video questions stats
-        $hasVideoQuestions = false;
-        $questionCount = 0;
-        $totalVideoPoints = 0;
-
-        if (in_array('video', $request->content_types) && $request->filled('video_questions')) {
-            $hasVideoQuestions = true;
-            $questionCount = count(array_filter($request->video_questions, function($q) {
-                return !empty($q['question']) && !empty($q['options']);
-            }));
-            
-            foreach ($request->video_questions as $question) {
-                if (!empty($question['question']) && !empty($question['options'])) {
-                    $totalVideoPoints += $question['points'] ?? 1;
-                }
-            }
-        }
+        list($hasVideoQuestions, $questionCount, $totalVideoPoints) = $this->calculateVideoQuestionStats($request, $contentTypes);
 
         // Update data
         $materialData = [
@@ -599,19 +551,19 @@ class MaterialController extends Controller
             'attendance_required' => $request->boolean('attendance_required'),
             'soal_pretest' => $soalPretest,
             'soal_posttest' => $soalPosttest,
-            'learning_objectives' => json_encode($request->content_types),
+            'learning_objectives' => json_encode($contentTypes),
             'auto_duration' => true,
         ];
 
-        // Update field durasi khusus (KECUALI duration_video)
-        if (in_array('pretest', $request->content_types)) {
+        // Update field durasi khusus
+        if (in_array('pretest', $contentTypes)) {
             $materialData['durasi_pretest'] = $request->durasi_pretest;
         } else {
             $materialData['durasi_pretest'] = null;
             $materialData['soal_pretest'] = null;
         }
 
-        if (in_array('posttest', $request->content_types)) {
+        if (in_array('posttest', $contentTypes)) {
             $materialData['durasi_posttest'] = $request->durasi_posttest;
         } else {
             $materialData['durasi_posttest'] = null;
@@ -619,7 +571,7 @@ class MaterialController extends Controller
         }
 
         // Jika bukan video, bersihkan data video
-        if (!in_array('video', $request->content_types)) {
+        if (!in_array('video', $contentTypes)) {
             $materialData['video_url'] = null;
             $materialData['video_type'] = 'external';
             $materialData['video_file'] = null;
@@ -641,18 +593,13 @@ class MaterialController extends Controller
             }
         }
 
-        // Debug data sebelum update
-        Log::info('Material Data to be updated:', $materialData);
-
         try {
             $material->update($materialData);
             
             // Update video questions
             if ($hasVideoQuestions && $request->filled('video_questions')) {
-                // Delete existing questions
                 VideoQuestion::where('material_id', $material->id)->delete();
                 
-                // Create new questions
                 foreach ($request->video_questions as $index => $questionData) {
                     if (empty($questionData['question']) || empty($questionData['options'])) {
                         continue;
@@ -671,7 +618,6 @@ class MaterialController extends Controller
                     ]);
                 }
             } else {
-                // If no video questions, delete existing ones
                 VideoQuestion::where('material_id', $material->id)->delete();
             }
 
@@ -706,47 +652,69 @@ class MaterialController extends Controller
     }
 
     public function destroy(Kursus $kursus, Materials $material)
-    {
-        try {
-            // Delete files (tetap di local)
-            if ($material->file_path) {
-                $files = json_decode($material->file_path, true);
-                if (is_array($files)) {
-                    foreach ($files as $filePath) {
-                        Storage::disk('public')->delete($filePath);
-                    }
+{
+    try {
+        // Simpan order sebelum dihapus untuk reorder
+        $deletedOrder = $material->order;
+        
+        // Delete files (tetap di local)
+        if ($material->file_path) {
+            $files = json_decode($material->file_path, true);
+            if (is_array($files)) {
+                foreach ($files as $filePath) {
+                    Storage::disk('public')->delete($filePath);
                 }
             }
-
-            // Delete video file dari Google Drive
-            if ($material->video_file) {
-                try {
-                    $videoData = json_decode($material->video_file, true);
-                    if ($videoData && isset($videoData['file_id'])) {
-                        $this->deleteFromGoogleDrive($videoData['file_id']);
-                    }
-                } catch (\Exception $e) {
-                    Log::error('Error deleting video from Google Drive: ' . $e->getMessage());
-                }
-            }
-
-            // Delete video questions
-            VideoQuestion::where('material_id', $material->id)->delete();
-            
-            // Delete video progress
-            UserVideoProgress::where('material_id', $material->id)->delete();
-
-            $material->delete();
-
-            return redirect()->route('admin.kursus.materials.index', $kursus)
-                            ->with('success', 'Material berhasil dihapus!');
-        } catch (\Exception $e) {
-            Log::error('Error deleting material: ' . $e->getMessage());
-            
-            return redirect()->back()
-                            ->with('error', 'Gagal menghapus material: ' . $e->getMessage());
         }
+
+        // Delete video file dari Google Drive
+        if ($material->video_file) {
+            try {
+                $videoData = json_decode($material->video_file, true);
+                if ($videoData && isset($videoData['file_id'])) {
+                    $this->deleteFromGoogleDrive($videoData['file_id']);
+                }
+            } catch (\Exception $e) {
+                Log::error('Error deleting video from Google Drive: ' . $e->getMessage());
+            }
+        }
+
+        // Delete video questions
+        VideoQuestion::where('material_id', $material->id)->delete();
+        
+        // Delete video progress
+        UserVideoProgress::where('material_id', $material->id)->delete();
+
+        $material->delete();
+
+        // Reorder secara manual (backup jika event deleted tidak jalan)
+        $this->reorderMaterials($kursus->id);
+
+        return redirect()->route('admin.kursus.materials.index', $kursus)
+                        ->with('success', 'Material berhasil dihapus!');
+    } catch (\Exception $e) {
+        Log::error('Error deleting material: ' . $e->getMessage());
+        
+        return redirect()->back()
+                        ->with('error', 'Gagal menghapus material: ' . $e->getMessage());
     }
+}
+
+// Tambahkan method helper untuk reorder
+private function reorderMaterials($courseId)
+{
+    $materials = Materials::where('course_id', $courseId)
+        ->orderBy('order')
+        ->orderBy('created_at')
+        ->get();
+    
+    $order = 1;
+    foreach ($materials as $material) {
+        $material->order = $order;
+        $material->saveQuietly(); // saveQuietly untuk menghindari event updating
+        $order++;
+    }
+}
 
     public function updateStatus(Request $request, Kursus $kursus, Materials $material)
     {
@@ -821,6 +789,165 @@ class MaterialController extends Controller
         ];
         
         return view('admin.kursus.materials.video-stats', compact('kursus', 'material', 'stats'));
+    }
+
+    private function validateContentTypeCombination($contentTypes)
+    {
+        // Jika memilih pretest
+        if (in_array('pretest', $contentTypes)) {
+            if (count($contentTypes) > 1) {
+                return 'Jika memilih pretest, tidak bisa memilih konten lain.';
+            }
+        }
+        
+        // Jika memilih posttest
+        if (in_array('posttest', $contentTypes)) {
+            if (count($contentTypes) > 1) {
+                return 'Jika memilih posttest, tidak bisa memilih konten lain.';
+            }
+        }
+        
+        // Jika memilih file (PDF/PPT)
+        if (in_array('file', $contentTypes)) {
+            $allowedWithFile = ['video']; // File bisa dikombinasikan dengan video
+            foreach ($contentTypes as $type) {
+                if ($type !== 'file' && !in_array($type, $allowedWithFile)) {
+                    if (in_array($type, ['pretest', 'posttest'])) {
+                        return 'File tidak bisa dikombinasikan dengan ' . ($type === 'pretest' ? 'pretest' : 'posttest') . '.';
+                    }
+                }
+            }
+            
+            // Cek apakah kombinasi file dan video valid
+            if (count($contentTypes) > 2 || (count($contentTypes) === 2 && !in_array('video', $contentTypes))) {
+                return 'File hanya bisa dikombinasikan dengan video.';
+            }
+        }
+        
+        // Jika memilih video
+        if (in_array('video', $contentTypes)) {
+            $allowedWithVideo = ['file']; // Video bisa dikombinasikan dengan file
+            foreach ($contentTypes as $type) {
+                if ($type !== 'video' && !in_array($type, $allowedWithVideo)) {
+                    if (in_array($type, ['pretest', 'posttest'])) {
+                        return 'Video tidak bisa dikombinasikan dengan ' . ($type === 'pretest' ? 'pretest' : 'posttest') . '.';
+                    }
+                }
+            }
+            
+            // Cek apakah kombinasi video valid
+            if (count($contentTypes) > 2 || (count($contentTypes) === 2 && !in_array('file', $contentTypes))) {
+                return 'Video hanya bisa dikombinasikan dengan file.';
+            }
+        }
+
+        return null;
+    }
+
+    private function validateConditionalFields($request, $contentTypes)
+    {
+        // Conditional validasi untuk file
+        if (in_array('file', $contentTypes)) {
+            if (!$request->hasFile('file_path') && empty($request->input('existing_files', []))) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Harap upload file untuk konten tipe file.');
+            }
+            
+            $request->validate([
+                'file_path' => 'nullable|array',
+                'file_path.*' => 'file|mimes:pdf,doc,docx,ppt,pptx,jpg,jpeg,png|max:10240',
+            ]);
+        }
+
+        // Conditional validasi untuk pretest
+        if (in_array('pretest', $contentTypes)) {
+            $request->validate([
+                'durasi_pretest' => 'required|integer|min:1',
+                'pretest_soal' => 'required|array|min:1',
+                'pretest_soal.*.pertanyaan' => 'required|string',
+                'pretest_soal.*.pilihan' => 'required|array|min:4|max:4',
+                'pretest_soal.*.pilihan.*' => 'required|string',
+                'pretest_soal.*.jawaban_benar' => 'required|integer|min:0|max:3',
+            ]);
+        }
+
+        // Conditional validasi untuk posttest
+        if (in_array('posttest', $contentTypes)) {
+            $request->validate([
+                'durasi_posttest' => 'required|integer|min:1',
+                'posttest_soal' => 'required|array|min:1',
+                'posttest_soal.*.pertanyaan' => 'required|string',
+                'posttest_soal.*.pilihan' => 'required|array|min:4|max:4',
+                'posttest_soal.*.pilihan.*' => 'required|string',
+                'posttest_soal.*.jawaban_benar' => 'required|integer|min:0|max:3',
+            ]);
+        }
+
+        return null;
+    }
+
+    private function determineMaterialTypes($contentTypes)
+    {
+        $type = 'material';
+        $materialType = 'theory';
+        
+        if (in_array('pretest', $contentTypes)) {
+            $type = 'pre_test';
+            $materialType = 'quiz';
+        } elseif (in_array('posttest', $contentTypes)) {
+            $type = 'post_test';
+            $materialType = 'quiz';
+        } elseif (in_array('file', $contentTypes) && in_array('video', $contentTypes)) {
+            $materialType = 'mixed';
+        } elseif (in_array('file', $contentTypes)) {
+            $materialType = 'theory';
+        } elseif (in_array('video', $contentTypes)) {
+            $materialType = 'video';
+        }
+        
+        return [$type, $materialType];
+    }
+
+    private function formatSoal($soalData, $type)
+    {
+        $soalFormatted = [];
+        foreach ($soalData as $index => $soal) {
+            // Validasi bahwa semua pilihan terisi
+            if (count(array_filter($soal['pilihan'])) < 4) {
+                return 'Semua pilihan jawaban untuk setiap soal ' . $type . ' harus diisi.';
+            }
+
+            $soalFormatted[] = [
+                'id' => $index + 1,
+                'pertanyaan' => $soal['pertanyaan'] ?? '',
+                'pilihan' => $soal['pilihan'] ?? [],
+                'jawaban_benar' => (int)($soal['jawaban_benar'] ?? 0)
+            ];
+        }
+        return $soalFormatted;
+    }
+
+    private function calculateVideoQuestionStats($request, $contentTypes)
+    {
+        $hasVideoQuestions = false;
+        $questionCount = 0;
+        $totalVideoPoints = 0;
+
+        if (in_array('video', $contentTypes) && $request->filled('video_questions')) {
+            $hasVideoQuestions = true;
+            $questionCount = count(array_filter($request->video_questions, function($q) {
+                return !empty($q['question']) && !empty($q['options']);
+            }));
+            
+            foreach ($request->video_questions as $question) {
+                if (!empty($question['question']) && !empty($question['options'])) {
+                    $totalVideoPoints += $question['points'] ?? 1;
+                }
+            }
+        }
+        
+        return [$hasVideoQuestions, $questionCount, $totalVideoPoints];
     }
 
     public function updateVideoQuestions(Request $request, Kursus $kursus, Materials $material)
@@ -934,107 +1061,130 @@ class MaterialController extends Controller
      * Upload file to Google Drive
      */
     // GANTI method uploadToGoogleDrive dengan ini:
-private function uploadToGoogleDrive($file)
-{
-    try {
-        Log::info('Starting Google Drive upload...');
-        
-        $client = new GoogleClient();
-        
-        // Load credentials dari file JSON
-        $credentialsPath = storage_path('app/google-drive/credentials.json');
-        
-        if (!file_exists($credentialsPath)) {
-            throw new \Exception('Credentials file not found at: ' . $credentialsPath);
-        }
-        
-        $client->setAuthConfig($credentialsPath);
-        $client->addScope(GoogleDrive::DRIVE_FILE);
-        
-        // Set subject untuk service account
-        $serviceAccount = json_decode(file_get_contents($credentialsPath), true);
-        $client->setSubject($serviceAccount['client_email']);
-        
-        $service = new GoogleDrive($client);
-        
-        // Generate unique filename
-        $filename = 'video_' . Str::random(20) . '_' . time() . '.' . $file->getClientOriginalExtension();
-        $originalName = $file->getClientOriginalName();
-        
-        // Upload file ke Google Drive
-        $fileMetadata = new \Google\Service\Drive\DriveFile([
-            'name' => $filename,
-            'parents' => [env('GOOGLE_DRIVE_FOLDER_ID')],
-            'description' => 'Video materi pembelajaran - ' . $originalName,
-        ]);
-        
-        $content = file_get_contents($file->getRealPath());
-        
-        $uploadedFile = $service->files->create($fileMetadata, [
-            'data' => $content,
-            'mimeType' => $file->getMimeType(),
-            'uploadType' => 'multipart',
-            'fields' => 'id, name, webViewLink, webContentLink, size, mimeType, createdTime, modifiedTime',
-            'supportsAllDrives' => true
-        ]);
-        
-        // Buat file bisa diakses publik
-        if (env('GOOGLE_DRIVE_MAKE_PUBLIC', true)) {
+    private function uploadToGoogleDrive($file)
+    {
+        try {
+            Log::info('Starting Google Drive upload...');
+            
+            $client = new GoogleClient();
+            
+            // Load credentials
+            $credentialsPath = storage_path('app/google-drive/credentials.json');
+            
+            if (!file_exists($credentialsPath)) {
+                throw new \Exception('Credentials file not found');
+            }
+            
+            $client->setAuthConfig($credentialsPath);
+            $client->addScope(GoogleDrive::DRIVE_FILE);
+            $client->addScope(GoogleDrive::DRIVE_READONLY);
+            
+            // Set subject untuk service account
+            $serviceAccount = json_decode(file_get_contents($credentialsPath), true);
+            $client->setSubject($serviceAccount['client_email']);
+            
+            $service = new GoogleDrive($client);
+            
+            // Generate unique filename
+            $filename = 'video_' . Str::random(20) . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $originalName = $file->getClientOriginalName();
+            
+            // Upload file ke Google Drive
+            $fileMetadata = new \Google\Service\Drive\DriveFile([
+                'name' => $filename,
+                'parents' => [env('GOOGLE_DRIVE_FOLDER_ID')],
+                'description' => 'Video materi pembelajaran - ' . $originalName,
+                'mimeType' => $file->getMimeType(),
+            ]);
+            
+            $content = file_get_contents($file->getRealPath());
+            
+            $uploadedFile = $service->files->create($fileMetadata, [
+                'data' => $content,
+                'mimeType' => $file->getMimeType(),
+                'uploadType' => 'multipart',
+                'fields' => 'id, name, webViewLink, webContentLink, size, mimeType, thumbnailLink',
+                'supportsAllDrives' => true
+            ]);
+            
+            // Buat file bisa diakses publik
             try {
                 $permission = new \Google\Service\Drive\Permission([
                     'type' => 'anyone',
                     'role' => 'reader',
+                    'allowFileDiscovery' => false,
                 ]);
                 
                 $service->permissions->create($uploadedFile->id, $permission);
+                
+                // Buat embed link khusus
+                $embedLink = 'https://drive.google.com/file/d/' . $uploadedFile->id . '/preview';
+                
+                // Get thumbnail link
+                $thumbnailLink = $uploadedFile->thumbnailLink ?? null;
+                
+                // Return informasi file dengan embed link
+                return [
+                    'file_id' => $uploadedFile->id,
+                    'file_name' => $uploadedFile->name,
+                    'original_name' => $originalName,
+                    'web_view_link' => $uploadedFile->webViewLink,
+                    'web_content_link' => $uploadedFile->webContentLink,
+                    'embed_link' => $embedLink,
+                    'thumbnail_link' => $thumbnailLink,
+                    'size' => $uploadedFile->size,
+                    'mime_type' => $uploadedFile->mimeType,
+                    'uploaded_at' => now()->toDateTimeString(),
+                    'direct_play' => true,
+                ];
+                
             } catch (\Exception $e) {
                 Log::warning('Failed to make file public: ' . $e->getMessage());
+                
+                // Tetap return data tanpa permission
+                return [
+                    'file_id' => $uploadedFile->id,
+                    'file_name' => $uploadedFile->name,
+                    'original_name' => $originalName,
+                    'web_view_link' => $uploadedFile->webViewLink,
+                    'embed_link' => 'https://drive.google.com/file/d/' . $uploadedFile->id . '/preview',
+                    'size' => $uploadedFile->size,
+                    'mime_type' => $uploadedFile->mimeType,
+                    'uploaded_at' => now()->toDateTimeString(),
+                    'direct_play' => true,
+                ];
             }
+            
+        } catch (\Exception $e) {
+            Log::error('Error in uploadToGoogleDrive: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            throw $e;
         }
-        
-        // Return informasi file
-        return [
-            'file_id' => $uploadedFile->id,
-            'file_name' => $uploadedFile->name,
-            'original_name' => $originalName,
-            'web_view_link' => $uploadedFile->webViewLink,
-            'web_content_link' => $uploadedFile->webContentLink,
-            'size' => $uploadedFile->size,
-            'mime_type' => $uploadedFile->mimeType,
-            'created_time' => $uploadedFile->createdTime,
-            'uploaded_at' => now()->toDateTimeString(),
-        ];
-        
-    } catch (\Exception $e) {
-        Log::error('Error in uploadToGoogleDrive: ' . $e->getMessage());
-        Log::error('Stack trace: ' . $e->getTraceAsString());
-        throw $e;
     }
-}
 
 // Juga perbaiki deleteFromGoogleDrive:
 private function deleteFromGoogleDrive($fileId)
-{
-    try {
-        $client = new GoogleClient();
-        
-        $credentialsPath = storage_path('app/google-drive/credentials.json');
-        $client->setAuthConfig($credentialsPath);
-        $client->addScope(GoogleDrive::DRIVE_FILE);
-        
-        $serviceAccount = json_decode(file_get_contents($credentialsPath), true);
-        $client->setSubject($serviceAccount['client_email']);
-        
-        $service = new GoogleDrive($client);
-        $service->files->delete($fileId);
-        
-        Log::info('File deleted from Google Drive: ' . $fileId);
-        
-    } catch (\Exception $e) {
-        Log::error('Error deleting from Google Drive: ' . $e->getMessage());
-        // Jangan throw error saat delete, karena mungkin file sudah tidak ada
+    {
+        try {
+            $client = new GoogleClient();
+            
+            $credentialsPath = storage_path('app/google-drive/credentials.json');
+            $client->setAuthConfig($credentialsPath);
+            $client->addScope(GoogleDrive::DRIVE_FILE);
+            
+            $serviceAccount = json_decode(file_get_contents($credentialsPath), true);
+            $client->setSubject($serviceAccount['client_email']);
+            
+            $service = new GoogleDrive($client);
+            $service->files->delete($fileId);
+            
+            Log::info('File deleted from Google Drive: ' . $fileId);
+            
+        } catch (\Exception $e) {
+            Log::error('Error deleting from Google Drive: ' . $e->getMessage());
+        }
     }
-}
+
 
     /**
      * Get video URL from Google Drive
@@ -1115,6 +1265,254 @@ private function deleteFromGoogleDrive($fileId)
         }
         
         return null;
+    }
+    
+    /**
+     * Import soal dari Excel
+     */
+    public function importSoal(Request $request, Kursus $kursus)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls,csv|max:5120', // 5MB max
+            'type' => 'required|in:pretest,posttest',
+            'preview_only' => 'nullable|boolean'
+        ]);
+
+        try {
+            $import = new SoalImport();
+            
+            if ($request->preview_only) {
+                // Untuk preview, baca hanya 50 baris pertama
+                $data = Excel::toCollection($import, $request->file('file'))->first()->take(50);
+            } else {
+                $data = Excel::toCollection($import, $request->file('file'))->first();
+            }
+            
+            if ($data->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'File Excel kosong atau format tidak sesuai'
+                ], 400);
+            }
+            
+            $soalData = $this->processExcelData($data, $request->type);
+            
+            if (empty($soalData)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak ada data soal yang valid ditemukan. Pastikan format sesuai template.'
+                ], 400);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Data berhasil diimport',
+                'data' => $soalData,
+                'count' => count($soalData)
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Error importing soal: ' . $e->getMessage());
+            \Log::error($e->getTraceAsString());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Download template Excel
+     */
+    // Di controller Anda (contoh: MaterialController.php)
+// Di App\Http\Controllers\Admin\MaterialController.php
+
+/**
+ * Download template Excel untuk soal
+ */
+public function downloadTemplate()
+{
+    try {
+        // Buat spreadsheet
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        // Set header TANPA POIN
+        $headers = ['PERTANYAAN', 'PILIHAN_A', 'PILIHAN_B', 'PILIHAN_C', 'PILIHAN_D', 'JAWABAN_BENAR'];
+        
+        foreach ($headers as $index => $header) {
+            $col = chr(65 + $index);
+            $sheet->setCellValue($col . '1', $header);
+            
+            // Style header
+            $sheet->getStyle($col . '1')->applyFromArray([
+                'font' => [
+                    'bold' => true,
+                    'color' => ['rgb' => 'FFFFFF']
+                ],
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => '1E3C72']
+                ],
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    'vertical' => Alignment::VERTICAL_CENTER
+                ]
+            ]);
+        }
+        
+        // Contoh data TANPA POIN
+        $examples = [
+            [
+                'Apa ibu kota Indonesia?',
+                'Jakarta',
+                'Bandung',
+                'Surabaya',
+                'Yogyakarta',
+                'A'
+            ],
+            [
+                'Siapa presiden pertama Indonesia?',
+                'Soekarno',
+                'Soeharto',
+                'BJ Habibie',
+                'Gus Dur',
+                'A'
+            ],
+            [
+                'Tanggal berapa Indonesia merdeka?',
+                '17 Agustus 1945',
+                '27 Desember 1949',
+                '1 Juni 1945',
+                '10 November 1945',
+                'A'
+            ]
+        ];
+        
+        // Tambahkan contoh data
+        $row = 2;
+        foreach ($examples as $example) {
+            foreach ($example as $index => $value) {
+                $col = chr(65 + $index);
+                $sheet->setCellValue($col . $row, $value);
+            }
+            $row++;
+        }
+        
+        // Set width columns
+        $sheet->getColumnDimension('A')->setWidth(40); // Pertanyaan
+        $sheet->getColumnDimension('B')->setWidth(20); // Pilihan A
+        $sheet->getColumnDimension('C')->setWidth(20); // Pilihan B
+        $sheet->getColumnDimension('D')->setWidth(20); // Pilihan C
+        $sheet->getColumnDimension('E')->setWidth(20); // Pilihan D
+        $sheet->getColumnDimension('F')->setWidth(15); // Jawaban Benar
+        
+        // Data validation untuk kolom jawaban
+        $validation = $sheet->getCell('F2')->getDataValidation();
+        $validation->setType(DataValidation::TYPE_LIST);
+        $validation->setFormula1('"A,B,C,D"');
+        $validation->setShowDropDown(true);
+        $validation->setAllowBlank(false);
+        
+        // Terapkan ke semua baris contoh
+        for ($i = 2; $i <= 4; $i++) {
+            $sheet->getCell('F' . $i)->setDataValidation(clone $validation);
+        }
+        
+        // Simpan ke temporary file
+        $filename = 'template-soal-' . date('YmdHis') . '.xlsx';
+        $tempPath = storage_path('app/temp/' . $filename);
+        
+        // Pastikan directory exists
+        if (!file_exists(dirname($tempPath))) {
+            mkdir(dirname($tempPath), 0755, true);
+        }
+        
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($tempPath);
+        
+        // Download file
+        return response()->download($tempPath, 'template-soal.xlsx')->deleteFileAfterSend(true);
+        
+    } catch (\Exception $e) {
+        Log::error('Error creating template: ' . $e->getMessage());
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Gagal membuat template: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
+    /**
+     * Process data dari Excel
+     */
+    private function processExcelData($rows, string $type): array
+{
+    $soalData = [];
+    
+    foreach ($rows as $index => $row) {
+        // Skip jika baris kosong
+        if (empty($row) || !isset($row['pertanyaan']) || empty(trim($row['pertanyaan']))) {
+            continue;
+        }
+        
+        // Format data soal TANPA POIN
+        $soal = [
+            'id' => count($soalData) + 1,
+            'pertanyaan' => trim($row['pertanyaan']),
+            'pilihan' => [
+                isset($row['pilihan_a']) ? trim($row['pilihan_a']) : '',
+                isset($row['pilihan_b']) ? trim($row['pilihan_b']) : '',
+                isset($row['pilihan_c']) ? trim($row['pilihan_c']) : '',
+                isset($row['pilihan_d']) ? trim($row['pilihan_d']) : '',
+            ],
+            'jawaban_benar' => $this->convertJawabanToIndex($row['jawaban_benar'] ?? 'A'),
+            'row_number' => $index + 2
+        ];
+        
+        // Validasi: pastikan ada minimal 2 pilihan yang tidak kosong
+        $validPilihan = array_filter($soal['pilihan'], function($pilihan) {
+            return !empty(trim($pilihan));
+        });
+        
+        if (count($validPilihan) < 2) {
+            \Log::warning("Soal pada baris {$soal['row_number']} diabaikan: kurang dari 2 pilihan yang valid");
+            continue;
+        }
+        
+        $soalData[] = $soal;
+        
+        // Batasi maksimal 500 soal untuk performance
+        if (count($soalData) >= 500) {
+            \Log::info("Mencapai batas maksimal 500 soal, menghentikan proses import");
+            break;
+        }
+    }
+    
+    \Log::info("Berhasil memproses " . count($soalData) . " soal dari Excel");
+    return $soalData;
+}
+
+    /**
+     * Convert jawaban (A/B/C/D) ke index (0/1/2/3)
+     */
+    private function convertJawabanToIndex($jawaban): int
+    {
+        if (empty($jawaban)) {
+            return 0;
+        }
+        
+        $jawaban = strtoupper(trim($jawaban));
+        
+        switch ($jawaban) {
+            case 'A': return 0;
+            case 'B': return 1;
+            case 'C': return 2;
+            case 'D': return 3;
+            default: return 0;
+        }
     }
 
     /**

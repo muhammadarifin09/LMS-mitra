@@ -53,27 +53,48 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::put('kursus/{kursus}', [KursusController::class, 'update'])->name('kursus.update');
         Route::delete('kursus/{kursus}', [KursusController::class, 'destroy'])->name('kursus.destroy');
         Route::post('kursus/{kursus}/status', [KursusController::class, 'updateStatus'])->name('kursus.updateStatus');
-
+        
         // Material Routes
-        Route::prefix('kursus/{kursus}')->group(function () {
-            Route::get('materials', [MaterialController::class, 'index'])->name('kursus.materials.index');
-            Route::get('materials/create', [MaterialController::class, 'create'])->name('kursus.materials.create');
-            Route::post('materials', [MaterialController::class, 'store'])->name('kursus.materials.store');
-            Route::get('materials/{material}/edit', [MaterialController::class, 'edit'])->name('kursus.materials.edit');
-            Route::put('materials/{material}', [MaterialController::class, 'update'])->name('kursus.materials.update');
-            Route::delete('materials/{material}', [MaterialController::class, 'destroy'])->name('kursus.materials.destroy');
-            Route::post('materials/{material}/status', [MaterialController::class, 'updateStatus'])->name('kursus.materials.status');
+        Route::prefix('kursus/{kursus}')->name('kursus.materials.')->group(function () {
+            // CRUD Materials
+            Route::get('materials', [MaterialController::class, 'index'])->name('index');
+            Route::get('materials/create', [MaterialController::class, 'create'])->name('create');
+            Route::post('materials', [MaterialController::class, 'store'])->name('store');
+            Route::get('materials/{material}/edit', [MaterialController::class, 'edit'])->name('edit');
+            Route::put('materials/{material}', [MaterialController::class, 'update'])->name('update');
+            Route::delete('materials/{material}', [MaterialController::class, 'destroy'])->name('destroy');
             
-            // Material Ordering
-            Route::post('materials/reorder', [MaterialController::class, 'reorder'])->name('kursus.materials.reorder');
-            Route::post('materials/{material}/fix-order', [MaterialController::class, 'fixOrder'])->name('kursus.materials.fix-order');
+            // Status & Ordering
+            Route::post('materials/{material}/status', [MaterialController::class, 'updateStatus'])->name('status');
             
-            // Download & Video Routes untuk Admin
-            Route::get('materials/{material}/download', [MaterialController::class, 'downloadMaterialFile'])
-                ->name('kursus.materials.download');
-            Route::get('materials/{material}/video', [MaterialController::class, 'viewMaterialVideo'])
-                ->name('kursus.materials.video.view');
+            // NEW: Drag and Drop Routes
+            Route::post('materials/update-order', [MaterialController::class, 'updateOrder'])->name('update-order');
+            Route::get('materials/{material}/progress-stats', [MaterialController::class, 'getProgressStats'])->name('progress-stats');
+            
+            // Video Related Routes
+            Route::get('materials/{material}/video-questions', [MaterialController::class, 'videoQuestions'])->name('video-questions');
+            Route::get('materials/{material}/video-preview', [MaterialController::class, 'videoPreview'])->name('video-preview');
+            Route::get('materials/{material}/video-stats', [MaterialController::class, 'videoStats'])->name('video-stats');
+            
+            // Update Video Questions
+            Route::post('materials/{material}/video-questions/update', [MaterialController::class, 'updateVideoQuestions'])->name('video-questions.update');
+            
+            // Update Player Config
+            Route::post('materials/{material}/player-config/update', [MaterialController::class, 'updatePlayerConfig'])->name('player-config.update');
+            
+            // Download & Import
+            Route::get('materials/{material}/download', [MaterialController::class, 'downloadMaterialFile'])->name('download');
+            Route::post('materials/import-soal', [MaterialController::class, 'importSoal'])->name('import-soal');
+            
+            // Video View
+            Route::get('materials/{material}/video', [MaterialController::class, 'viewMaterialVideo'])->name('video.view');
+            
+            // Video Direct Link
+            Route::get('video/{material}/direct-link', [MaterialController::class, 'getDirectVideoLink'])->name('video.direct-link');
         });
+        
+        // Template soal route
+        Route::get('template-soal', [MaterialController::class, 'downloadTemplate'])->name('kursus.materials.download-template');
 
         // Notification Routes
         Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
@@ -99,7 +120,7 @@ Route::middleware(['auth', 'role:mitra'])->group(function () {
         // Route untuk myCourses (alternatif)
         Route::get('/my-courses', [MitraKursusController::class, 'myCourses'])->name('kursus.my');
         
-        // Material Routes untuk Mitra - REORGANIZED UNTUK MENGHINDARI DUPLIKASI
+        // Material Routes untuk Mitra
         Route::prefix('kursus/{kursus}')->group(function () {
             // Download File
             Route::get('/materials/{material}/download', [MitraKursusController::class, 'downloadMaterialFile'])
@@ -143,7 +164,7 @@ Route::middleware(['auth', 'role:mitra'])->group(function () {
                 ->name('kursus.progress');
             
             // ============================
-            // VIDEO ROUTES - PERBAIKAN BESAR
+            // VIDEO ROUTES
             // ============================
             
             // Route untuk menampilkan video player
@@ -151,13 +172,11 @@ Route::middleware(['auth', 'role:mitra'])->group(function () {
                 ->name('kursus.material.video');
             
             // Route untuk video progress tracking
+            Route::post('/materials/{material}/video/complete', [MitraKursusController::class, 'markVideoAsComplete'])
+                ->name('kursus.material.video.complete');
+            
             Route::post('/materials/{material}/video/progress', [MitraKursusController::class, 'updateVideoProgress'])
                 ->name('kursus.material.video.progress');
-                Route::post('/materials/{material}/video/complete', [MitraKursusController::class, 'markVideoAsComplete'])
-            ->name('kursus.material.video.complete');
-            
-        Route::post('/materials/{material}/video/progress', [MitraKursusController::class, 'updateVideoProgress'])
-            ->name('kursus.material.video.progress');
             
             // Route untuk menandai video sudah ditonton
             Route::post('/materials/{material}/video/watched', [MitraKursusController::class, 'markVideoAsWatched'])

@@ -16,8 +16,8 @@ class Kursus extends Model
     protected $fillable = [
         'judul_kursus',
         'deskripsi_kursus',
-        'penerbit',
-        'tingkat_kesulitan',
+        'pelaksana',
+        'kategori',
         'gambar_kursus',
         'durasi_jam',
         'status',
