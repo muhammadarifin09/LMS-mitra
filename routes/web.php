@@ -189,30 +189,40 @@ Route::prefix('admin')
             // ======================
             Route::get('/kursus', [LaporanController::class, 'kursusIndex'])
                 ->name('kursus');
+            Route::get('/mitra', [LaporanController::class, 'mitraIndex'])
+                ->name('mitra');
 
             // ======================
             // DETAIL KURSUS
             // ======================
             Route::get('/kursus/{kursus}', [LaporanController::class, 'kursusDetail'])
                 ->name('kursus.detail');
+            Route::get('/mitra/{mitra}', [LaporanController::class, 'mitraDetail'])
+                ->name('mitra.detail');
 
             // ======================
             // EXPORT PDF RINGKAS (dari halaman index)
             // ======================
             Route::get('/kursus/{kursus}/pdf-ringkas', [LaporanController::class, 'exportKursusPdfRingkas'])
                 ->name('kursus.pdf.ringkas');
+            Route::get('/mitra/{mitra}/pdf-ringkas', [LaporanController::class, 'exportMitraPdfRingkas'])
+                ->name('mitra.pdf.ringkas');
 
             // ======================
             // EXPORT PDF DETAIL (dari halaman detail)
             // ======================
             Route::get('/kursus/{kursus}/pdf-detail', [LaporanController::class, 'exportKursusPdfDetail'])
                 ->name('kursus.pdf.detail');
+            Route::get('/mitra/{mitra}/pdf-detail', [LaporanController::class, 'exportMitraPdfDetail'])
+                ->name('mitra.pdf.detail');
 
             // ======================
             // EXPORT PDF (LEGACY - bisa dihapus jika tidak diperlukan)
             // ======================
             Route::get('/kursus/{kursus}/pdf', [LaporanController::class, 'exportKursusPdf'])
                 ->name('kursus.pdf');
+            Route::get('/mitra/{mitra}/pdf', [LaporanController::class, 'exportMitraPdf'])
+                ->name('mitra.pdf');
 
             // ======================
             // TEST PDF (SEMENTARA)
@@ -250,18 +260,26 @@ Route::prefix('admin/laporan')->name('admin.laporan.')->group(function () {
     // =====================
     Route::get('/kursus/export-csv', [LaporanController::class, 'exportKursusCsv'])
         ->name('kursus.csv');
+    Route::get('/mitra/export-csv', [LaporanController::class, 'exportMitraCsv'])
+        ->name('mitra.csv');
 
     Route::get('/kursus/{kursus}/export-csv', [LaporanController::class, 'exportKursusDetailCsv'])
         ->name('kursus.detail.csv');
+    Route::get('/mitra/{mitra}/export-csv', [LaporanController::class, 'exportMitraDetailCsv'])
+        ->name('mitra.detail.csv');
 
     // =====================
     // VIEW (DI BAWAH)
     // =====================
     Route::get('/kursus', [LaporanController::class, 'kursusIndex'])
         ->name('kursus');
+    Route::get('/mitra', [LaporanController::class, 'mitraIndex'])
+        ->name('mitra');
 
     Route::get('/kursus/{kursus}', [LaporanController::class, 'kursusDetail'])
         ->name('kursus.detail');
+    Route::get('/mitra/{mitra}', [LaporanController::class, 'mitraDetail'])
+        ->name('mitra.detail');
 });
 
 
@@ -274,6 +292,10 @@ Route::post(
     '/admin/laporan/kursus/{kursus}/generate',
     [LaporanController::class, 'generateLaporanKursus']
 )->name('admin.laporan.kursus.generate');
+Route::post(
+    '/admin/laporan/mitra/{mitra}/generate',
+    [LaporanController::class, 'generateLaporanMitra']
+)->name('admin.laporan.mitra.generate');
 
 
 
