@@ -90,4 +90,25 @@ class Kursus extends Model
         return $this->hasMany(Certificate::class);
     }
 
+    // Apakah kursus sudah penuh?
+    public function isPenuh(): bool
+    {
+        if ($this->kuota_peserta === null) {
+            return false; // unlimited
+        }
+
+        return $this->peserta_terdaftar >= $this->kuota_peserta;
+    }
+
+    // Sisa kuota
+    public function sisaKuota(): ?int
+    {
+        if ($this->kuota_peserta === null) {
+            return null;
+        }
+
+        return max($this->kuota_peserta - $this->peserta_terdaftar, 0);
+    }
+
+
 }

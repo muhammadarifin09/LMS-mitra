@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use ZipArchive;
 
+
 class KursusController extends Controller
 {
     /**
@@ -1901,4 +1902,37 @@ public function refreshAllMaterialsStatus($kursusId)
 
         return $this->isMaterialCompleted($previousProgress, $previousMaterial);
     }
+
+            public function daftar($id)
+    {
+        $kursus = Kursus::findOrFail($id);
+
+        // ❌ CEK KURSUS PENUH
+        if ($kursus->isPenuh()) {
+            return back()->with('error', 'Kuota sudah penuh!');
+        }
+
+        // ❌ CEK SUDAH TERDAFTAR
+        $sudahDaftar = Enrollment::where('kursus_id', $kursus->id)
+            ->where('user_id', Auth::id())
+            ->exists();
+
+        if ($sudahDaftar) {
+            return back()->with('error', 'Anda sudah terdaftar di kursus ini.');
+        }
+
+        // ✅ SIMPAN ENROLLMENT
+        Enrollment::create([
+            'kursus_id' => $kursus->id,
+            'user_id' => Auth::id(),
+            'status'    => 'aktif',
+        ]);
+
+        // ✅ TAMBAH PESERTA TERDAFTAR
+        $kursus->increment('peserta_terdaftar');
+
+        return back()->with('success', 'Berhasil mendaftar kursus!');
+    }
+
+
 }

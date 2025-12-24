@@ -677,6 +677,7 @@
                         @else level-lanjutan @endif">
                         {{ $item->kategori }}
                     </div>
+           
                 </div>
 
                 <div class="course-content-wrapper">
@@ -706,28 +707,59 @@
                     <div class="course-meta-grid">
                         <div class="meta-card">
                             <div class="meta-value">{{ $item->durasi_jam }} JP</div>
-                            <div class="meta-label"></div>
+                            <div class="meta-label">Jam Pelajaran</div>
                         </div>
                         <div class="meta-card">
-                            <div class="meta-value">{{ $item->peserta_terdaftar }}</div>
-                            <div class="meta-label">Peserta</div>
+                            <div class="meta-value">{{ $item->kuota_peserta }}</div>
+                            <div class="meta-label">Kuota Peserta</div>
                         </div>
                     </div>
 
                     <!-- Action Row -->
                     <div class="course-action-row">
-                        <form action="{{ route('mitra.kursus.enroll', $item->id) }}" method="POST" class="d-inline">
-                            @csrf
-                            <button type="submit" class="btn-follow-course">
-                                <i class="fas fa-play-circle"></i>
-                                Ikuti Kursus
+                     @php
+                        $sudahIkut = $item->enrollments
+                            ->where('user_id', auth()->id())
+                            ->count() > 0;
+                    @endphp
+
+
+                        {{-- PRIORITAS 1: SUDAH IKUT --}}
+                        @if($sudahIkut)
+                            <a href="{{ route('mitra.kursus.saya') }}" class="btn-follow-course">
+                                <i class="fas fa-arrow-right"></i>
+                                Lanjutkan Kursus
+                            </a>
+
+                        {{-- PRIORITAS 2: KUOTA PENUH --}}
+                        @elseif($item->isPenuh())
+                            <button class="btn-follow-course" disabled
+                                style="background:#adb5bd; cursor:not-allowed;">
+                                <i class="fas fa-lock"></i>
+                                Kuota Penuh
                             </button>
-                        </form>
-                        <button type="button" class="btn-view-course-white" data-bs-toggle="modal" data-bs-target="#detailModal{{ $item->id }}">
+
+                        {{-- PRIORITAS 3: BISA DAFTAR --}}
+                        @else
+                            <form action="{{ route('mitra.kursus.enroll', $item->id) }}" method="POST" class="d-inline">
+                                @csrf
+                                <button type="submit" class="btn-follow-course">
+                                    <i class="fas fa-play-circle"></i>
+                                    Ikuti Kursus
+                                </button>
+                            </form>
+                        @endif
+
+                        {{-- TOMBOL DETAIL (TETAP ADA) --}}
+                        <button type="button"
+                            class="btn-view-course-white"
+                            data-bs-toggle="modal"
+                            data-bs-target="#detailModal{{ $item->id }}">
                             <i class="fas fa-eye"></i>
-                            Lihat Kursus
+                            Detail Kursus
                         </button>
                     </div>
+
                 </div>
             </div>
 
@@ -740,7 +772,10 @@
                                 <i class="fas fa-info-circle me-2"></i>
                                 Detail Kursus: {{ $item->judul_kursus }}
                             </h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <i class="fas fa-times me-2"></i>Tutup detail
+                            </button>
+                            <!-- <button type="button" class="btn-close btn-close-black" data-bs-dismiss="modal" aria-label="Close"></button> -->
                         </div>
                         <div class="modal-body" style="margin-right: 20px; margin-left: 20px;">
                             <!-- Gambar Kursus jika ada -->
@@ -888,15 +923,15 @@
                             @endif
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                <i class="fas fa-times me-2"></i>Tutup
+                        
+                         @if($item->isPenuh())
+                            <button type="button" class="btn btn-secondary" disabled>
+                                <i class="fas fa-lock me-2"></i>Kuota Sudah Penuh
                             </button>
-                            <form action="{{ route('mitra.kursus.enroll', $item->id) }}" method="POST" class="d-inline">
-                                @csrf
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-play-circle me-2"></i>Ikuti Kursus
-                                </button>
-                            </form>
+                        @else
+                    
+                        @endif
+
                         </div>
                     </div>
                 </div>

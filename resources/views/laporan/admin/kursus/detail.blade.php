@@ -38,7 +38,7 @@
                         <!-- PERBAIKAN: route ke pdf detail, bukan detail view -->
                         <a href="{{ route('admin.laporan.kursus.pdf.detail', $kursus->id) }}" 
                            class="btn btn-sm btn-danger" target="_blank">
-                            <i class="fas fa-file-pdf"></i> Detail PDF
+                            <i class="fas fa-file-pdf"></i> Export PDF
                         </a>
                     </div>
                 </div>
