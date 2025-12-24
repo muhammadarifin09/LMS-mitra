@@ -677,15 +677,7 @@
                         @else level-lanjutan @endif">
                         {{ $item->kategori }}
                     </div>
-                    @if($item->isPenuh())
-                        <div class="course-badge" style="
-                            left: 10px;
-                            right: auto;
-                            background: rgba(220, 53, 69, 0.9);
-                        ">
-                            PENUH
-                        </div>
-                    @endif
+           
                 </div>
 
                 <div class="course-content-wrapper">
