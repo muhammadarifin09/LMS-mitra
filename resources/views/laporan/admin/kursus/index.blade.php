@@ -12,17 +12,13 @@
                         <i class="fas fa-book-open mr-2"></i>
                         Laporan Data Kursus
                     </h3>
-                    <div class="card-tools">
-                       <!-- TAMBAH: Tombol Export Excel -->
-                       <a href="{{ route('test.csv') }}"
+                    <!-- <div class="card-tools">
+                        TAMBAH: Tombol Export Excel -->
+                       <!-- <a href="{{ route('test.csv') }}"
                         class="btn btn-sm btn-success">
                             <i class="fas fa-file-csv"></i> Export Excel
-                        </a>
-                        
-                        
-                 
-
-                    </div>
+                        </a> -->
+                    <!-- </div> --> 
                 </div>
                 <div class="card-body">
                     @if($kursus->isEmpty())
@@ -76,14 +72,14 @@
                                         </a>
                                         
                                         <!-- PDF RINGKAS: export ringkas -->
-                                        <a href="{{ route('admin.laporan.kursus.pdf.ringkas', $item->id) }}" 
+                                        <!-- <a href="{{ route('admin.laporan.kursus.pdf.ringkas', $item->id) }}" 
                                         class="btn btn-warning" 
                                         title="Export Ringkasan PDF"
                                         target="_blank"
                                         style="border-radius: 6px; padding: 0.5px 8px; display: flex; align-items: center; gap: 6px;">
                                             <i class="fas fa-file-pdf" style="color: white; background-color: #dc3545; padding: 4px; border-radius: 3px; font-size: 1em;"></i>
                                             <span>Export PDF</span>
-                                        </a>
+                                        </a> -->
                                     </div>
                                 </td>
                                 </tr>
@@ -91,9 +87,9 @@
                             </tbody>
                             @if($kursus->isNotEmpty())
                             <tfoot>
-                                <tr>
+                                <!-- <tr>
                                     <td colspan="2" style="text-align: right; font-weight: 600; color: #2d3748;">
-                                        Total Peserta:
+                                        Total Pesertaaa:
                                     </td>
                                     <td style="text-align: center; font-weight: 700;">
                                         <span style="display: inline-block; padding: 5px 12px; border-radius: 15px;
@@ -103,7 +99,7 @@
                                         </span>
                                     </td>
                                     <td></td>
-                                </tr>
+                                </tr> -->
                             </tfoot>
                             @endif
                         </table>
