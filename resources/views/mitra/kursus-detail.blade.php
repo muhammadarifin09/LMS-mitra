@@ -321,6 +321,254 @@
         border: 1px solid #f5c6cb;
     }
 
+    /* =========================
+    RESPONSIVE DESIGN UNTUK MOBILE (<500px)
+    ========================= */
+    @media (max-width: 500px) {
+        .main-content {
+            padding: 15px 12px !important; /* Tambah kiri-kanan 12px */
+            margin: 10px 10px !important; /* Tambah margin kiri-kanan 8px */
+            width: auto !important;
+        }
+
+        /* Container utama */
+        .container-fluid.py-4 {
+            padding: 10px !important;
+        }
+        
+        /* Header dan Progress Bar */
+        .progress-section {
+            padding: 10px !important;
+            border-radius: 8px !important;
+            margin-bottom: 15px !important;
+        }
+        
+        .progress-info {
+            gap: 5px !important;
+            margin-bottom: 8px !important;
+            font-size: 0.75rem !important;
+            justify-content: space-between;
+        }
+        
+        .progress-bar {
+            height: 6px !important;
+            border-radius: 3px !important;
+        }
+
+        /* Flow Step Container */
+        .sequential-flow {
+            margin: 0 !important;
+        }
+        
+        /* Flow Step Box */
+        .flow-step {
+            padding: 12px !important;
+            margin-bottom: 12px !important;
+            border-radius: 10px !important;
+            border-left-width: 3px !important;
+        }
+        
+        /* Step Header */
+        .step-header {
+            padding: 8px !important;
+            flex-direction: row !important;
+            align-items: flex-start !important;
+            flex-wrap: wrap;
+        }
+        
+        .header-content {
+            flex: 1;
+            min-width: 0; /* Penting untuk text truncation */
+        }
+        
+        .step-title {
+            font-size: 0.9rem !important;
+            line-height: 1.2 !important;
+            margin-bottom: 3px !important;
+            word-break: break-word;
+        }
+        
+        .material-description {
+            font-size: 0.75rem !important;
+            line-height: 1.3 !important;
+            margin-top: 2px !important;
+        }
+        
+        /* Step Status Badge */
+        .step-status {
+            padding: 3px 8px !important;
+            font-size: 0.65rem !important;
+            margin-left: 8px !important;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        
+        /* Test info badges */
+        .test-info {
+            gap: 5px !important;
+            margin-top: 5px !important;
+        }
+        
+        .info-badge {
+            padding: 3px 6px !important;
+            font-size: 0.65rem !important;
+            border-radius: 8px !important;
+        }
+        
+        /* Step Toggle Arrow */
+        .step-toggle {
+            margin-left: 5px !important;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .step-toggle i {
+            font-size: 0.8rem !important;
+        }
+        
+        /* Sub-tasks Container */
+        .sub-tasks.expanded {
+            padding: 10px !important;
+            max-height: 800px !important; /* Lebih tinggi untuk mobile */
+        }
+        
+        /* Sub-task Item */
+        .sub-task {
+            padding: 8px !important;
+            flex-direction: row;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .task-icon {
+            width: 28px !important;
+            height: 28px !important;
+            margin-right: 8px !important;
+            flex-shrink: 0;
+        }
+        
+        .task-icon i {
+            font-size: 0.9rem !important;
+        }
+        
+        .task-info {
+            flex: 1;
+            min-width: 0; /* Penting untuk text truncation */
+        }
+        
+        .task-name {
+            font-size: 0.8rem !important;
+            margin-bottom: 2px !important;
+        }
+        
+        .task-description {
+            font-size: 0.7rem !important;
+            line-height: 1.2 !important;
+        }
+        
+        /* File list styling untuk mobile */
+        .file-list {
+            margin-top: 5px !important;
+        }
+        
+        .file-item {
+            padding: 6px 8px !important;
+            margin-bottom: 5px !important;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 5px;
+        }
+        
+        .file-icon {
+            margin-right: 6px !important;
+            font-size: 1rem !important;
+        }
+        
+        .file-name {
+            font-size: 0.7rem !important;
+            word-break: break-all;
+        }
+        
+        .file-status {
+            font-size: 0.65rem !important;
+            align-self: flex-end;
+        }
+        
+        /* Task Action Buttons */
+        .task-action {
+            margin-left: 0 !important;
+            margin-top: 8px !important;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .btn-simple {
+            padding: 6px 12px !important;
+            font-size: 0.75rem !important;
+            width: 100%;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            margin-bottom: 5px;
+        }
+        
+        /* Test Action Button Area */
+        .flow-step .task-action {
+            padding: 10px 0 0 0 !important;
+            margin-top: 10px !important;
+            border-top: 1px solid #f1f3f4;
+        }
+        
+        /* Score badges untuk test */
+        .score-pass, .score-fail {
+            padding: 6px 10px !important;
+            font-size: 0.75rem !important;
+            width: 100%;
+            text-align: center;
+        }
+        
+        /* No content message */
+        .no-content-message {
+            padding: 15px !important;
+            font-size: 0.8rem !important;
+        }
+        
+        /* Text truncation untuk judul panjang */
+        .step-title {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* Tombol khusus untuk test dan recap */
+        .flow-step .task-action .btn-simple {
+            margin-top: 5px;
+        }
+        
+        /* Untuk step yang tidak bisa diklik (no-toggle) */
+        .step-header.no-toggle {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .step-header.no-toggle .header-content {
+            width: 100%;
+        }
+        
+        .step-header.no-toggle .step-status {
+            align-self: flex-end;
+            margin-top: 5px;
+        }
+    }
+
 </style>
 
 <div class="container-fluid py-4">

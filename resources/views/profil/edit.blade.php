@@ -123,8 +123,8 @@
         margin-left: 2px;
     }
 
-    /* ===== RESPONSIVE DESIGN UNTUK MOBILE (≤400px) ===== */
-    @media (max-width: 400px) {                      
+    /* ===== RESPONSIVE DESIGN UNTUK MOBILE (≤500px) ===== */
+    @media (max-width: 500px) {                      
         /* Container utama - SAMA DENGAN HALAMAN PROFIL */
         .main-content {
             padding: 15px 12px !important;

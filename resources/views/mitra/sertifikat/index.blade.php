@@ -64,8 +64,8 @@
         margin-bottom: 20px;
     }
 
-    /* ===== RESPONSIVE DESIGN UNTUK MOBILE (≤400px) ===== */
-    @media (max-width: 400px) {
+    /* ===== RESPONSIVE DESIGN UNTUK MOBILE (≤500px) ===== */
+    @media (max-width: 500px) {
         /* Container utama - konsisten dengan halaman lain */
         .main-content {
             padding: 15px 12px !important;

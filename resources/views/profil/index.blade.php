@@ -37,8 +37,8 @@
         color: #1e3c72;
     }
 
-    /* ===== RESPONSIVE DESIGN UNTUK MOBILE (≤400px) ===== */
-    @media (max-width: 400px) {
+    /* ===== RESPONSIVE DESIGN UNTUK MOBILE (≤500px) ===== */
+    @media (max-width: 500px) {
         /* Layout utama - konsisten dengan halaman lain */
         .main-content {
             padding: 15px 12px !important;

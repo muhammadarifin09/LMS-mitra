@@ -142,8 +142,8 @@
         line-height: 1.6;
     }
 
-    /* ===== RESPONSIVE DESIGN UNTUK MOBILE (≤400px) ===== */
-    @media (max-width: 400px) {
+    /* ===== RESPONSIVE DESIGN UNTUK MOBILE (≤500px) ===== */
+    @media (max-width: 500px) {
         /* Layout utama */
         .main-content {
             padding: 15px !important;

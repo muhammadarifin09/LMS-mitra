@@ -159,12 +159,13 @@
     }
 
     .course-action-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
         margin-top: auto;
-        padding-top: 15px;
-        border-top: 1px solid #e9ecef;
+        width: 100%;
+        min-width: 0;
+        display: flex; /* Tambahkan ini */
+        justify-content: center; /* Untuk tengah horizontal */
+        gap: 10px; /* Jarak antara tombol */
+        padding-top: 10px; /* Jarak dari konten di atas */
     }
 
     /* Tombol Ikuti Kursus - Warna biru */
@@ -177,7 +178,6 @@
         font-weight: 600;
         transition: all 0.3s ease;
         text-decoration: none;
-        display: inline-flex;
         align-items: center;
         gap: 6px;
         font-size: 0.8rem;
@@ -235,7 +235,6 @@
         font-weight: 600;
         transition: all 0.3s ease;
         text-decoration: none;
-        display: inline-flex;
         align-items: center;
         gap: 6px;
         font-size: 0.8rem;
@@ -293,44 +292,6 @@
         }
     }
 
-    @media (max-width: 768px) {
-        .course-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .kursus-title {
-            font-size: 1.8rem;
-        }
-    }
-
-    @media (max-width: 576px) {
-        .course-content-wrapper {
-            padding: 15px;
-        }
-        
-        .course-main-title {
-            font-size: 1rem;
-        }
-        
-        .course-meta-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .course-image-wrapper {
-            height: 140px;
-        }
-        
-        .course-action-row {
-            flex-direction: column;
-            gap: 10px;
-        }
-        
-        .btn-follow-course, .btn-view-course-white {
-            width: 100%;
-            justify-content: center;
-        }
-    }
-
     /* Empty State */
     .empty-state-container {
         display: flex;
@@ -381,8 +342,8 @@
         transform: translateY(-2px);
     }
 
-    /* ===== RESPONSIVE DESIGN UNTUK MOBILE KECIL (≤400px) ===== */
-    @media (max-width: 400px) {
+    /* ===== RESPONSIVE DESIGN UNTUK MOBILE KECIL (≤500px) ===== */
+    @media (max-width: 500px) {
         /* Header Kursus */
         .main-content {
             padding: 15px 12px !important; /* Tambah kiri-kanan 12px */
@@ -479,19 +440,14 @@
             font-size: 0.65rem !important; /* Turun dari 0.7rem */
         }
         
-        /* Action Row */
-        .course-action-row {
-            flex-direction: row !important; /* Tetap horizontal */
-            gap: 8px !important;
-            padding-top: 10px !important;
-        }
-        
         .btn-follow-course, 
         .btn-view-course-white {
             padding: 6px 10px !important;
             font-size: 0.7rem !important; /* Lebih kecil */
-            gap: 4px !important;
             flex: 1; /* Membagi ruang sama rata */
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
         }
         
         /* Modal Responsive */
@@ -564,45 +520,7 @@
             transform: none !important;
             box-shadow: 0 4px 15px rgba(0,0,0,0.08) !important;
         }
-        
-        .btn-follow-course:hover,
-        .btn-view-course-white:hover {
-            transform: none !important;
-            box-shadow: none !important;
-        }
-    }
 
-    /* ===== OPTIMASI TAMBAHAN UNTUK SEMUA UKURAN MOBILE ===== */
-    @media (max-width: 576px) {
-        /* Pastikan gambar di modal responsif */
-        .modal-course-image {
-            max-height: 200px !important;
-        }
-        
-        .modal-image-placeholder {
-            height: 150px !important;
-            font-size: 2rem !important;
-        }
-        
-        /* Kolom di modal menjadi 1 kolom */
-        .modal-body .row .col-md-6 {
-            width: 100% !important;
-            margin-bottom: 15px;
-        }
-        
-        /* Judul section di modal */
-        .fw-bold.text-primary {
-            font-size: 0.9rem;
-        }
-        
-        /* Course info di modal */
-        .course-info .card-body {
-            padding: 12px;
-        }
-    }
-
-    /* ===== RESPONSIVE FONT SIZE GLOBAL UNTUK MOBILE ===== */
-    @media (max-width: 400px) {
         /* Ukuran font dasar untuk mobile */
         body {
             font-size: 14px;
@@ -620,26 +538,6 @@
         }
     }
 
-    /* ===== FIX UNTUK OVERFLOW TEXT ===== */
-    @media (max-width: 400px) {
-        /* Pastikan teks tidak overflow */
-        .course-main-title,
-        .course-description,
-        .modal-title,
-        .card-text {
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            hyphens: auto;
-        }
-        
-        /* Tombol dengan teks panjang */
-        .btn-follow-course,
-        .btn-view-course-white {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-    }
 </style>
 
 <!-- Kursus Header -->
@@ -728,7 +626,7 @@
                         @if($sudahIkut)
                             <a href="{{ route('mitra.kursus.saya') }}" class="btn-follow-course">
                                 <i class="fas fa-arrow-right"></i>
-                                Lanjutkan Kursus
+                                Lanjutkan
                             </a>
 
                         {{-- PRIORITAS 2: KUOTA PENUH --}}
@@ -745,7 +643,7 @@
                                 @csrf
                                 <button type="submit" class="btn-follow-course">
                                     <i class="fas fa-play-circle"></i>
-                                    Ikuti Kursus
+                                    Ikuti
                                 </button>
                             </form>
                         @endif
@@ -756,7 +654,7 @@
                             data-bs-toggle="modal"
                             data-bs-target="#detailModal{{ $item->id }}">
                             <i class="fas fa-eye"></i>
-                            Detail Kursus
+                            Lihat Kursus
                         </button>
                     </div>
 
@@ -773,7 +671,7 @@
                                 Detail Kursus: {{ $item->judul_kursus }}
                             </h5>
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                <i class="fas fa-times me-2"></i>Tutup detail
+                                <i class="fas fa-times"></i>
                             </button>
                             <!-- <button type="button" class="btn-close btn-close-black" data-bs-dismiss="modal" aria-label="Close"></button> -->
                         </div>
