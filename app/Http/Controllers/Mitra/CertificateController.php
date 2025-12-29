@@ -152,4 +152,43 @@ class CertificateController extends Controller
             'message' => 'Sertifikat belum tersedia.'
         ]);
     }
+
+    public function validateCertificate($id_kredensial)
+    {
+        $certificate = Certificate::with(['user', 'kursus'])
+            ->where('id_kredensial', $id_kredensial)
+            ->first();
+
+        if (!$certificate) {
+            return view('mitra.sertifikat.invalid');
+        }
+
+        // Jika file PDF belum ada → generate
+        if (!$certificate->file_path || !Storage::exists($certificate->file_path)) {
+            $this->certificateService->generateCertificatePDF($certificate);
+        }
+
+        return view('mitra.sertifikat.validate', [
+            'certificate' => $certificate
+        ]);
+    }
+
+    public function publicPdf($id_kredensial)
+    {
+        $certificate = Certificate::where('id_kredensial', $id_kredensial)->firstOrFail();
+
+        if (!$certificate->file_path || !Storage::disk('private')->exists($certificate->file_path)) {
+            $this->certificateService->generateCertificatePDF($certificate);
+        }
+
+        return response()->file(
+            storage_path('app/private/' . $certificate->file_path),
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="certificate.pdf"',
+            ]
+        );
+    }
+
+
 }

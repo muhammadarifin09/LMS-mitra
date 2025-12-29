@@ -327,9 +327,35 @@ Route::post(
 //     Route::get('/kursus/{kursus}/cek', [CertificateController::class, 'checkCertificate'])->name('check');
 // });
 
-Route::middleware(['auth'])->prefix('sertifikat')->name('sertifikat.')->group(function () {
-        Route::get('/', [CertificateController::class, 'index'])->name('index');
-        Route::get('/{certificate}', [CertificateController::class, 'show'])->name('show');
-        Route::get('/{certificate}/unduh', [CertificateController::class, 'download'])->name('download');
+Route::middleware(['auth'])->prefix('dashboard/sertifikat')->name('sertifikat.')->group(function () {
+    Route::get('/', [CertificateController::class, 'index'])->name('index');
+    Route::get('/{certificate}', [CertificateController::class, 'show'])->name('show');
+    Route::get('/{certificate}/unduh', [CertificateController::class, 'download'])->name('download');
 });
 
+
+// routes/web.php (tambahkan di bawah)
+Route::get('/test-certificate-qr', function () {
+    $certificate = \App\Models\Certificate::with(['user', 'kursus', 'enrollment'])
+        ->whereNotNull('id_kredensial')
+        ->first();
+    
+    if (!$certificate) {
+        return 'No certificate with id_kredensial found';
+    }
+    
+    return view('mitra.sertifikat.template', [
+        'certificate' => $certificate,
+        'user' => $certificate->user,
+        'kursus' => $certificate->kursus,
+        'enrollment' => $certificate->enrollment,
+    ]);
+});
+
+// Validasi sertifikat via QR code
+Route::get('/sertifikat/{id_kredensial}', [App\Http\Controllers\Mitra\CertificateController::class, 'validateCertificate'])
+    ->name('certificates.validate');
+    
+Route::get('/sertifikat/{id_kredensial}/pdf', 
+    [App\Http\Controllers\Mitra\CertificateController::class, 'publicPdf']
+)->name('certificates.publicPdf');
