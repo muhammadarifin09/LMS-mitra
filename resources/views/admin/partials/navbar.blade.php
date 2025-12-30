@@ -4,12 +4,6 @@
             <a href="{{ route('admin.dashboard') }}" class="nav-brand">
                 <img src="{{ asset('img/Logo_E-Learning.png') }}" alt="MOOC BPS Logo" class="logo-image">
             </a>
-            <div class="nav-menu ms-5">
-                <a href="{{ route('admin.dashboard') }}" class="nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">Dashboard</a>
-                <a href="{{ route('admin.users.index') }}" class="nav-item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">Manajemen User</a>
-                <a href="{{ route('admin.kursus.index') }}" class="nav-item {{ request()->routeIs('admin.kursus.*') ? 'active' : '' }}">Manajemen Kursus</a>
-                <a href="{{ route('admin.biodata.index') }}" class="nav-item {{ request()->routeIs('admin.biodata.*') ? 'active' : '' }}">Manajemen Biodata</a>
-            </div>
         </div>
         
         <div class="d-flex align-items-center">
