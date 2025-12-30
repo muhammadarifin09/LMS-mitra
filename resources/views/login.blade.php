@@ -52,6 +52,16 @@
             max-width: 600px;
             margin: 0 auto;
         }
+        
+        /* Animasi untuk alert */
+        .alert-danger {
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body class="min-vh-100 d-flex flex-column flex-md-row align-items-stretch justify-content-center">
@@ -76,16 +86,42 @@
             <form action="{{ route('login') }}" method="POST">
                 @csrf
 
+                <!-- Alert untuk menampilkan error -->
+                @if(session('error'))
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        {{ session('error') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+
+                @if($errors->has('login'))
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        {{ $errors->first('login') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+
                 <div class="mb-3">
                     <label for="username" class="form-label">Username</label>
                     <input type="text" name="username" id="username" 
-                           class="form-control" placeholder="Masukkan username Anda" required>
+                           class="form-control @error('username') is-invalid @enderror" 
+                           placeholder="Masukkan username Anda" 
+                           value="{{ old('username') }}"
+                           required>
+                    @error('username')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
 
                 <div class="mb-3">
                     <label for="password" class="form-label">Password</label>
                     <input type="password" name="password" id="password" 
-                           class="form-control" placeholder="Masukkan password" required>
+                           class="form-control @error('password') is-invalid @enderror" 
+                           placeholder="Masukkan password" 
+                           required>
+                    @error('password')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
 
                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-3">
@@ -99,5 +135,33 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Script untuk auto-hide alert setelah beberapa detik -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-hide alert setelah 5 detik
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                setTimeout(function() {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }, 5000);
+            });
+            
+            // Menambahkan efek pada form saat error
+            const errorAlert = document.querySelector('.alert-danger');
+            if (errorAlert) {
+                // Fokus ke field username jika ada error
+                document.getElementById('username').focus();
+                
+                // Tambahkan efek shake pada form
+                const form = document.querySelector('form');
+                form.classList.add('animate__animated', 'animate__shakeX');
+                setTimeout(() => {
+                    form.classList.remove('animate__animated', 'animate__shakeX');
+                }, 1000);
+            }
+        });
+    </script>
 </body>
 </html>
