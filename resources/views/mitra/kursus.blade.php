@@ -834,8 +834,14 @@
                             <div class="meta-value">{{ $item->durasi_jam }} JP</div>
                             <div class="meta-label">Jam Pelajaran</div>
                         </div>
-                        <div class="meta-card">
-                            <div class="meta-value">{{ $item->kuota_peserta }}</div>
+                       <div class="meta-card">
+                            <div class="meta-value">
+                                @if($item->kuota_peserta && $item->kuota_peserta > 0)
+                                    {{ $item->kuota_peserta }}
+                                @else
+                                    <span>Tidak Terbatas</span>
+                                @endif
+                            </div>
                             <div class="meta-label">Kuota Peserta</div>
                         </div>
                     </div>
@@ -854,7 +860,7 @@
                         @if($sudahIkut)
                             <a href="{{ route('mitra.kursus.saya') }}" class="btn-follow-course">
                                 <i class="fas fa-arrow-right"></i>
-                                Lanjutkan
+                                Lanjutkan Kursus
                             </a>
 
                         {{-- PRIORITAS 2: KUOTA PENUH --}}
