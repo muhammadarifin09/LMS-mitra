@@ -364,52 +364,82 @@ class KursusController extends Controller
     /**
      * Enroll to course
      */
-    public function enroll(Request $request, $id)
-    {
-        $kursus = Kursus::where('status', 'aktif')
-                        ->where('id', $id)
-                        ->firstOrFail();
+ public function enroll(Request $request, $id)
+{
+    $kursus = Kursus::where('status', 'aktif')
+                    ->where('id', $id)
+                    ->firstOrFail();
 
-        $user = Auth::user();
-        
-        $alreadyEnrolled = Enrollment::where('user_id', $user->id)
-                                   ->where('kursus_id', $id)
-                                   ->exists();
+    $user = Auth::user();
 
-        if ($alreadyEnrolled) {
+    // ❌ Sudah ikut kursus
+    $alreadyEnrolled = Enrollment::where('user_id', $user->id)
+                               ->where('kursus_id', $id)
+                               ->exists();
+
+    if ($alreadyEnrolled) {
+        return redirect()->back()
+            ->with('error', 'Anda sudah mengikuti kursus ini.')
+            ->with('error_type', 'enrollment');
+    }
+
+    // ❌ Kuota penuh
+    if ($kursus->kuota_peserta &&
+        $kursus->peserta_terdaftar >= $kursus->kuota_peserta) {
+        return redirect()->back()
+            ->with('error', 'Maaf, kuota kursus sudah penuh.')
+            ->with('error_type', 'quota');
+    }
+
+    // 🔐 ENROLL CODE (PASSWORD KURSUS)
+    if (!empty($kursus->enroll_code)) {
+
+        // jika kursus pakai kode tapi user tidak mengisi
+        if (!$request->filled('enroll_code')) {
             return redirect()->back()
-                           ->with('error', 'Anda sudah mengikuti kursus ini.');
+                ->with('error', 'Kode enroll wajib diisi untuk kursus ini.')
+                ->with('error_type', 'enroll_code')
+                ->with('enroll_course_id', $id) // Simpan ID kursus
+                ->with('attempted_code', $request->enroll_code);
         }
 
-        if ($kursus->kuota_peserta && 
-            $kursus->peserta_terdaftar >= $kursus->kuota_peserta) {
+        // jika kode salah
+        if ($request->enroll_code !== $kursus->enroll_code) {
             return redirect()->back()
-                           ->with('error', 'Maaf, kuota kursus sudah penuh.');
-        }
-
-        try {
-            // Create enrollment
-            $totalMaterials = Materials::where('course_id', $id)
-                                        ->where('is_active', true)
-                                        ->count();
-            
-            Enrollment::create([
-                'user_id' => $user->id,
-                'kursus_id' => $id,
-                'total_activities' => $totalMaterials,
-                'enrolled_at' => now()
-            ]);
-
-            $kursus->increment('peserta_terdaftar');
-
-            return redirect()->route('mitra.kursus.saya')
-                            ->with('success', 'Berhasil mengikuti kursus!');
-
-        } catch (\Exception $e) {
-            return redirect()->back()
-                           ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+                ->with('error', 'Kode enroll yang Anda masukkan salah. Silakan masukkan kembali kode yang benar.')
+                ->with('error_type', 'enroll_code')
+                ->with('enroll_course_id', $id) // Simpan ID kursus
+                ->with('attempted_code', $request->enroll_code); // Simpan kode yang dimasukkan
         }
     }
+
+    try {
+        // Hitung total materi aktif
+        $totalMaterials = Materials::where('course_id', $id)
+                                    ->where('is_active', true)
+                                    ->count();
+
+        // ✅ Create enrollment
+        Enrollment::create([
+            'user_id' => $user->id,
+            'kursus_id' => $id,
+            'total_activities' => $totalMaterials,
+            'enrolled_at' => now()
+        ]);
+
+        // ✅ Tambah peserta terdaftar
+        $kursus->increment('peserta_terdaftar');
+
+        return redirect()->route('mitra.kursus.saya')
+            ->with('success', 'Berhasil mengikuti kursus!');
+
+    } catch (\Exception $e) {
+        return redirect()->back()
+            ->with('error', 'Terjadi kesalahan: ' . $e->getMessage())
+            ->with('error_type', 'system');
+    }
+}
+
 
     /**
      * My courses

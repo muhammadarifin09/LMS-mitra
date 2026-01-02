@@ -52,7 +52,9 @@ class KursusController extends Controller
             'output_pelatihan' => 'nullable|string',
             'persyaratan' => 'nullable|string',
             'fasilitas' => 'nullable|string',
-            'kuota_peserta' => 'nullable|integer|min:1'
+            'kuota_peserta' => 'nullable|integer|min:1',
+            'enroll_code' => 'nullable|string|max:50',
+
         ]);
 
         // Upload gambar jika ada
@@ -110,7 +112,9 @@ class KursusController extends Controller
             'output_pelatihan' => 'nullable|string',
             'persyaratan' => 'nullable|string',
             'fasilitas' => 'nullable|string',
-            'kuota_peserta' => 'nullable|integer|min:1'
+            'kuota_peserta' => 'nullable|integer|min:1',
+            'enroll_code' => 'nullable|string|max:50',
+
         ]);
 
         // Upload gambar baru jika ada

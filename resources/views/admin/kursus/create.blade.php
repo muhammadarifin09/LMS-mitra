@@ -233,29 +233,322 @@
                         @enderror
                     </div>
 
-                    <!-- Tanggal Mulai & Selesai -->
+                    <!-- Kode Enroll Kursus -->
+                    <div class="form-group">
+                        <label for="enroll_code" class="form-label">
+                            Kode Enroll Kursus
+                            <span class="text-muted">(opsional)</span>
+                        </label>
+                        <input type="text"
+                            class="form-control"
+                            id="enroll_code"
+                            name="enroll_code"
+                            value="{{ old('enroll_code') }}"
+                            placeholder="Contoh: BPS-TALA-2025">
+                        <div class="form-text">
+                            Isi jika kursus hanya boleh diikuti mitra tertentu.
+                            Kosongkan jika kursus terbuka untuk semua.
+                        </div>
+                        @error('enroll_code')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+
+                  <!-- Tanggal Mulai & Selesai -->
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="tanggal_mulai" class="form-label">Tanggal Mulai</label>
-                                <input type="date" class="form-control" id="tanggal_mulai" name="tanggal_mulai" 
-                                       value="{{ old('tanggal_mulai') }}">
+                                <label for="tanggal_mulai" class="form-label">
+                                    <i class="fas fa-calendar-plus me-1"></i>Tanggal Mulai
+                                </label>
+                                <input type="date" class="form-control @error('tanggal_mulai') is-invalid @enderror" 
+                                    id="tanggal_mulai" name="tanggal_mulai" 
+                                    value="{{ old('tanggal_mulai') }}"
+                                    onchange="validateDates()">
                                 @error('tanggal_mulai')
-                                    <div class="text-danger">{{ $message }}</div>
+                                    <div class="invalid-feedback d-block">
+                                        <i class="fas fa-exclamation-circle me-1"></i>{{ $message }}
+                                    </div>
                                 @enderror
+                                <div class="form-text text-muted small">
+                                    <i class="fas fa-info-circle me-1"></i>Pilih tanggal mulai kursus
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="tanggal_selesai" class="form-label">Tanggal Selesai</label>
-                                <input type="date" class="form-control" id="tanggal_selesai" name="tanggal_selesai" 
-                                       value="{{ old('tanggal_selesai') }}">
+                                <label for="tanggal_selesai" class="form-label">
+                                    <i class="fas fa-calendar-check me-1"></i>Tanggal Selesai
+                                </label>
+                                <input type="date" class="form-control @error('tanggal_selesai') is-invalid @enderror" 
+                                    id="tanggal_selesai" name="tanggal_selesai" 
+                                    value="{{ old('tanggal_selesai') }}"
+                                    onchange="validateDates()">
                                 @error('tanggal_selesai')
-                                    <div class="text-danger">{{ $message }}</div>
+                                    <div class="invalid-feedback d-block">
+                                        <i class="fas fa-exclamation-circle me-1"></i>{{ $message }}
+                                    </div>
                                 @enderror
+                                <div class="form-text text-muted small">
+                                    <i class="fas fa-info-circle me-1"></i>Pilih tanggal selesai kursus
+                                </div>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Container untuk pesan error custom -->
+                    <div id="dateValidationError" class="alert alert-danger alert-dismissible fade show d-none mt-2" role="alert">
+                        <i class="fas fa-calendar-times me-2"></i>
+                        <span id="dateErrorText"></span>
+                        <button type="button" class="btn-close" onclick="dismissDateError()"></button>
+                    </div>
+
+                    <!-- Container untuk pesan info -->
+                    <div id="dateInfo" class="alert alert-info alert-dismissible fade show d-none mt-2" role="alert">
+                        <i class="fas fa-calendar-alt me-2"></i>
+                        <span id="dateInfoText"></span>
+                    </div>
+
+                    <style>
+                        /* Styling untuk input tanggal yang error */
+                        .form-control.is-invalid {
+                            border-color: #dc3545;
+                            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+                            background-repeat: no-repeat;
+                            background-position: right calc(0.375em + 0.1875rem) center;
+                            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+                        }
+
+                        .form-control.is-invalid:focus {
+                            border-color: #dc3545;
+                            box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+                        }
+
+                        /* Styling untuk pesan error dan info */
+                        .alert {
+                            border-radius: 8px;
+                            border: 1px solid transparent;
+                            padding: 12px 16px;
+                        }
+
+                        .alert-danger {
+                            background-color: #f8d7da;
+                            border-color: #f5c6cb;
+                            color: #721c24;
+                        }
+
+                        .alert-info {
+                            background-color: #d1ecf1;
+                            border-color: #bee5eb;
+                            color: #0c5460;
+                        }
+
+                        /* Animasi untuk munculnya pesan */
+                        @keyframes slideDown {
+                            from {
+                                opacity: 0;
+                                transform: translateY(-10px);
+                            }
+                            to {
+                                opacity: 1;
+                                transform: translateY(0);
+                            }
+                        }
+
+                        .fade.show {
+                            animation: slideDown 0.3s ease;
+                        }
+
+                        /* Styling untuk label */
+                        .form-label {
+                            font-weight: 600;
+                            color: #495057;
+                            margin-bottom: 8px;
+                        }
+
+                        /* Styling untuk helper text */
+                        .form-text {
+                            font-size: 0.85rem;
+                            margin-top: 4px;
+                        }
+                    </style>
+
+                    <script>
+                    // Fungsi untuk validasi tanggal
+                    function validateDates() {
+                        const startDateInput = document.getElementById('tanggal_mulai');
+                        const endDateInput = document.getElementById('tanggal_selesai');
+                        const errorDiv = document.getElementById('dateValidationError');
+                        const errorText = document.getElementById('dateErrorText');
+                        const infoDiv = document.getElementById('dateInfo');
+                        const infoText = document.getElementById('dateInfoText');
+                        
+                        // Reset semua status
+                        startDateInput.classList.remove('is-invalid');
+                        endDateInput.classList.remove('is-invalid');
+                        errorDiv.classList.add('d-none');
+                        infoDiv.classList.add('d-none');
+                        
+                        // Ambil nilai tanggal
+                        const startDate = startDateInput.value;
+                        const endDate = endDateInput.value;
+                        
+                        // Jika kedua tanggal terisi
+                        if (startDate && endDate) {
+                            const start = new Date(startDate);
+                            const end = new Date(endDate);
+                            
+                            // Validasi: Tanggal mulai tidak boleh setelah tanggal selesai
+                            if (start > end) {
+                                // Tampilkan pesan error
+                                errorText.textContent = 'Tanggal mulai harus lebih awal dari tanggal selesai. Periksa kembali urutan tanggal.';
+                                errorDiv.classList.remove('d-none');
+                                
+                                // Tambahkan kelas error pada input
+                                startDateInput.classList.add('is-invalid');
+                                endDateInput.classList.add('is-invalid');
+                                
+                                // Scroll ke error message
+                                errorDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                
+                                return false;
+                            }
+                            
+                            // Validasi: Tanggal selesai tidak boleh sebelum tanggal mulai
+                            if (end < start) {
+                                errorText.textContent = 'Tanggal selesai tidak boleh sebelum tanggal mulai. Pastikan urutan tanggal benar.';
+                                errorDiv.classList.remove('d-none');
+                                endDateInput.classList.add('is-invalid');
+                                errorDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                return false;
+                            }
+                            
+                            // Hitung durasi kursus
+                            const diffTime = Math.abs(end - start);
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                            
+                            // Tampilkan info durasi kursus
+                            if (diffDays === 1) {
+                                infoText.textContent = 'Kursus berlangsung selama 1 hari.';
+                            } else {
+                                infoText.textContent = `Kursus berlangsung selama ${diffDays} hari.`;
+                            }
+                            infoDiv.classList.remove('d-none');
+                            
+                            return true;
+                        }
+                        
+                        // Validasi jika hanya satu tanggal yang terisi
+                        if (startDate && !endDate) {
+                            infoText.textContent = 'Silakan pilih tanggal selesai untuk menghitung durasi kursus.';
+                            infoDiv.classList.remove('d-none');
+                        } else if (!startDate && endDate) {
+                            infoText.textContent = 'Silakan pilih tanggal mulai terlebih dahulu.';
+                            infoDiv.classList.remove('d-none');
+                        }
+                        
+                        return null; // Validasi belum lengkap
+                    }
+
+                    // Fungsi untuk menutup pesan error tanggal
+                    function dismissDateError() {
+                        const errorDiv = document.getElementById('dateValidationError');
+                        errorDiv.classList.add('d-none');
+                    }
+
+                    // Fungsi untuk validasi sebelum submit form
+                    function validateFormBeforeSubmit(event) {
+                        const startDateInput = document.getElementById('tanggal_mulai');
+                        const endDateInput = document.getElementById('tanggal_selesai');
+                        
+                        const startDate = startDateInput.value;
+                        const endDate = endDateInput.value;
+                        
+                        // Jika kedua tanggal terisi, lakukan validasi
+                        if (startDate && endDate) {
+                            const start = new Date(startDate);
+                            const end = new Date(endDate);
+                            
+                            if (start > end) {
+                                // Tampilkan pesan error
+                                const errorDiv = document.getElementById('dateValidationError');
+                                const errorText = document.getElementById('dateErrorText');
+                                
+                                errorText.textContent = 'Tanggal mulai tidak boleh lebih dari tanggal selesai. Silakan perbaiki tanggal sebelum melanjutkan.';
+                                errorDiv.classList.remove('d-none');
+                                
+                                // Tambahkan kelas error
+                                startDateInput.classList.add('is-invalid');
+                                endDateInput.classList.add('is-invalid');
+                                
+                                // Scroll ke error
+                                errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                
+                                // Cegah submit
+                                event.preventDefault();
+                                return false;
+                            }
+                        }
+                        
+                        return true;
+                    }
+
+                    // Validasi real-time saat user mengubah input
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const startDateInput = document.getElementById('tanggal_mulai');
+                        const endDateInput = document.getElementById('tanggal_selesai');
+                        
+                        // Tambahkan event listener untuk input real-time
+                        if (startDateInput) {
+                            startDateInput.addEventListener('change', validateDates);
+                            startDateInput.addEventListener('input', function() {
+                                this.classList.remove('is-invalid');
+                            });
+                        }
+                        
+                        if (endDateInput) {
+                            endDateInput.addEventListener('change', validateDates);
+                            endDateInput.addEventListener('input', function() {
+                                this.classList.remove('is-invalid');
+                            });
+                        }
+                        
+                        // Validasi saat form di-submit
+                        const form = startDateInput?.closest('form');
+                        if (form) {
+                            form.addEventListener('submit', validateFormBeforeSubmit);
+                        }
+                        
+                        // Validasi saat halaman pertama kali dimuat (jika ada data lama)
+                        setTimeout(validateDates, 100);
+                    });
+
+                    // Fungsi untuk reset validasi tanggal
+                    function resetDateValidation() {
+                        const startDateInput = document.getElementById('tanggal_mulai');
+                        const endDateInput = document.getElementById('tanggal_selesai');
+                        const errorDiv = document.getElementById('dateValidationError');
+                        const infoDiv = document.getElementById('dateInfo');
+                        
+                        startDateInput?.classList.remove('is-invalid');
+                        endDateInput?.classList.remove('is-invalid');
+                        errorDiv?.classList.add('d-none');
+                        infoDiv?.classList.add('d-none');
+                    }
+
+                    // Fungsi untuk menetapkan tanggal (dari external source)
+                    function setCourseDates(startDate, endDate) {
+                        const startDateInput = document.getElementById('tanggal_mulai');
+                        const endDateInput = document.getElementById('tanggal_selesai');
+                        
+                        if (startDateInput) startDateInput.value = startDate;
+                        if (endDateInput) endDateInput.value = endDate;
+                        
+                        // Jalankan validasi setelah mengatur tanggal
+                        setTimeout(validateDates, 50);
+                    }
+                    </script>
                 </div>
 
                 <!-- Kolom Kanan -->

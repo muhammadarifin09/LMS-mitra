@@ -27,7 +27,8 @@ class Kursus extends Model
         'persyaratan',
         'fasilitas',
         'kuota_peserta',
-        'peserta_terdaftar'
+        'peserta_terdaftar',
+        'enroll_code'
     ];
 
     protected $casts = [

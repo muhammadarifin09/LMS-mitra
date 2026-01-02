@@ -234,6 +234,28 @@
                         @enderror
                     </div>
 
+                        <!-- Kode Enroll Kursus -->
+                    <div class="form-group">
+                        <label for="enroll_code" class="form-label">
+                            Kode Enroll Kursus
+                            <span class="text-muted">(opsional)</span>
+                        </label>
+                        <input type="text"
+                            class="form-control"
+                            id="enroll_code"
+                            name="enroll_code"
+                            value="{{ old('enroll_code') }}"
+                            placeholder="Contoh: BPS-TALA-2025">
+                        <div class="form-text">
+                            Isi jika kursus hanya boleh diikuti mitra tertentu.
+                            Kosongkan jika kursus terbuka untuk semua.
+                        </div>
+                        @error('enroll_code')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+
                     <!-- Tanggal Mulai & Selesai -->
                     <div class="row">
                         <div class="col-md-6">
