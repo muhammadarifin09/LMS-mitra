@@ -109,6 +109,118 @@
         color: white;
         transform: translateY(-2px);
     }
+
+    /* Pagination Styles */
+    .pagination-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 25px;
+        border-top: 1px solid #e9ecef;
+        background: #f8f9fa;
+    }
+
+    .pagination-info {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    .pagination-controls {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .per-page-selector {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .per-page-selector label {
+        font-size: 0.9rem;
+        color: #495057;
+        margin: 0;
+    }
+
+    .per-page-selector select {
+        padding: 5px 10px;
+        border: 1px solid #ced4da;
+        border-radius: 5px;
+        background: white;
+        font-size: 0.9rem;
+        color: #495057;
+        cursor: pointer;
+    }
+
+    .per-page-selector select:focus {
+        outline: none;
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    .pagination {
+        margin: 0;
+        display: flex;
+        gap: 5px;
+    }
+
+    .page-item .page-link {
+        border-radius: 5px;
+        padding: 6px 12px;
+        border: 1px solid #dee2e6;
+        color: #1e3c72;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+    }
+
+    .page-item.active .page-link {
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
+        border-color: #1e3c72;
+        color: white;
+    }
+
+    .page-item.disabled .page-link {
+        color: #6c757d;
+        background-color: #f8f9fa;
+        border-color: #dee2e6;
+    }
+
+    .page-item .page-link:hover {
+        background-color: #e9ecef;
+        border-color: #dee2e6;
+    }
+
+    .page-item.active .page-link:hover {
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
+        color: white;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .pagination-container {
+            flex-direction: column;
+            gap: 15px;
+            align-items: flex-start;
+        }
+        
+        .pagination-controls {
+            width: 100%;
+            justify-content: space-between;
+        }
+        
+        .pagination {
+            flex-wrap: wrap;
+        }
+    }
+
+    .search-input {
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        min-width: 150px;
+    }
 </style>
 @endsection
 
@@ -125,6 +237,17 @@
 <div class="table-container">
     <div class="table-header">
         <h2 class="table-title">Daftar Mitra</h2>
+        <div class="search-box">
+            <form method="GET" action="{{ url()->current() }}">
+                <input 
+                    type="text" 
+                    name="search"
+                    value="{{ request('search') }}"
+                    placeholder="Search..."
+                    class="search-input"
+                >
+            </form>
+        </div>
     </div>
     
     <div class="table-responsive">
@@ -150,7 +273,7 @@
                 @else
                     @foreach($mitra as $item)
                     <tr>
-                        <td>{{ $loop->iteration }}</td>
+                        <td>{{ ($mitra->currentPage() - 1) * $mitra->perPage() + $loop->iteration }}</td>
                         <td>{{ $item->nama }}</td>
                         <td>{{ $item->biodata->id_sobat ?? '-' }}</td>
                         <td>{{ $item->biodata->kecamatan ?? '-' }}</td>
@@ -169,6 +292,75 @@
                 @endif
             </tbody>
         </table>
+
+        @if($mitra->count() > 0)
+        <div class="pagination-container">
+
+            <!-- Info -->
+            <div class="pagination-info">
+                Menampilkan {{ $mitra->firstItem() }} – {{ $mitra->lastItem() }}
+                dari {{ $mitra->total() }} data
+            </div>
+
+            <div class="pagination-controls">
+
+                <!-- Per Page -->
+                <div class="per-page-selector">
+                    <label>Per halaman:</label>
+                    <select onchange="changePerPage(this.value)">
+                        <option value="5" {{ $mitra->perPage() == 5 ? 'selected' : '' }}>5</option>
+                        <option value="10" {{ $mitra->perPage() == 10 ? 'selected' : '' }}>10</option>
+                        <option value="25" {{ $mitra->perPage() == 25 ? 'selected' : '' }}>25</option>
+                        <option value="50" {{ $mitra->perPage() == 50 ? 'selected' : '' }}>50</option>
+                        <option value="100" {{ $mitra->perPage() == 100 ? 'selected' : '' }}>100</option>
+                    </select>
+                </div>
+
+                <!-- Pagination -->
+                <nav>
+                    <ul class="pagination">
+
+                        @php
+                            $current = $mitra->currentPage();
+                            $last = $mitra->lastPage();
+                            $prev = max($current - 1, 1);
+                            $next = min($current + 1, $last);
+                        @endphp
+
+                        <!-- First -->
+                        <li class="page-item {{ $current == 1 ? 'disabled' : '' }}">
+                            <a class="page-link" href="{{ $mitra->url(1) }}">«</a>
+                        </li>
+
+                        <!-- Prev Number -->
+                        @if($current > 1)
+                            <li class="page-item">
+                                <a class="page-link" href="{{ $mitra->url($prev) }}">{{ $prev }}</a>
+                            </li>
+                        @endif
+
+                        <!-- Current -->
+                        <li class="page-item active">
+                            <span class="page-link">{{ $current }}</span>
+                        </li>
+
+                        <!-- Next Number -->
+                        @if($current < $last)
+                            <li class="page-item">
+                                <a class="page-link" href="{{ $mitra->url($next) }}">{{ $next }}</a>
+                            </li>
+                        @endif
+
+                        <!-- Last -->
+                        <li class="page-item {{ $current == $last ? 'disabled' : '' }}">
+                            <a class="page-link" href="{{ $mitra->url($last) }}">»</a>
+                        </li>
+
+                    </ul>
+                </nav>
+            </div>
+        </div>
+        @endif
     </div>
 </div>                                                                              
 
@@ -186,30 +378,12 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    // Inisialisasi DataTable
-    $(document).ready(function() {
-        $('.table').DataTable({
-            "paging": true,
-            "lengthChange": true,
-            "searching": true,
-            "ordering": true,
-            "info": true,
-            "autoWidth": false,
-            "responsive": true,
-            "pageLength": 10,
-            "language": {
-                "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Indonesian.json",
-                "search": "Cari:",
-                "lengthMenu": "Tampilkan _MENU_ data",
-                "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
-                "paginate": {
-                    "first": "Pertama",
-                    "last": "Terakhir",
-                    "next": "Selanjutnya",
-                    "previous": "Sebelumnya"
-                }
-            }
-        });
-    });
-</script>   
+function changePerPage(value) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('per_page', value);
+    url.searchParams.set('page', 1);
+    window.location.href = url.toString();
+}
+</script>
+
 @endsection

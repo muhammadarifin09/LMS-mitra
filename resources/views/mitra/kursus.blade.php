@@ -643,7 +643,7 @@
                                 @csrf
                                 <button type="submit" class="btn-follow-course">
                                     <i class="fas fa-play-circle"></i>
-                                    Ikuti
+                                    Ikuti Kursus
                                 </button>
                             </form>
                         @endif

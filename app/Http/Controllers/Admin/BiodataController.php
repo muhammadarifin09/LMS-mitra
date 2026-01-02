@@ -11,10 +11,21 @@ use Illuminate\Support\Facades\Storage;
 
 class BiodataController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $biodata = Biodata::with('user')->get();
-        return view('admin.biodata.index', ['biodata' => $biodata]);
+        $perPage = $request->get('per_page', 10);
+        $search  = $request->get('search');
+
+        $biodata = Biodata::with('user')
+            ->when($search, function ($query) use ($search) {
+                $query->where('nama_lengkap', 'like', "%{$search}%")
+                    ->orWhere('id_sobat', 'like', "%{$search}%");
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage)
+            ->appends($request->query());
+
+        return view('admin.biodata.index', compact('biodata'));
     }
 
     public function create()
