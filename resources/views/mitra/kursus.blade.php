@@ -874,7 +874,7 @@
                                     data-bs-toggle="modal"
                                     data-bs-target="#enrollModal{{ $item->id }}">
                                     <i class="fas fa-play-circle"></i>
-                                    Ikuti kursus
+                                    Ikuti Kursus
                                 </button>
                             {{-- 🔓 TANPA ENROLL CODE → LANGSUNG --}}
                             @else

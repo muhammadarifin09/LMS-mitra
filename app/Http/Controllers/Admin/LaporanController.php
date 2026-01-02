@@ -16,6 +16,7 @@ use App\Models\Biodata;
 use App\Models\Enrollment;
 use App\Models\M_User;
 use App\Models\LaporanMitra;
+use Illuminate\Http\Request;
 
 
 class LaporanController extends Controller
@@ -477,14 +478,26 @@ public function exportKursusPdfRingkas(Kursus $kursus)
     // LAPORAN MITRA
     // ======================
 
-    public function mitraIndex()
+    public function mitraIndex(Request $request)
     {
-        // Ambil semua user yang punya biodata (mitra)
-        $mitra = M_User::whereHas('biodata')
-            ->with(['biodata'])
+        $perPage = $request->get('per_page', 10);
+        $search  = $request->get('search');
+
+        $mitra = M_User::whereHas('biodata') // pastikan memang mitra
+            ->where(function ($query) use ($search) {
+                if ($search) {
+                    $query->where('nama', 'like', "%$search%")
+                        ->orWhereHas('biodata', function ($q) use ($search) {
+                            $q->where('id_sobat', 'like', "%$search%")
+                                ->orWhere('kecamatan', 'like', "%$search%");
+                        });
+                }
+            })
+            ->with('biodata')
             ->withCount('enrollments')
             ->orderBy('nama')
-            ->get();
+            ->paginate($perPage)
+            ->appends($request->query());
 
         return view('laporan.admin.mitra.index', compact('mitra'));
     }
