@@ -9,8 +9,6 @@ use App\Models\Materials;
 use App\Models\Enrollment;
 use Illuminate\Http\Request;
 use App\Models\VideoQuestion;
-use Google\Client as GoogleClient;
-use Google\Service\Drive as GoogleDrive;
 use App\Models\MaterialProgress;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -132,146 +130,255 @@ class KursusController extends Controller
     }
 
     /**
-     * PERBAIKAN BESAR: Logika status material
+     * Helper method untuk mendapatkan content types dari learning_objectives
      */
-    private function getMaterialsWithStatus($materials, $user, $kursusId)
+    private function getContentTypes($learningObjectives)
     {
-        $processedMaterials = [];
-        
-        // Ambil semua progress user untuk kursus ini
-        $userProgress = MaterialProgress::where('user_id', $user->id)
-            ->whereIn('material_id', $materials->pluck('id'))
-            ->get()
-            ->keyBy('material_id');
-        
-        $previousMaterialCompleted = true; // Material pertama selalu bisa diakses
-        
-        foreach ($materials->sortBy('order') as $index => $material) {
-            // Skip jika materi tidak aktif
-            if (!$material->is_active) {
-                continue;
-            }
-            
-            $progress = $userProgress[$material->id] ?? null;
-            
-            // Parse file_path untuk mendapatkan file paths
-            $filePaths = [];
-            $totalFiles = 0;
-            $hasMaterial = !empty($material->file_path);
-            
-            if ($hasMaterial) {
-                $filePaths = json_decode($material->file_path, true) ?? [$material->file_path];
-                $totalFiles = count($filePaths);
-            }
-            
-            // **PERBAIKAN PENTING: Cek apakah memiliki video**
-            // Video bisa dari video_url (YouTube/Vimeo) atau video_file (Google Drive)
-            $hasVideo = false;
-            $videoData = null;
-            
-            if (!empty($material->video_url) || !empty($material->video_file)) {
-                $hasVideo = true;
-                
-                // Jika ada video_file (Google Drive), parse data
-                if (!empty($material->video_file)) {
-                    try {
-                        $videoData = json_decode($material->video_file, true);
-                    } catch (\Exception $e) {
-                        Log::error('Error parsing video_file data: ' . $e->getMessage());
-                    }
-                }
-            }
-            
-            // **PERBAIKAN KRUSIAL: Tentukan apakah material ini bisa diakses**
-            // Material pertama selalu bisa diakses
-            if ($material->order === 1) {
-                $isAccessible = true;
-            } else {
-                // Cek apakah material sebelumnya sudah selesai
-                $previousMaterial = $materials->where('order', $material->order - 1)->first();
-                if ($previousMaterial) {
-                    $previousProgress = $userProgress[$previousMaterial->id] ?? null;
-                    $isAccessible = $this->isMaterialCompleted($previousProgress, $previousMaterial);
-                } else {
-                    $isAccessible = true;
-                }
-            }
-            
-            // Tentukan apakah material ini sudah selesai
-            $isCompleted = $this->isMaterialCompleted($progress, $material);
-            
-            // **PERBAIKAN: Tentukan status dengan benar**
-            if ($isCompleted) {
-                $status = 'completed';
-                $statusClass = 'completed';
-            } elseif ($isAccessible) {
-                $status = 'current';
-                $statusClass = 'current';
-            } else {
-                $status = 'locked';
-                $statusClass = 'locked';
-            }
-            
-            // Get specific status for each task
-            $attendanceStatus = $progress ? ($progress->attendance_status ?? 'pending') : 'pending';
-            $materialStatus = $progress ? ($progress->material_status ?? 'pending') : 'pending';
-            $videoStatus = $progress ? ($progress->video_status ?? 'pending') : 'pending';
-            
-            // For test types, check if completed
-            $isTestCompleted = false;
-            $testScore = null;
-            
-            if ($material->type === 'pre_test' && $progress && $progress->pretest_score !== null) {
-                $isTestCompleted = true;
-                $testScore = $progress->pretest_score;
-            } elseif ($material->type === 'post_test' && $progress && $progress->posttest_score !== null) {
-                $isTestCompleted = true;
-                $testScore = $progress->posttest_score;
-            }
-
-            // Ambil downloaded_files
-            $downloadedFiles = [];
-            if ($progress && $progress->downloaded_files) {
-                $downloadedFiles = json_decode($progress->downloaded_files, true) ?? [];
-            }
-            
-            // Determine available content types
-            $hasAttendance = $material->attendance_required ?? true;
-            
-            $processedMaterials[] = [
-                'id' => $material->id,
-                'title' => $material->title,
-                'type' => $material->type,
-                'order' => $material->order,
-                'status' => $status,
-                'status_class' => $statusClass,
-                'attendance_status' => $attendanceStatus,
-                'material_status' => $materialStatus,
-                'video_status' => $videoStatus,
-                'is_test_completed' => $isTestCompleted,
-                'test_score' => $testScore,
-                'soal_pretest' => $material->soal_pretest,
-                'soal_posttest' => $material->soal_posttest,
-                'durasi_pretest' => $material->durasi_pretest,
-                'durasi_posttest' => $material->durasi_posttest,
-                'passing_grade' => $material->passing_grade,
-                'file_path' => $material->file_path,
-                'video_url' => $material->video_url,
-                'video_type' => $material->video_type,
-                'video_file' => $videoData, // Data video dari Google Drive
-                'player_config' => $material->player_config,
-                'description' => $material->description,
-                'downloaded_files' => $downloadedFiles,
-                'total_files' => $totalFiles,
-                // Tambahan untuk menentukan konten yang tersedia
-                'attendance_required' => $hasAttendance,
-                'has_material' => $hasMaterial,
-                'has_video' => $hasVideo, // PERBAIKAN: Sekarang termasuk video dari Google Drive
-                'file_paths' => $filePaths
-            ];
+        if (empty($learningObjectives)) {
+            return [];
         }
         
-        return $processedMaterials;
+        // Jika sudah array, langsung return
+        if (is_array($learningObjectives)) {
+            return $learningObjectives;
+        }
+        
+        // Jika string, coba decode JSON
+        if (is_string($learningObjectives)) {
+            try {
+                $decoded = json_decode($learningObjectives, true);
+                return is_array($decoded) ? $decoded : [];
+            } catch (\Exception $e) {
+                Log::error('Error decoding learning_objectives: ' . $e->getMessage());
+                return [];
+            }
+        }
+        
+        return [];
+    }
+
+    /**
+     * Helper method untuk parse JSON data dengan aman
+     */
+    private function safeJsonDecode($data, $default = null)
+    {
+        if (is_null($data)) {
+            return $default;
+        }
+        
+        if (is_array($data)) {
+            return $data;
+        }
+        
+        if (is_string($data)) {
+            try {
+                $decoded = json_decode($data, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    Log::warning('JSON decode error:', [
+                        'error' => json_last_error_msg(),
+                        'data' => substr($data, 0, 200)
+                    ]);
+                    return $default;
+                }
+                return $decoded ?? $default;
+            } catch (\Exception $e) {
+                Log::error('Error decoding JSON: ' . $e->getMessage());
+                return $default;
+            }
+        }
+        
+        return $default;
+    }
+
+    /**
+     * Helper method untuk parse file_path dengan aman
+     */
+    private function parseFilePath($filePath)
+    {
+        if (empty($filePath)) {
+            return [];
+        }
+        
+        // Jika sudah array, langsung return
+        if (is_array($filePath)) {
+            return array_filter($filePath);
+        }
+        
+        // Jika string, coba decode JSON
+        if (is_string($filePath)) {
+            try {
+                $decoded = json_decode($filePath, true);
+                if (is_array($decoded)) {
+                    return array_filter($decoded);
+                }
+                // Jika decode menghasilkan string (bukan array), kembalikan sebagai array
+                return array_filter([$filePath]);
+            } catch (\Exception $e) {
+                Log::error('Error parsing file_path: ' . $e->getMessage());
+                return array_filter([$filePath]);
+            }
+        }
+        
+        return [];
+    }
+
+    private function detectContentTypesFromMaterial($material)
+    {
+        $types = [];
+        
+        // Deteksi berdasarkan kolom yang ada
+        if (!empty($material->file_path)) {
+            $types[] = 'file';
+        }
+        
+        if (!empty($material->video_url) || !empty($material->video_file)) {
+            $types[] = 'video';
+        }
+        
+        if ($material->attendance_required ?? true) {
+            $types[] = 'attendance';
+        }
+        
+        // Deteksi test types
+        if (!empty($material->soal_pretest)) {
+            $types[] = 'pretest';
+        }
+        
+        if (!empty($material->soal_posttest)) {
+            $types[] = 'posttest';
+        }
+        
+        // Deteksi recap
+        if ($material->type === 'recap') {
+            $types[] = 'recap';
+        }
+        
+        return $types;
+    }
+    
+    /**
+     * Helper method untuk cek apakah material memiliki konten file
+     */
+    private function hasFileContent($material, $contentTypes = null)
+    {
+        // Jika ada contentTypes yang ditentukan, gunakan itu
+        if ($contentTypes !== null) {
+            return in_array('file', $contentTypes);
+        }
+        
+        // Jika tidak ada contentTypes, cek langsung dari material
+        return !empty($material->file_path);
+    }
+    
+    /**
+     * Helper method untuk cek apakah material memiliki konten video
+     */
+    private function hasVideoContent($material, $contentTypes = null)
+    {
+        // Jika ada contentTypes yang ditentukan, gunakan itu
+        if ($contentTypes !== null) {
+            return in_array('video', $contentTypes);
+        }
+        
+        // Jika tidak ada contentTypes, cek langsung dari material
+        return !empty($material->video_url) || !empty($material->video_file);
+    }
+    
+    /**
+     * Debug video data dari database
+     */
+    private function debugVideoData($material)
+    {
+        Log::debug('Video Database Raw Data:', [
+            'material_id' => $material->id,
+            'title' => $material->title,
+            'video_type' => $material->video_type,
+            'video_url' => $material->video_url,
+            'video_file_raw_length' => strlen($material->video_file ?? ''),
+            'video_file_sample' => substr($material->video_file ?? '', 0, 200),
+            'json_valid' => json_decode($material->video_file ?? '') !== null,
+            'json_last_error' => json_last_error(),
+            'json_last_error_msg' => json_last_error_msg(),
+            'learning_objectives' => $material->learning_objectives,
+            'is_active' => $material->is_active
+        ]);
+    }
+    
+    /**
+     * Cek apakah video hosted (Google Drive) tersedia
+     */
+    private function isHostedVideoAvailable($videoData, $materialId = null)
+    {
+        if (!$videoData || !is_array($videoData)) {
+            Log::warning('Google Drive video data not array or empty', [
+                'material_id' => $materialId,
+                'video_data_type' => gettype($videoData)
+            ]);
+            return false;
+        }
+        
+        // Cek berbagai format data Google Drive
+        $hasEmbedLink = isset($videoData['embed_link']) && !empty($videoData['embed_link']);
+        $hasWebViewLink = isset($videoData['web_view_link']) && !empty($videoData['web_view_link']);
+        $hasFileId = isset($videoData['file_id']) && !empty($videoData['file_id']);
+        $hasId = isset($videoData['id']) && !empty($videoData['id']);
+        $hasDirectLink = isset($videoData['direct_link']) && !empty($videoData['direct_link']);
+        
+        // Jika ada minimal salah satu, video tersedia
+        $isAvailable = $hasEmbedLink || $hasWebViewLink || $hasFileId || $hasId || $hasDirectLink;
+        
+        Log::info('Google Drive Video Availability Check:', [
+            'material_id' => $materialId,
+            'has_embed_link' => $hasEmbedLink,
+            'has_web_view_link' => $hasWebViewLink,
+            'has_file_id' => $hasFileId,
+            'has_id' => $hasId,
+            'has_direct_link' => $hasDirectLink,
+            'available_keys' => array_keys($videoData),
+            'is_available' => $isAvailable
+        ]);
+        
+        return $isAvailable;
+    }
+    
+    /**
+     * Cek apakah video lokal tersedia
+     */
+    private function isLocalVideoAvailable($videoData, $materialId = null)
+    {
+        if (!$videoData || !is_array($videoData)) {
+            Log::warning('Local video data not array or empty', [
+                'material_id' => $materialId,
+                'video_data_type' => gettype($videoData)
+            ]);
+            return false;
+        }
+        
+        // Cek berbagai format data video lokal
+        $hasPath = isset($videoData['path']) && !empty($videoData['path']);
+        $hasUrl = isset($videoData['url']) && !empty($videoData['url']);
+        
+        // Jika ada path, cek apakah file benar-benar ada
+        if ($hasPath) {
+            $fileExists = Storage::disk('public')->exists($videoData['path']);
+            Log::info('Local Video File Check:', [
+                'material_id' => $materialId,
+                'path' => $videoData['path'],
+                'file_exists' => $fileExists
+            ]);
+            return $fileExists;
+        }
+        
+        // Jika ada URL langsung
+        if ($hasUrl) {
+            return true;
+        }
+        
+        Log::warning('Local video data incomplete:', [
+            'material_id' => $materialId,
+            'video_data' => $videoData
+        ]);
+        return false;
     }
 
     /**
@@ -304,60 +411,73 @@ class KursusController extends Controller
     }
 
     /**
-     * Helper method untuk cek apakah material sudah selesai (dengan multiple files)
+     * Helper method untuk cek apakah material sudah selesai (sesuai dengan admin)
      */
     private function isMaterialCompleted($progress, $material)
     {
-        // Jika tidak ada progress, maka belum selesai
         if (!$progress) {
             return false;
         }
 
-        // For test materials, check if test is completed
-        if ($material->type === 'pre_test') {
+        $contentTypes = $this->getContentTypes($material->learning_objectives);
+        $isPretest = in_array('pretest', $contentTypes);
+        $isPosttest = in_array('posttest', $contentTypes);
+        $isRecap = $material->type === 'recap';
+
+        // For test materials
+        if ($isPretest) {
             return $progress->pretest_score !== null;
-        } elseif ($material->type === 'post_test') {
+        } elseif ($isPosttest) {
             return $progress->posttest_score !== null;
-        } elseif ($material->type === 'recap') {
-            return true; // Recap selalu bisa diakses setelah terbuka
-        } else {
-            // Untuk material reguler, cek semua status yang diperlukan
+        } elseif ($isRecap) {
+            // Recap selalu bisa diakses
+            return true;
+        }
+        
+        // Untuk material reguler
+        $hasFile = in_array('file', $contentTypes);
+        $hasVideo = in_array('video', $contentTypes);
+        $hasAttendance = in_array('attendance', $contentTypes) || ($material->attendance_required ?? true);
+        
+        $attendanceCompleted = !$hasAttendance || $progress->attendance_status === 'completed';
+        
+        // Cek file completion
+        $fileCompleted = true;
+        if ($hasFile && !empty($material->file_path)) {
+            $filePaths = $this->parseFilePath($material->file_path);
+            $totalFiles = count($filePaths);
             
-            // PERBAIKAN: Tentukan apakah memiliki video (termasuk dari Google Drive)
-            $hasVideo = !empty($material->video_url) || !empty($material->video_file);
-            
-            $attendanceRequired = $material->attendance_required ?? true;
-            $hasMaterial = !empty($material->file_path);
-            
-            $attendanceCompleted = !$attendanceRequired || $progress->attendance_status === 'completed';
-            $videoCompleted = !$hasVideo || $progress->video_status === 'completed';
-            
-            // Cek material completion
-            $materialCompleted = true; // default jika tidak ada material
-            
-            if ($hasMaterial) {
+            if ($totalFiles > 0) {
                 if ($progress->all_files_downloaded) {
-                    $materialCompleted = true;
+                    $fileCompleted = true;
                 } else {
-                    // Parse file_path untuk mendapatkan jumlah file
-                    $filePaths = json_decode($material->file_path, true);
-                    if (!is_array($filePaths)) {
-                        $filePaths = [$material->file_path];
-                    }
-                    $totalFiles = count($filePaths);
-                    
-                    $downloadedFiles = json_decode($progress->downloaded_files, true) ?? [];
-                    $materialCompleted = (count($downloadedFiles) >= $totalFiles);
+                    $downloadedFiles = $this->safeJsonDecode($progress->downloaded_files, []);
+                    $fileCompleted = (count($downloadedFiles) >= $totalFiles);
                 }
             }
             
-            // PERBAIKAN: Gunakan material_status sebagai fallback
-            if (!$materialCompleted && $progress->material_status === 'completed') {
-                $materialCompleted = true;
+            if (!$fileCompleted && $progress->material_status === 'completed') {
+                $fileCompleted = true;
             }
-            
-            return $attendanceCompleted && $materialCompleted && $videoCompleted;
         }
+        
+        // Cek video completion
+        $videoCompleted = true;
+        if ($hasVideo) {
+            $videoCompleted = $progress->video_status === 'completed';
+            
+            if ($videoCompleted && $material->require_video_completion) {
+                $minWatchPercentage = 90;
+                $playerConfig = $this->safeJsonDecode($material->player_config, []);
+                
+                $videoProgress = $progress->video_progress ?? 0;
+                if ($videoProgress < $minWatchPercentage) {
+                    $videoCompleted = false;
+                }
+            }
+        }
+        
+        return $attendanceCompleted && $fileCompleted && $videoCompleted;
     }
 
 
@@ -413,6 +533,8 @@ class KursusController extends Controller
         }
     }
 
+<<<<<<< HEAD
+=======
     try {
         // Hitung total materi aktif
         $totalMaterials = Materials::where('course_id', $id)
@@ -456,6 +578,7 @@ class KursusController extends Controller
         return view('mitra.kursus-saya', compact('enrolledCourses'));
     }
 
+>>>>>>> aeb232a879ee3019e46bd83769f8370d998319e9
     // MARK: - Progress Tracking Methods
     public function markAttendance(Request $request, $kursus, $material)
     {
@@ -490,8 +613,8 @@ class KursusController extends Controller
                 'user_id' => $user->id,
                 'material_id' => $material,
                 'attendance_status' => 'completed',
-                'material_status' => empty($materialRecord->file_path) ? 'completed' : 'pending',
-                'video_status' => empty($materialRecord->video_url) ? 'completed' : 'pending'
+                'material_status' => 'pending',
+                'video_status' => 'pending'
             ]);
         }
 
@@ -540,13 +663,8 @@ class KursusController extends Controller
         }
         
         try {
-            // Parse file_path (bisa string atau JSON array)
-            $filePaths = json_decode($materialRecord->file_path, true);
-            
-            // Jika bukan array, buat array dari string
-            if (!is_array($filePaths)) {
-                $filePaths = [$materialRecord->file_path];
-            }
+            // PERBAIKAN: Parse file_path dengan helper method
+            $filePaths = $this->parseFilePath($materialRecord->file_path);
             
             // Filter hanya file yang valid
             $validFilePaths = [];
@@ -664,53 +782,53 @@ class KursusController extends Controller
      * API untuk mencatat video telah ditonton
      */
     public function recordVideoWatched(Request $request, $kursus, $material)
-{
-    try {
-        $user = Auth::user();
-        
-        // Update progress video
-        $progress = MaterialProgress::where('user_id', $user->id)
-            ->where('material_id', $material)
-            ->first();
-        
-        if ($progress) {
-            $progress->video_status = 'completed';
-            $progress->save();
-        } else {
-            $materialRecord = Materials::find($material);
-            MaterialProgress::create([
-                'user_id' => $user->id,
-                'material_id' => $material,
-                'video_status' => 'completed',
-                'material_status' => ($materialRecord && $materialRecord->file_path) ? 'pending' : 'completed',
-                'attendance_status' => ($materialRecord && ($materialRecord->attendance_required ?? true)) ? 'pending' : 'completed'
+    {
+        try {
+            $user = Auth::user();
+            
+            // Update progress video
+            $progress = MaterialProgress::where('user_id', $user->id)
+                ->where('material_id', $material)
+                ->first();
+            
+            if ($progress) {
+                $progress->video_status = 'completed';
+                $progress->save();
+            } else {
+                $materialRecord = Materials::find($material);
+                MaterialProgress::create([
+                    'user_id' => $user->id,
+                    'material_id' => $material,
+                    'video_status' => 'completed',
+                    'material_status' => 'pending',
+                    'attendance_status' => 'pending'
+                ]);
+            }
+
+            // PERBAIKAN: Otomatis cek dan unlock material berikutnya
+            $this->checkAndUnlockNextMaterial($user->id, $material, $kursus);
+
+            // Update enrollment progress
+            $this->updateEnrollmentProgress($user->id, $kursus);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Video telah ditandai sebagai telah ditonton'
             ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error recording video watched:', [
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id(),
+                'material' => $material
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mencatat progress video'
+            ], 500);
         }
-
-        // PERBAIKAN: Otomatis cek dan unlock material berikutnya
-        $this->checkAndUnlockNextMaterial($user->id, $material, $kursus);
-
-        // Update enrollment progress
-        $this->updateEnrollmentProgress($user->id, $kursus);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Video telah ditandai sebagai telah ditonton'
-        ]);
-
-    } catch (\Exception $e) {
-        Log::error('Error recording video watched:', [
-            'error' => $e->getMessage(),
-            'user_id' => Auth::id(),
-            'material' => $material
-        ]);
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Gagal mencatat progress video'
-        ], 500);
     }
-}
 
     /**
      * PERBAIKAN: Method untuk cek dan unlock material berikutnya
@@ -747,8 +865,6 @@ class KursusController extends Controller
                     ->first();
                 
                 if ($nextMaterial) {
-                    // Untuk material berikutnya, kita tidak perlu melakukan apa-apa di database
-                    // Karena status akan dihitung ulang saat getMaterialsWithStatus dipanggil
                     Log::info('Material berikutnya siap dibuka:', [
                         'current_material_id' => $currentMaterialId,
                         'next_material_id' => $nextMaterial->id,
@@ -937,11 +1053,7 @@ class KursusController extends Controller
             ->firstOrFail();
 
         // Parse file_path
-        $filePaths = json_decode($materialRecord->file_path, true);
-        
-        if (!is_array($filePaths)) {
-            $filePaths = [$materialRecord->file_path];
-        }
+        $filePaths = $this->parseFilePath($materialRecord->file_path);
 
         // Siapkan data file
         $files = [];
@@ -974,7 +1086,7 @@ class KursusController extends Controller
 
     public function viewMaterialVideo($kursus, $material)
 {
-    Log::info('View Material Video - FIXED:', [
+    Log::info('View Material Video:', [
         'kursus' => $kursus,
         'material' => $material,
         'user_id' => Auth::id()
@@ -993,28 +1105,34 @@ class KursusController extends Controller
         ->where('course_id', $kursus)
         ->firstOrFail();
 
-    // **FIX: Ambil video questions menggunakan model yang benar**
-    $videoQuestions = [];
-    try {
-        $videoQuestions = VideoQuestion::where('material_id', $materialRecord->id)
-            ->orderBy('order')
-            ->get();
-    } catch (\Exception $e) {
-        Log::error('Error loading video questions: ' . $e->getMessage());
-        $videoQuestions = [];
-    }
+    // Cek content types
+    $contentTypes = $this->getContentTypes($materialRecord->learning_objectives);
+    $hasVideo = in_array('video', $contentTypes);
     
-    // **FIX: Siapkan data video dengan benar**
+    if (!$hasVideo) {
+        return redirect()->back()
+            ->with('error', 'Material ini tidak memiliki video.');
+    }
+
+    // **PERBAIKAN: Siapkan data video dengan benar**
     $videoData = $this->prepareVideoData($materialRecord);
     
-    // **DEBUG: Log informasi video**
-    Log::info('Video Debug Info:', [
+    // Debug
+    Log::info('Video Data for View:', [
         'material_id' => $materialRecord->id,
-        'video_type' => $videoData['type'],
-        'embed_url' => $videoData['embed_url'],
-        'has_direct_link' => !empty($videoData['direct_link']),
-        'video_questions_count' => count($videoQuestions)
+        'video_type' => $videoData['type'] ?? 'unknown',
+        'is_available' => $videoData['is_available'] ?? false,
+        'direct_link' => $videoData['direct_link'] ?? null,
+        'embed_url' => $videoData['embed_url'] ?? null,
+        'has_video_data' => !empty($materialRecord->video_file)
     ]);
+    
+    // Jika video tidak available, redirect dengan error
+    if (!$videoData['is_available'] ?? false) {
+        return redirect()->back()
+            ->with('error', 'Video tidak tersedia. Silakan hubungi administrator.')
+            ->with('debug_info', json_encode($videoData));
+    }
     
     // Get progress
     $progress = MaterialProgress::where('user_id', $user->id)
@@ -1029,8 +1147,8 @@ class KursusController extends Controller
             'user_id' => $user->id,
             'material_id' => $material,
             'video_status' => 'in_progress',
-            'material_status' => empty($materialRecord->file_path) ? 'completed' : 'pending',
-            'attendance_status' => ($materialRecord->attendance_required ?? true) ? 'pending' : 'completed'
+            'material_status' => 'pending',
+            'attendance_status' => 'pending'
         ]);
     }
 
@@ -1038,195 +1156,738 @@ class KursusController extends Controller
         'kursus' => $enrollment->kursus,
         'material' => $materialRecord,
         'videoData' => $videoData,
-        'videoQuestions' => $videoQuestions,
+        'videoQuestions' => [], // Optional: tambahkan jika ada
         'progress' => $progress
     ]);
 }
 
+    /**
+     * PERBAIKAN BESAR: Method prepareVideoData sesuai dengan admin controller
+     */
+    /**
+
+ */
 private function prepareVideoData($material)
 {
-    $videoData = [
-        'type' => $material->video_type ?? 'external',
-        'url' => $material->video_url,
-        'embed_url' => null,
-        'direct_link' => null,
+    $videoType = $material->video_type ?? 'unknown';
+    
+    // Default result
+    $result = [
+        'type' => $videoType,
+        'is_available' => false,
+        'url' => '',
+        'embed_url' => '',
+        'direct_link' => '',
+        'player_type' => 'html5',
+        'is_local' => false,
         'is_hosted' => false,
-        'drive_data' => null,
-        'player_config' => $material->player_config ? json_decode($material->player_config, true) : [],
-        'duration' => $material->duration,
-        'auto_play' => false,
-        'controls' => true,
-        'loading' => 'lazy'
     ];
     
-    // **FIX UTAMA: Video dari Google Drive**
-    if ($material->video_type === 'hosted' && $material->video_file) {
-        try {
-            $videoInfo = json_decode($material->video_file, true);
+    // Cek ketersediaan berdasarkan tipe
+    if ($videoType === 'local') {
+        $videoFile = $this->safeJsonDecode($material->video_file);
+        
+        Log::info('Local Video Data Debug:', [
+            'material_id' => $material->id,
+            'video_file_decoded' => $videoFile,
+            'is_array' => is_array($videoFile),
+            'has_path' => is_array($videoFile) && isset($videoFile['path'])
+        ]);
+        
+        if (is_array($videoFile) && isset($videoFile['path'])) {
+            $path = $videoFile['path'];
             
-            if ($videoInfo && is_array($videoInfo)) {
-                $videoData['is_hosted'] = true;
-                $videoData['drive_data'] = $videoInfo;
+            $fileExists = Storage::disk('public')->exists($path);
+            Log::info('Video File Check:', [
+                'path' => $path,
+                'exists' => $fileExists,
+                'full_path' => $fileExists ? Storage::disk('public')->path($path) : 'not found'
+            ]);
+            
+            if ($fileExists) {
+                $result['is_available'] = true;
+                $result['path'] = $path;
+                $result['direct_link'] = Storage::disk('public')->url($path);
+                $result['url'] = $result['direct_link'];
+                $result['player_type'] = 'html5';
+                $result['is_local'] = true;
+                $result['mime_type'] = mime_content_type(Storage::disk('public')->path($path)) ?: 'video/mp4';
                 
-                // **Ekstrak file ID dari berbagai kemungkinan**
-                $fileId = null;
-                
-                // Format 1: Dari field file_id
-                if (isset($videoInfo['file_id'])) {
-                    $fileId = $videoInfo['file_id'];
-                }
-                // Format 2: Dari field id
-                elseif (isset($videoInfo['id'])) {
-                    $fileId = $videoInfo['id'];
-                }
-                // Format 3: Dari web_view_link
-                elseif (isset($videoInfo['web_view_link'])) {
-                    $patterns = [
-                        '/\/d\/([a-zA-Z0-9_-]+)/',
-                        '/id=([a-zA-Z0-9_-]+)/',
-                        '/file\/d\/([a-zA-Z0-9_-]+)/'
-                    ];
-                    
-                    foreach ($patterns as $pattern) {
-                        if (preg_match($pattern, $videoInfo['web_view_link'], $matches)) {
-                            $fileId = $matches[1];
-                            break;
-                        }
-                    }
-                }
-                
-                if ($fileId) {
-                    // **FORMAT EMBED URL YANG BENAR**
-                    $embedUrl = "https://drive.google.com/file/d/{$fileId}/preview";
-                    
-                    // Tambahkan parameter untuk mencegah isu
-                    $embedUrl .= "?autoplay=0&controls=1&modestbranding=1&rel=0&showinfo=0&enablejsapi=1";
-                    
-                    $videoData['embed_url'] = $embedUrl;
-                    
-                    // Direct link untuk fallback
-                    $videoData['direct_link'] = "https://drive.google.com/uc?export=download&id={$fileId}";
-                    
-                    Log::info('Google Drive Video Prepared:', [
-                        'file_id' => $fileId,
-                        'embed_url' => $embedUrl,
-                        'direct_link' => $videoData['direct_link']
-                    ]);
-                } else {
-                    Log::warning('Cannot extract file ID from video info', $videoInfo);
-                    
-                    // Fallback: coba gunakan web_view_link langsung
-                    if (isset($videoInfo['web_view_link'])) {
-                        $videoData['embed_url'] = $videoInfo['web_view_link'];
-                    }
-                }
-                
-                // Set URL utama
-                $videoData['url'] = $videoInfo['web_view_link'] ?? $material->video_url;
+                // **SIMPLE VIDEO TAG - HAPUS ROUTE KOMPLIKASI**
+                $result['video_tag'] = '<video id="custom-video-player" controls preload="auto" style="width:100%;height:100%;">
+                    <source src="' . $result['direct_link'] . '" type="' . $result['mime_type'] . '">
+                    Browser Anda tidak mendukung pemutaran video.
+                </video>';
             }
-        } catch (\Exception $e) {
-            Log::error('Error preparing Google Drive video: ' . $e->getMessage());
+        }
+        
+    } elseif ($videoType === 'youtube') {
+        // YouTube
+        if (!empty($material->video_url)) {
+            $result['is_available'] = true;
+            $result['url'] = $material->video_url;
+            $result['embed_url'] = $this->getYouTubeEmbedUrl($material->video_url);
+            $result['player_type'] = 'youtube';
+        }
+        
+    } elseif ($videoType === 'hosted') {
+        // Google Drive
+        $videoFile = $this->safeJsonDecode($material->video_file);
+        if ($videoFile && isset($videoFile['embed_link'])) {
+            $result['is_available'] = true;
+            $result['embed_url'] = $videoFile['embed_link'];
+            $result['direct_link'] = $videoFile['web_view_link'] ?? $videoFile['embed_link'];
+            $result['url'] = $result['direct_link'];
+            $result['player_type'] = 'drive';
+            $result['is_hosted'] = true;
         }
     }
     
-    // YouTube
-    if ($material->video_type === 'youtube' && $material->video_url) {
-        $videoId = $this->extractYouTubeId($material->video_url);
-        if ($videoId) {
-            $videoData['embed_url'] = "https://www.youtube-nocookie.com/embed/{$videoId}?rel=0&controls=1&showinfo=0&modestbranding=1";
-        }
-    }
+    // Tambahkan player config
+    $playerConfig = $this->safeJsonDecode($material->player_config, []);
+    $result['player_config'] = $playerConfig;
     
-    // Vimeo
-    if ($material->video_type === 'vimeo' && $material->video_url) {
-        $videoId = $this->extractVimeoId($material->video_url);
-        if ($videoId) {
-            $videoData['embed_url'] = "https://player.vimeo.com/video/{$videoId}?title=0&byline=0&portrait=0&dnt=1";
-        }
-    }
+    Log::info('Final Video Data:', [
+        'material_id' => $material->id,
+        'type' => $result['type'],
+        'is_available' => $result['is_available'],
+        'player_type' => $result['player_type'],
+        'has_direct_link' => !empty($result['direct_link']),
+        'has_embed_url' => !empty($result['embed_url'])
+    ]);
     
-    // Fallback untuk URL embed
-    if (!$videoData['embed_url'] && $material->video_url) {
-        $videoData['embed_url'] = $material->video_url;
-    }
-    
-    // Fallback untuk direct link jika belum ada
-    if (!$videoData['direct_link'] && $material->video_url) {
-        $videoData['direct_link'] = $material->video_url;
-    }
-    
-    // Validasi URL
-    if ($videoData['embed_url'] && !filter_var($videoData['embed_url'], FILTER_VALIDATE_URL)) {
-        Log::warning('Invalid embed URL detected: ' . $videoData['embed_url']);
-        $videoData['embed_url'] = null;
-    }
-    
-    return $videoData;
+    return $result;
 }
 
-public function completeVideo(Request $request, $kursus, $material)
+public function quickFixVideo($materialId)
 {
     try {
-        $user = Auth::user();
+        $material = Materials::findOrFail($materialId);
         
-        // Update progress
-        $progress = MaterialProgress::where('user_id', $user->id)
-            ->where('material_id', $material)
-            ->first();
-        
-        if ($progress) {
-            $progress->video_status = 'completed';
-            $progress->video_progress = 100;
-            $progress->save();
-        } else {
-            MaterialProgress::create([
-                'user_id' => $user->id,
-                'material_id' => $material,
-                'video_status' => 'completed',
-                'video_progress' => 100,
-                'material_status' => 'pending',
-                'attendance_status' => 'pending'
-            ]);
+        if ($material->video_type === 'local' && !empty($material->video_file)) {
+            $videoData = $this->safeJsonDecode($material->video_file);
+            
+            if (is_array($videoData) && isset($videoData['path'])) {
+                $path = $videoData['path'];
+                
+                // Cek jika file ada
+                if (Storage::disk('public')->exists($path)) {
+                    // Update dengan URL langsung
+                    $material->video_file = json_encode([
+                        'type' => 'local',
+                        'path' => $path,
+                        'url' => Storage::disk('public')->url($path),
+                        'size' => Storage::disk('public')->size($path),
+                        'mime_type' => mime_content_type(Storage::disk('public')->path($path)) ?: 'video/mp4',
+                        'direct_play' => true
+                    ]);
+                    $material->save();
+                    
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Video data fixed!',
+                        'url' => Storage::disk('public')->url($path)
+                    ]);
+                }
+            }
         }
-
-        // Cek dan unlock material berikutnya
-        $this->checkAndUnlockNextMaterial($user->id, $material, $kursus);
-
-        // Update enrollment progress
-        $this->updateEnrollmentProgress($user->id, $kursus);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Video berhasil ditandai sebagai selesai'
-        ]);
-
-    } catch (\Exception $e) {
-        Log::error('Error completing video:', [
-            'error' => $e->getMessage(),
-            'user_id' => Auth::id(),
-            'material' => $material
-        ]);
-
+        
         return response()->json([
             'success' => false,
-            'message' => 'Gagal menandai video selesai'
+            'message' => 'Video data not fixed'
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error: ' . $e->getMessage()
         ], 500);
     }
 }
 
-    private function extractYouTubeId($url)
-    {
-        preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', $url, $matches);
-        return $matches[1] ?? null;
+/**
+ * Helper untuk mendapatkan YouTube embed URL
+ */
+private function getYouTubeEmbedUrl($url)
+{
+    if (preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', $url, $matches)) {
+        return 'https://www.youtube.com/embed/' . $matches[1];
     }
+    return $url;
+}
+
+/**
+ * Ganti method getMaterialsWithStatus untuk bagian video:
+ */
+private function getMaterialsWithStatus($materials, $user, $kursusId)
+{
+    $processedMaterials = [];
+    
+    // Ambil semua progress user untuk kursus ini
+    $userProgress = MaterialProgress::where('user_id', $user->id)
+        ->whereIn('material_id', $materials->pluck('id'))
+        ->get()
+        ->keyBy('material_id');
+    
+    foreach ($materials->sortBy('order') as $index => $material) {
+        // Skip jika materi tidak aktif
+        if (!$material->is_active) {
+            continue;
+        }
+        
+        $progress = $userProgress[$material->id] ?? null;
+        
+        // Dapatkan content types dengan benar
+        $contentTypes = $this->getContentTypes($material->learning_objectives);
+
+        if (empty($contentTypes)) {
+            $contentTypes = $this->detectContentTypesFromMaterial($material);
+        }
+        
+        // LOGIKA PERBAIKAN: Deteksi jenis konten yang tersedia
+        $isPretest = in_array('pretest', $contentTypes);
+        $isPosttest = in_array('posttest', $contentTypes);
+        $isRecap = $material->type === 'recap';
+        
+        // Untuk materi biasa, cek content types
+        if (!$isPretest && !$isPosttest && !$isRecap) {
+            $hasFile = $this->hasFileContent($material, $contentTypes);
+            $hasVideo = $this->hasVideoContent($material, $contentTypes);
+            $hasAttendance = in_array('attendance', $contentTypes) || ($material->attendance_required ?? true);
+            
+            // **PERBAIKAN UTAMA: Gunakan method dari model untuk cek video availability**
+            $videoAvailable = $material->isVideoAvailable();
+            $videoType = $material->video_type ?? null;
+            
+            // Log untuk debugging
+            Log::info('Video availability check - USING MODEL:', [
+                'material_id' => $material->id,
+                'video_type' => $videoType,
+                'has_video_content' => $hasVideo,
+                'video_available' => $videoAvailable,
+                'model_method_result' => $material->isVideoAvailable(),
+                'learning_objectives' => $contentTypes
+            ]);
+            
+        } else {
+            // Untuk test/recap, set semua ke false
+            $hasFile = false;
+            $hasVideo = false;
+            $hasAttendance = false;
+            $videoAvailable = false;
+            $videoType = null;
+        }
+        
+        // Tentukan apakah material ini bisa diakses
+        $isAccessible = $this->canAccessMaterial($user->id, $kursusId, $material);
+        
+        // Tentukan apakah material ini sudah selesai
+        $isCompleted = $this->isMaterialCompleted($progress, $material);
+        
+        // Tentukan status
+        if ($isCompleted) {
+            $status = 'completed';
+            $statusClass = 'completed';
+        } elseif ($isAccessible) {
+            $status = 'current';
+            $statusClass = 'current';
+        } else {
+            $status = 'locked';
+            $statusClass = 'locked';
+        }
+        
+        // Get specific status
+        $attendanceStatus = $progress ? ($progress->attendance_status ?? 'pending') : 'pending';
+        $materialStatus = $progress ? ($progress->material_status ?? 'pending') : 'pending';
+        $videoStatus = $progress ? ($progress->video_status ?? 'pending') : 'pending';
+        
+        // Untuk test types
+        $isTestCompleted = false;
+        $testScore = null;
+        
+        if (($isPretest || $isPosttest) && $progress) {
+            if ($isPretest && $progress->pretest_score !== null) {
+                $isTestCompleted = true;
+                $testScore = $progress->pretest_score;
+            } elseif ($isPosttest && $progress->posttest_score !== null) {
+                $isTestCompleted = true;
+                $testScore = $progress->posttest_score;
+            }
+        }
+
+        // File handling
+        $downloadedFiles = [];
+        $filePaths = [];
+        $totalFiles = 0;
+        
+        if ($hasFile && !empty($material->file_path)) {
+            $filePaths = $this->parseFilePath($material->file_path);
+            $totalFiles = count($filePaths);
+            
+            if ($progress && $progress->downloaded_files) {
+                $downloadedFiles = $this->safeJsonDecode($progress->downloaded_files, []);
+            }
+        }
+        
+        // Parse player_config
+        $playerConfig = $this->safeJsonDecode($material->player_config, []);
+        
+        // Parse soal test jika ada
+        $soalTest = null;
+        if ($isPretest && !empty($material->soal_pretest)) {
+            $soalTest = $this->safeJsonDecode($material->soal_pretest);
+        } elseif ($isPosttest && !empty($material->soal_posttest)) {
+            $soalTest = $this->safeJsonDecode($material->soal_posttest);
+        }
+        
+        // Determine material type
+        $materialType = $material->type;
+        if ($isPretest) {
+            $materialType = 'pre_test';
+        } elseif ($isPosttest) {
+            $materialType = 'post_test';
+        } elseif ($isRecap) {
+            $materialType = 'recap';
+        }
+        
+        // **PERBAIKAN: Gunakan prepareVideoData yang sudah diperbaiki**
+        $preparedVideoData = null;
+        if ($videoAvailable) {
+            $preparedVideoData = $this->prepareVideoData($material);
+            
+            // Log hasil prepare video data
+            Log::info('Prepared Video Data Result - FINAL:', [
+                'material_id' => $material->id,
+                'is_available' => $preparedVideoData['is_available'] ?? false,
+                'player_type' => $preparedVideoData['player_type'] ?? 'unknown',
+                'has_embed_url' => !empty($preparedVideoData['embed_url']),
+                'embed_url_exists' => isset($preparedVideoData['embed_url']),
+                'direct_link_exists' => isset($preparedVideoData['direct_link'])
+            ]);
+        } else {
+            Log::warning('Video not available for material', [
+                'material_id' => $material->id,
+                'title' => $material->title,
+                'video_type' => $videoType,
+                'has_video' => $hasVideo,
+                'video_available' => $videoAvailable,
+                'is_video_available_method' => $material->isVideoAvailable()
+            ]);
+        }
+        
+        $processedMaterials[] = [
+            'id' => $material->id,
+            'title' => $material->title,
+            'description' => $material->description,
+            'order' => $material->order,
+            'type' => $materialType,
+            'status' => $status,
+            'status_class' => $statusClass,
+            'attendance_status' => $attendanceStatus,
+            'material_status' => $materialStatus,
+            'video_status' => $videoStatus,
+            'is_test_completed' => $isTestCompleted,
+            'test_score' => $testScore,
+            'soal_test' => $soalTest,
+            'durasi_pretest' => $material->durasi_pretest,
+            'durasi_posttest' => $material->durasi_posttest,
+            'passing_grade' => $material->passing_grade ?? 70,
+            'file_path' => $material->file_path,
+            'file_paths' => $filePaths,
+            'total_files' => $totalFiles,
+            'video_url' => $material->video_url,
+            'video_type' => $videoType,
+            'video_data' => $preparedVideoData,
+            'player_config' => $playerConfig,
+            'allow_skip' => $material->allow_skip ?? false,
+            'downloaded_files' => $downloadedFiles,
+            // Konten yang tersedia
+            'has_file' => $hasFile && $totalFiles > 0,
+            'has_video' => $videoAvailable, // Gunakan $videoAvailable
+            'has_attendance' => $hasAttendance,
+            'is_pretest' => $isPretest,
+            'is_posttest' => $isPosttest,
+            'is_recap' => $isRecap,
+            'attendance_required' => $hasAttendance,
+            'duration' => $material->duration ?? 0,
+            'has_video_questions' => $material->has_video_questions ?? false,
+            'question_count' => $material->question_count ?? 0,
+            'total_video_points' => $material->total_video_points ?? 0,
+            'require_video_completion' => $material->require_video_completion ?? true,
+        ];
+    }
+    
+    return $processedMaterials;
+}
+
+/**
+ * Tambahkan method untuk fix existing data
+ */
+public function fixMaterialVideos()
+{
+    try {
+        $materials = Materials::whereIn('video_type', ['hosted', 'local'])
+            ->get();
+        
+        $fixedCount = 0;
+        $errorCount = 0;
+        $details = [];
+        
+        foreach ($materials as $material) {
+            try {
+                $videoFile = $material->video_file;
+                $videoFileOriginal = $videoFile;
+                
+                // CASE 1: String kosong atau "null"
+                if ($videoFile === '' || $videoFile === 'null' || $videoFile === null) {
+                    $material->video_file = null;
+                    $material->save();
+                    $fixedCount++;
+                    $details[] = "Material {$material->id}: Set null for empty string";
+                    continue;
+                }
+                
+                // CASE 2: String tapi bukan JSON valid
+                if (is_string($videoFile)) {
+                    $decoded = json_decode($videoFile, true);
+                    
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        // Try to fix common issues
+                        $fixedJson = $this->fixJsonString($videoFile);
+                        if ($fixedJson) {
+                            $material->video_file = json_decode($fixedJson, true);
+                            $material->save();
+                            $fixedCount++;
+                            $details[] = "Material {$material->id}: Fixed invalid JSON";
+                        } else {
+                            $material->video_file = null;
+                            $material->save();
+                            $fixedCount++;
+                            $details[] = "Material {$material->id}: Set null for unfixable JSON";
+                        }
+                    } elseif (is_array($decoded)) {
+                        // Valid JSON, save as array
+                        $material->video_file = $decoded;
+                        $material->save();
+                        $fixedCount++;
+                        $details[] = "Material {$material->id}: Saved valid JSON as array";
+                    }
+                }
+                
+                // CASE 3: Sudah array, simpan ulang untuk validasi
+                elseif (is_array($videoFile)) {
+                    $material->video_file = $videoFile;
+                    $material->save();
+                    $fixedCount++;
+                    $details[] = "Material {$material->id}: Re-saved array data";
+                }
+                
+            } catch (\Exception $e) {
+                $errorCount++;
+                $details[] = "Material {$material->id}: ERROR - " . $e->getMessage();
+                Log::error('Error fixing video_file for material ' . $material->id . ': ' . $e->getMessage());
+            }
+        }
+        
+        return response()->json([
+            'success' => true,
+            'message' => "Fixed $fixedCount materials, $errorCount errors",
+            'total_materials' => count($materials),
+            'fixed_count' => $fixedCount,
+            'error_count' => $errorCount,
+            'details' => $details
+        ]);
+        
+    } catch (\Exception $e) {
+        Log::error('Error in fixMaterialVideos: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Error: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
+/**
+ * Helper untuk fix JSON string
+ */
+private function fixJsonString($jsonString)
+{
+    if (empty($jsonString)) {
+        return null;
+    }
+    
+    // Coba beberapa fix strategies
+    $strategies = [
+        // Strategy 1: Remove trailing commas
+        function($str) {
+            return preg_replace('/,\s*([\]}])/', '$1', $str);
+        },
+        
+        // Strategy 2: Fix unquoted keys
+        function($str) {
+            return preg_replace('/(\w+):/', '"$1":', $str);
+        },
+        
+        // Strategy 3: Fix single quotes to double quotes
+        function($str) {
+            $result = str_replace("'", '"', $str);
+            // Unescape any escaped single quotes that became escaped double quotes
+            $result = str_replace('\"', '"', $result);
+            return $result;
+        },
+        
+        // Strategy 4: Try to decode as array and re-encode
+        function($str) {
+            $data = @unserialize($str);
+            if ($data !== false) {
+                return json_encode($data);
+            }
+            return null;
+        }
+    ];
+    
+    $currentString = $jsonString;
+    
+    foreach ($strategies as $strategy) {
+        $fixed = $strategy($currentString);
+        if ($fixed && $fixed !== $currentString) {
+            // Test if fixed version is valid JSON
+            json_decode($fixed);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                return $fixed;
+            }
+        }
+    }
+    
+    return null;
+}
+
+private function generateVideoToken($materialId, $userId)
+{
+    $secret = config('app.key');
+    $timestamp = time();
+    $data = $materialId . $userId . $secret . $timestamp;
+    return hash('sha256', $data);
+}
 
     /**
-     * Extract Vimeo video ID from URL
+     * Get video stream untuk video lokal (protected)
      */
-    private function extractVimeoId($url)
+    public function streamVideo($kursus, $material, $token)
+{
+    try {
+        $user = Auth::user();
+        
+        // Validasi token
+        $expectedToken = $this->generateVideoToken($material, $user->id);
+        if ($token !== $expectedToken) {
+            abort(403, 'Unauthorized access to video');
+        }
+        
+        // Cek enrollment
+        Enrollment::where('user_id', $user->id)
+            ->where('kursus_id', $kursus)
+            ->firstOrFail();
+        
+        // Ambil materi
+        $materialRecord = Materials::where('is_active', true)
+            ->where('id', $material)
+            ->where('course_id', $kursus)
+            ->firstOrFail();
+        
+        // Pastikan video lokal
+        if ($materialRecord->video_type !== 'local') {
+            abort(404, 'Not a local video');
+        }
+        
+        // Dapatkan path video dari video_file
+        $videoInfo = $this->safeJsonDecode($materialRecord->video_file);
+        if (!$videoInfo || !isset($videoInfo['path'])) {
+            abort(404, 'Video path not found');
+        }
+        
+        $videoPath = $videoInfo['path'];
+        
+        // Validasi file exists
+        if (!Storage::disk('public')->exists($videoPath)) {
+            Log::error('Video file not found in storage:', [
+                'path' => $videoPath,
+                'full_path' => Storage::disk('public')->path($videoPath)
+            ]);
+            abort(404, 'Video file not found');
+        }
+        
+        $fullPath = Storage::disk('public')->path($videoPath);
+        
+        // Dapatkan mime type
+        $mimeType = mime_content_type($fullPath);
+        if (!$mimeType) {
+            $mimeType = 'video/mp4'; // Default fallback
+        }
+        
+        $fileSize = filesize($fullPath);
+        
+        // Handle range requests (untuk streaming)
+        $range = request()->header('Range');
+        
+        if ($range) {
+            // Parse range header
+            list($param, $range) = explode('=', $range);
+            if (strtolower(trim($param)) !== 'bytes') {
+                abort(400, 'Invalid range parameter');
+            }
+            
+            list($from, $to) = explode('-', $range);
+            $from = intval($from);
+            $to = ($to === '') ? $fileSize - 1 : intval($to);
+            
+            $length = $to - $from + 1;
+            
+            header('HTTP/1.1 206 Partial Content');
+            header("Content-Range: bytes $from-$to/$fileSize");
+            header("Content-Length: $length");
+        } else {
+            header("Content-Length: $fileSize");
+        }
+        
+        header("Content-Type: $mimeType");
+        header('Accept-Ranges: bytes');
+        header('Cache-Control: private, max-age=31536000');
+        header('X-Accel-Buffering: no'); // Important for streaming
+        
+        // Stream video file
+        $stream = fopen($fullPath, 'rb');
+        
+        if ($range) {
+            fseek($stream, $from);
+            
+            $remaining = $length;
+            while (!feof($stream) && $remaining > 0) {
+                $chunkSize = min(1024 * 8, $remaining);
+                echo fread($stream, $chunkSize);
+                $remaining -= $chunkSize;
+                flush();
+            }
+        } else {
+            while (!feof($stream)) {
+                echo fread($stream, 1024 * 8);
+                flush();
+            }
+        }
+        
+        fclose($stream);
+        exit;
+        
+    } catch (\Exception $e) {
+        Log::error('Error streaming video: ' . $e->getMessage(), [
+            'kursus' => $kursus,
+            'material' => $material,
+            'error' => $e->getTraceAsString()
+        ]);
+        abort(404, 'Video stream error');
+    }
+}
+
+    public function getVideoInfo($kursus, $material)
     {
-        preg_match('/vimeo\.com\/(?:video\/)?(\d+)/', $url, $matches);
-        return $matches[1] ?? null;
+        try {
+            $user = Auth::user();
+            
+            // Cek enrollment
+            Enrollment::where('user_id', $user->id)
+                ->where('kursus_id', $kursus)
+                ->firstOrFail();
+            
+            // Ambil materi
+            $materialRecord = Materials::where('is_active', true)
+                ->where('id', $material)
+                ->where('course_id', $kursus)
+                ->firstOrFail();
+            
+            $videoData = $this->prepareVideoData($materialRecord);
+            
+            return response()->json([
+                'success' => true,
+                'video_data' => $videoData,
+                'token' => $this->generateVideoToken($material, $user->id)
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error getting video info: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mendapatkan info video'
+            ], 500);
+        }
+    }
+
+    public function completeVideo(Request $request, $kursus, $material)
+    {
+        try {
+            $user = Auth::user();
+            
+            // Update progress
+            $progress = MaterialProgress::where('user_id', $user->id)
+                ->where('material_id', $material)
+                ->first();
+            
+            if ($progress) {
+                $progress->video_status = 'completed';
+                $progress->video_progress = 100;
+                $progress->save();
+            } else {
+                MaterialProgress::create([
+                    'user_id' => $user->id,
+                    'material_id' => $material,
+                    'video_status' => 'completed',
+                    'video_progress' => 100,
+                    'material_status' => 'pending',
+                    'attendance_status' => 'pending'
+                ]);
+            }
+
+            // Cek dan unlock material berikutnya
+            $this->checkAndUnlockNextMaterial($user->id, $material, $kursus);
+
+            // Update enrollment progress
+            $this->updateEnrollmentProgress($user->id, $kursus);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Video berhasil ditandai sebagai selesai'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error completing video:', [
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id(),
+                'material' => $material
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menandai video selesai'
+            ], 500);
+        }
+    }
+
+    private function extractYouTubeId($url)
+    {
+        $patterns = [
+            '/youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/',
+            '/youtu\.be\/([a-zA-Z0-9_-]+)/',
+            '/youtube\.com\/embed\/([a-zA-Z0-9_-]+)/',
+            '/youtube\.com\/v\/([a-zA-Z0-9_-]+)/'
+        ];
+        
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $url, $matches)) {
+                return $matches[1];
+            }
+        }
+        
+        return null;
     }
 
     public function updateVideoProgress(Request $request, $kursus, $material)
@@ -1257,12 +1918,10 @@ public function completeVideo(Request $request, $kursus, $material)
                 ->where('material_id', $material)
                 ->first();
             
+            // Get min watch percentage from player config
             $minWatchPercentage = 90; // Default 90%
             
-            if ($materialRecord->player_config) {
-                $playerConfig = json_decode($materialRecord->player_config, true);
-                $minWatchPercentage = $playerConfig['min_watch_percentage'] ?? 90;
-            }
+            $playerConfig = $this->safeJsonDecode($materialRecord->player_config, []);
             
             $isCompleted = $request->progress_percentage >= $minWatchPercentage;
             
@@ -1294,7 +1953,7 @@ public function completeVideo(Request $request, $kursus, $material)
             return response()->json([
                 'success' => true,
                 'progress' => $progress,
-                'is_completed' => $isCompleted
+                'is_completed' => $isCompleted,
             ]);
             
         } catch (\Exception $e) {
@@ -1311,114 +1970,87 @@ public function completeVideo(Request $request, $kursus, $material)
         }
     }
 
-// Tambahkan method ini di controller
-private function validateAndFixDriveUrl($url)
-{
-    if (!$url) {
-        return null;
-    }
-    
-    // Jika URL tidak valid, coba perbaiki
-    if (!filter_var($url, FILTER_VALIDATE_URL)) {
-        // Coba extract file ID dari berbagai format
-        preg_match('/\/d\/([a-zA-Z0-9_-]+)/', $url, $matches);
-        if (isset($matches[1])) {
-            return 'https://drive.google.com/file/d/' . $matches[1] . '/preview';
-        }
-        return null;
-    }
-    
-    // Pastikan URL menggunakan HTTPS
-    $url = str_replace('http://', 'https://', $url);
-    
-    // Jika sudah preview, return as is
-    if (strpos($url, '/preview') !== false) {
-        return $url;
-    }
-    
-    // Ubah view ke preview
-    if (strpos($url, '/view') !== false) {
-        return str_replace('/view', '/preview', $url);
-    }
-    
-    // Tambahkan /preview jika belum ada
-    if (strpos($url, '/file/d/') !== false && !strpos($url, '/preview') && !strpos($url, '/view')) {
-        return $url . '/preview';
-    }
-    
-    return $url;
-}
-
-
-    // MARK: - Test Methods
+    // MARK: - Test Methods sesuai dengan admin controller
     public function showTest($kursus, $material, $testType)
-{
-    Log::info('Show Test:', [
-        'kursus' => $kursus,
-        'material' => $material,
-        'test_type' => $testType,
-        'user_id' => Auth::id()
-    ]);
+    {
+        Log::info('Show Test:', [
+            'kursus' => $kursus,
+            'material' => $material,
+            'test_type' => $testType,
+            'user_id' => Auth::id()
+        ]);
 
-    $kursusRecord = Kursus::findOrFail($kursus);
-    
-    // HANYA ambil materi yang AKTIF
-    $materialRecord = Materials::where('is_active', true)
-                        ->where('id', $material)
-                        ->firstOrFail();
-    
-    $user = Auth::user();
+        $kursusRecord = Kursus::findOrFail($kursus);
+        
+        // HANYA ambil materi yang AKTIF
+        $materialRecord = Materials::where('is_active', true)
+                            ->where('id', $material)
+                            ->firstOrFail();
+        
+        $user = Auth::user();
 
-    // Validate test type
-    if ($materialRecord->type !== $testType) {
-        abort(404);
+        // Cek content types untuk menentukan jenis test
+        $contentTypes = $this->getContentTypes($materialRecord->learning_objectives);
+        $isPretest = in_array('pretest', $contentTypes);
+        $isPosttest = in_array('posttest', $contentTypes);
+        
+        // Validate test type
+        if (($testType === 'pretest' && !$isPretest) || ($testType === 'posttest' && !$isPosttest)) {
+            abort(404);
+        }
+
+        // Tentukan soal berdasarkan jenis test
+        if ($testType === 'pretest') {
+            $soalTest = $materialRecord->soal_pretest;
+            $durasi = $materialRecord->durasi_pretest;
+        } else {
+            $soalTest = $materialRecord->soal_posttest;
+            $durasi = $materialRecord->durasi_posttest;
+        }
+
+        // Validasi apakah soal tersedia
+        if (empty($soalTest)) {
+            return redirect()->route('mitra.kursus.show', $kursus)
+                ->with('error', 'Soal ' . $testType . ' belum tersedia.');
+        }
+
+        // Parse soal dari JSON menggunakan helper method
+        $soalTest = $this->safeJsonDecode($soalTest);
+        if (empty($soalTest)) {
+            return redirect()->route('mitra.kursus.show', $kursus)
+                ->with('error', 'Format soal tidak valid.');
+        }
+
+        // Check if user can access this test
+        if (!$this->canAccessMaterial($user->id, $kursus, $materialRecord)) {
+            return redirect()->route('mitra.kursus.show', $kursus)
+                ->with('error', 'Silakan selesaikan materi sebelumnya terlebih dahulu.');
+        }
+
+        // Cek apakah user sudah mengerjakan test ini
+        $progress = MaterialProgress::where('user_id', $user->id)
+            ->where('material_id', $material)
+            ->first();
+
+        if ($testType === 'pretest' && $progress && $progress->pretest_score !== null) {
+            return redirect()->route('mitra.kursus.show', $kursus)
+                ->with('info', 'Anda sudah mengerjakan pretest ini.');
+        }
+
+        if ($testType === 'posttest' && $progress && $progress->posttest_score !== null) {
+            return redirect()->route('mitra.kursus.show', $kursus)
+                ->with('info', 'Anda sudah mengerjakan posttest ini.');
+        }
+
+        return view('mitra.test', [
+            'kursus' => $kursusRecord,
+            'material' => $materialRecord,
+            'testType' => $testType,
+            'soalTest' => $soalTest,
+            'durasi' => $durasi,
+            'passing_grade' => $materialRecord->passing_grade ?? 70
+        ]);
     }
-
-    // Tentukan soal berdasarkan jenis test
-    if ($testType === 'pre_test') {
-        $soalTest = $materialRecord->soal_pretest;
-        $durasi = $materialRecord->durasi_pretest;
-    } else {
-        $soalTest = $materialRecord->soal_posttest;
-        $durasi = $materialRecord->durasi_posttest;
-    }
-
-    // Validasi apakah soal tersedia
-    if (empty($soalTest)) {
-        return redirect()->route('mitra.kursus.show', $kursus)
-            ->with('error', 'Soal ' . ($testType === 'pre_test' ? 'pretest' : 'posttest') . ' belum tersedia.');
-    }
-
-    // Check if user can access this test
-    if (!$this->canAccessMaterial($user->id, $kursus, $materialRecord)) {
-        return redirect()->route('mitra.kursus.show', $kursus)
-            ->with('error', 'Silakan selesaikan materi sebelumnya terlebih dahulu.');
-    }
-
-    // Cek apakah user sudah mengerjakan test ini
-    $progress = MaterialProgress::where('user_id', $user->id)
-        ->where('material_id', $material)
-        ->first();
-
-    if ($testType === 'pre_test' && $progress && $progress->pretest_score !== null) {
-        return redirect()->route('mitra.kursus.show', $kursus)
-            ->with('info', 'Anda sudah mengerjakan pretest ini.');
-    }
-
-    if ($testType === 'post_test' && $progress && $progress->posttest_score !== null) {
-        return redirect()->route('mitra.kursus.show', $kursus)
-            ->with('info', 'Anda sudah mengerjakan posttest ini.');
-    }
-
-    // PERBAIKAN: Kirim variabel dengan nama yang benar
-    return view('mitra.test', [
-        'kursus' => $kursusRecord,
-        'material' => $materialRecord, // Ini yang harusnya digunakan di view
-        'testType' => $testType,
-        'soalTest' => $soalTest,
-        'durasi' => $durasi
-    ]);
-}
 
     public function submitTest(Request $request, $kursus, $material, $testType)
     {
@@ -1435,7 +2067,12 @@ private function validateAndFixDriveUrl($url)
                                 ->findOrFail($material);
             $user = Auth::user();
 
-            if ($materialRecord->type !== $testType) {
+            // Cek content types
+            $contentTypes = $this->getContentTypes($materialRecord->learning_objectives);
+            $isPretest = in_array('pretest', $contentTypes);
+            $isPosttest = in_array('posttest', $contentTypes);
+            
+            if (($testType === 'pretest' && !$isPretest) || ($testType === 'posttest' && !$isPosttest)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Jenis test tidak sesuai'
@@ -1452,13 +2089,13 @@ private function validateAndFixDriveUrl($url)
             $score = 0;
 
             // Tentukan soal yang akan digunakan berdasarkan tipe test
-            if ($testType === 'pre_test') {
-                $soalTest = $materialRecord->soal_pretest;
-                $totalQuestions = count($materialRecord->soal_pretest ?? []);
+            if ($testType === 'pretest') {
+                $soalTest = $this->safeJsonDecode($materialRecord->soal_pretest, []);
             } else {
-                $soalTest = $materialRecord->soal_posttest;
-                $totalQuestions = count($materialRecord->soal_posttest ?? []);
+                $soalTest = $this->safeJsonDecode($materialRecord->soal_posttest, []);
             }
+
+            $totalQuestions = count($soalTest);
 
             // Validasi: pastikan ada soal yang tersedia
             if ($totalQuestions === 0) {
@@ -1479,7 +2116,7 @@ private function validateAndFixDriveUrl($url)
             }
 
             $finalScore = $totalQuestions > 0 ? ($score / $totalQuestions) * 100 : 0;
-            $isPassed = $finalScore >= $materialRecord->passing_grade;
+            $isPassed = $finalScore >= ($materialRecord->passing_grade ?? 70);
 
             // Save progress
             $progressData = [
@@ -1487,7 +2124,7 @@ private function validateAndFixDriveUrl($url)
                 'is_completed' => $isPassed ? 1 : 0
             ];
 
-            if ($testType === 'pre_test') {
+            if ($testType === 'pretest') {
                 $progressData['pretest_score'] = $finalScore;
                 $progressData['pretest_completed_at'] = now();
             } else {
@@ -1519,7 +2156,7 @@ private function validateAndFixDriveUrl($url)
                     'success' => true,
                     'score' => round($finalScore, 2),
                     'is_passed' => $isPassed,
-                    'passing_grade' => $materialRecord->passing_grade,
+                    'passing_grade' => $materialRecord->passing_grade ?? 70,
                     'total_questions' => $totalQuestions,
                     'correct_answers' => $score,
                     'answered_count' => count($userAnswers),
@@ -1739,40 +2376,40 @@ private function validateAndFixDriveUrl($url)
     }
 
     /**
- * Refresh status semua material dalam kursus
- */
-public function refreshAllMaterialsStatus($kursusId)
-{
-    try {
-        $user = Auth::user();
-        
-        $kursus = Kursus::where('status', 'aktif')
-            ->where('id', $kursusId)
-            ->with(['materials' => function($query) {
-                $query->where('is_active', true)
-                      ->orderBy('order');
-            }])
-            ->firstOrFail();
-        
-        $materials = $this->getMaterialsWithStatus($kursus->materials, $user, $kursusId);
-        
-        return response()->json([
-            'success' => true,
-            'materials' => $materials
-        ]);
-        
-    } catch (\Exception $e) {
-        Log::error('Error refreshing all materials status:', [
-            'error' => $e->getMessage(),
-            'kursus_id' => $kursusId
-        ]);
-        
-        return response()->json([
-            'success' => false,
-            'message' => 'Gagal refresh status material'
-        ], 500);
+     * Refresh status semua material dalam kursus
+     */
+    public function refreshAllMaterialsStatus($kursusId)
+    {
+        try {
+            $user = Auth::user();
+            
+            $kursus = Kursus::where('status', 'aktif')
+                ->where('id', $kursusId)
+                ->with(['materials' => function($query) {
+                    $query->where('is_active', true)
+                          ->orderBy('order');
+                }])
+                ->firstOrFail();
+            
+            $materials = $this->getMaterialsWithStatus($kursus->materials, $user, $kursusId);
+            
+            return response()->json([
+                'success' => true,
+                'materials' => $materials
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error refreshing all materials status:', [
+                'error' => $e->getMessage(),
+                'kursus_id' => $kursusId
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal refresh status material'
+            ], 500);
+        }
     }
-}
 
     public function getMaterialSubtasks($kursusId, $materialId)
     {
@@ -1828,8 +2465,8 @@ public function refreshAllMaterialsStatus($kursusId)
                 $statusClass = 'locked';
             }
             
-            // Parse file_path
-            $filePaths = json_decode($material->file_path, true) ?? [$material->file_path];
+            // Parse file_path dengan helper method
+            $filePaths = $this->parseFilePath($material->file_path);
             $totalFiles = count($filePaths);
             
             // Prepare material data
@@ -1888,7 +2525,11 @@ public function refreshAllMaterialsStatus($kursusId)
         
         $user = Auth::user();
 
-        if ($materialRecord->type !== 'recap') {
+        // Cek content types
+        $contentTypes = $this->getContentTypes($materialRecord->learning_objectives);
+        $isRecap = $materialRecord->type === 'recap';
+        
+        if (!$isRecap) {
             abort(404);
         }
 
@@ -1932,6 +2573,56 @@ public function refreshAllMaterialsStatus($kursusId)
 
         return $this->isMaterialCompleted($previousProgress, $previousMaterial);
     }
+<<<<<<< HEAD
+    
+    /**
+     * DEBUGGING METHOD: Get video data for specific material
+     */
+    public function debugMaterialVideo($materialId)
+    {
+        try {
+            $material = Materials::findOrFail($materialId);
+            
+            $rawData = [
+                'id' => $material->id,
+                'title' => $material->title,
+                'video_type' => $material->video_type,
+                'video_url' => $material->video_url,
+                'video_file_raw' => $material->video_file,
+                'video_file_decoded' => json_decode($material->video_file, true),
+                'json_error' => json_last_error(),
+                'json_error_msg' => json_last_error_msg(),
+                'learning_objectives' => json_decode($material->learning_objectives, true),
+                'is_active' => $material->is_active
+            ];
+            
+            $processedData = $this->prepareVideoData($material);
+            
+            // Check availability
+            $videoData = json_decode($material->video_file, true);
+            $isHostedAvailable = $this->isHostedVideoAvailable($videoData, $materialId);
+            
+            return response()->json([
+                'success' => true,
+                'raw_database_data' => $rawData,
+                'processed_video_data' => $processedData,
+                'availability_check' => [
+                    'is_hosted_available' => $isHostedAvailable,
+                    'video_data_keys' => is_array($videoData) ? array_keys($videoData) : null,
+                    'video_data_sample' => $videoData
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Debug material video error: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+=======
 
             public function daftar($id)
     {
@@ -1965,4 +2656,5 @@ public function refreshAllMaterialsStatus($kursusId)
     }
 
 
+>>>>>>> aeb232a879ee3019e46bd83769f8370d998319e9
 }

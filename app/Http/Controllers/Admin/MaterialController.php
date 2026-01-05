@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\MaterialProgress;
 use App\Models\Kursus;
 use App\Models\Materials;
 use App\Models\VideoQuestion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Log; // TAMBAH INI
 use Illuminate\Support\Str;
 use App\Models\UserVideoProgress;
 use Google\Client as GoogleClient;
@@ -77,8 +78,17 @@ class MaterialController extends Controller
     }
 
     public function store(Request $request, Kursus $kursus)
-    {
-        // Validasi dasar - HAPUS duration_video
+{
+    // TAMBAH INI DI AWAL: Deteksi apakah request AJAX
+    $isAjax = $request->ajax() || $request->wantsJson() || $request->header('X-Requested-With') == 'XMLHttpRequest';
+    
+    Log::info('Store Request Debug', [
+        'isAjax' => $isAjax,
+        'content_types' => $request->content_types ?? []
+    ]);
+
+    try {
+        // Validasi dasar
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -88,10 +98,10 @@ class MaterialController extends Controller
             'attendance_required' => 'boolean',
             'is_active' => 'boolean',
             
-            // Video specific validations - HAPUS duration_video
-            'video_type' => 'nullable|required_if:content_types,video|in:youtube,vimeo,hosted,external',
-            'video_url' => 'nullable|required_if:video_type,external,youtube,vimeo|url',
-            'video_file' => 'nullable|required_if:video_type,hosted|file|mimes:mp4,webm,avi,mov,wmv|max:102400',
+            // Video specific validations
+            'video_type' => 'nullable|required_if:content_types,video|in:youtube,hosted,local',
+            'video_url' => 'nullable|required_if:video_type,youtube|url',
+            'video_file' => 'nullable|required_if:video_type,hosted,local|file|mimes:mp4,webm,avi,mov,wmv,mkv|max:102400',
             'allow_skip' => 'boolean',
             
             // Player config validations
@@ -99,7 +109,6 @@ class MaterialController extends Controller
             'disable_backward_seek' => 'boolean',
             'disable_right_click' => 'boolean',
             'require_completion' => 'boolean',
-            'min_watch_percentage' => 'nullable|integer|min:50|max:100',
             'auto_pause_on_question' => 'boolean',
             'require_question_completion' => 'boolean',
             
@@ -120,6 +129,12 @@ class MaterialController extends Controller
         $errorMessage = $this->validateContentTypeCombination($contentTypes);
         
         if ($errorMessage) {
+            if ($isAjax) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage
+                ], 422);
+            }
             return redirect()->back()
                 ->withInput()
                 ->with('error', $errorMessage);
@@ -157,7 +172,7 @@ class MaterialController extends Controller
             ]);
         }
 
-        // Handle multiple file uploads (tetap di local storage)
+        // Handle multiple file uploads
         $filePaths = [];
         if (in_array('file', $contentTypes) && $request->hasFile('file_path')) {
             foreach ($request->file('file_path') as $file) {
@@ -165,30 +180,195 @@ class MaterialController extends Controller
             }
         }
 
-        // Handle video upload ke Google Drive jika video_type = hosted
-        $videoInfo = null;
-        $videoDuration = 0;
+        // ============================================
+        // PERBAIKAN BESAR: VIDEO HANDLING SECTION
+        // ============================================
         
-        if (in_array('video', $contentTypes) && $request->video_type === 'hosted' && $request->hasFile('video_file')) {
+        $videoData = null;
+        $videoDuration = 0;
+        $videoFilePath = null;
+
+        if (in_array('video', $contentTypes)) {
             try {
-                $videoFile = $request->file('video_file');
-                $videoInfo = $this->uploadToGoogleDrive($videoFile);
+                $videoType = $request->video_type;
+                Log::info('Processing video upload', [
+                    'video_type' => $videoType,
+                    'has_file' => $request->hasFile('video_file')
+                ]);
                 
-                if ($videoInfo) {
-                    $videoInfo = json_encode($videoInfo);
-                } else {
-                    throw new \Exception('Gagal upload video ke Google Drive');
+                // YouTube videos
+                if ($videoType === 'youtube') {
+                    // Validasi URL YouTube
+                    if (!$this->isValidYouTubeUrl($request->video_url)) {
+                        if ($isAjax) {
+                            return response()->json([
+                                'success' => false,
+                                'message' => 'URL YouTube tidak valid.'
+                            ], 422);
+                        }
+                        
+                        return redirect()->back()
+                            ->withInput()
+                            ->with('error', 'URL YouTube tidak valid.');
+                    }
+                    
+                    $videoData = null; // YouTube tidak menyimpan video_data
+                    Log::info('YouTube video configured', ['url' => $request->video_url]);
+                }
+                
+                // Google Drive (hosted) videos
+                elseif ($videoType === 'hosted' && $request->hasFile('video_file')) {
+                    $videoFile = $request->file('video_file');
+                    
+                    // Validasi file
+                    if (!$videoFile->isValid()) {
+                        throw new \Exception('File video tidak valid atau corrupt');
+                    }
+                    
+                    Log::info('Uploading to Google Drive', [
+                        'original_name' => $videoFile->getClientOriginalName(),
+                        'size' => $videoFile->getSize(),
+                        'mime_type' => $videoFile->getMimeType()
+                    ]);
+                    
+                    // Upload ke Google Drive
+                    $driveInfo = $this->uploadToGoogleDrive($videoFile);
+                    
+                    if (!$driveInfo || !is_array($driveInfo)) {
+                        throw new \Exception('Gagal upload video ke Google Drive. Response tidak valid.');
+                    }
+                    
+                    // Validasi response dari Google Drive
+                    if (empty($driveInfo['file_id'])) {
+                        Log::error('Google Drive response missing file_id', $driveInfo);
+                        throw new \Exception('Response dari Google Drive tidak lengkap.');
+                    }
+                    
+                    // **PERBAIKAN: Buat struktur data yang konsisten dan valid JSON**
+                    $videoData = [
+                        'type' => 'hosted',
+                        'file_id' => $driveInfo['file_id'] ?? null,
+                        'file_name' => $driveInfo['file_name'] ?? $videoFile->getClientOriginalName(),
+                        'original_name' => $driveInfo['original_name'] ?? $videoFile->getClientOriginalName(),
+                        'web_view_link' => $driveInfo['web_view_link'] ?? null,
+                        'web_content_link' => $driveInfo['web_content_link'] ?? null,
+                        'embed_link' => $driveInfo['embed_link'] ?? 'https://drive.google.com/file/d/' . $driveInfo['file_id'] . '/preview',
+                        'thumbnail_link' => $driveInfo['thumbnail_link'] ?? null,
+                        'size' => $driveInfo['size'] ?? $videoFile->getSize(),
+                        'mime_type' => $driveInfo['mime_type'] ?? $videoFile->getMimeType(),
+                        'uploaded_at' => now()->toDateTimeString(),
+                        'direct_play' => true,
+                    ];
+                    
+                    // Hapus null values
+                    $videoData = array_filter($videoData, function($value) {
+                        return $value !== null;
+                    });
+                    
+                    // Validasi JSON sebelum disimpan
+                    $jsonTest = json_encode($videoData);
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        Log::error('JSON encode error for video_data', [
+                            'error' => json_last_error_msg(),
+                            'data' => $videoData
+                        ]);
+                        throw new \Exception('Gagal membuat data JSON video: ' . json_last_error_msg());
+                    }
+                    
+                    Log::info('Google Drive upload successful', [
+                        'file_id' => $driveInfo['file_id'],
+                        'embed_link' => $videoData['embed_link']
+                    ]);
+                }
+                
+                // Local videos
+                elseif ($videoType === 'local' && $request->hasFile('video_file')) {
+                    $videoFile = $request->file('video_file');
+                    
+                    // Validasi file
+                    if (!$videoFile->isValid()) {
+                        throw new \Exception('File video tidak valid atau corrupt');
+                    }
+                    
+                    Log::info('Uploading local video', [
+                        'original_name' => $videoFile->getClientOriginalName(),
+                        'size' => $videoFile->getSize(),
+                        'mime_type' => $videoFile->getMimeType()
+                    ]);
+                    
+                    // Simpan ke storage lokal
+                    $videoFilePath = $videoFile->store('videos', 'public');
+                    
+                    if (!$videoFilePath) {
+                        throw new \Exception('Gagal menyimpan video ke storage lokal');
+                    }
+                    
+                    // Dapatkan durasi video
+                    $videoDuration = $this->getVideoDuration($videoFile);
+                    
+                    // **PERBAIKAN: Buat struktur data yang konsisten dan valid JSON**
+                    $videoData = [
+                        'type' => 'local',
+                        'path' => $videoFilePath,
+                        'url' => Storage::url($videoFilePath),
+                        'size' => Storage::disk('public')->size($videoFilePath),
+                        'duration' => $videoDuration,
+                        'original_name' => $videoFile->getClientOriginalName(),
+                        'uploaded_at' => now()->toDateTimeString(),
+                        'direct_play' => true,
+                    ];
+                    
+                    // Validasi JSON sebelum disimpan
+                    $jsonTest = json_encode($videoData);
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        // Hapus file jika JSON invalid
+                        Storage::disk('public')->delete($videoFilePath);
+                        Log::error('JSON encode error for local video', [
+                            'error' => json_last_error_msg(),
+                            'data' => $videoData
+                        ]);
+                        throw new \Exception('Gagal membuat data JSON video lokal: ' . json_last_error_msg());
+                    }
+                    
+                    Log::info('Local video upload successful', [
+                        'path' => $videoFilePath,
+                        'url' => $videoData['url'],
+                        'duration' => $videoDuration
+                    ]);
+                }
+                
+                // Video type tidak valid
+                else {
+                    throw new \Exception('Tipe video tidak didukung atau file tidak diupload');
                 }
                 
             } catch (\Exception $e) {
-                Log::error('Error uploading video to Google Drive: ' . $e->getMessage());
+                Log::error('Error processing video upload: ' . $e->getMessage());
+                Log::error('Stack trace: ' . $e->getTraceAsString());
+                
+                // Hapus file yang sudah diupload jika ada error
+                if (isset($videoFilePath) && $videoFilePath) {
+                    try {
+                        Storage::disk('public')->delete($videoFilePath);
+                    } catch (\Exception $deleteError) {
+                        Log::error('Error deleting video file: ' . $deleteError->getMessage());
+                    }
+                }
+                
+                if ($isAjax) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Error processing video: ' . $e->getMessage()
+                    ], 500);
+                }
+                
                 return redirect()->back()
                     ->withInput()
-                    ->with('error', 'Gagal mengupload video ke Google Drive: ' . $e->getMessage());
+                    ->with('error', 'Error processing video: ' . $e->getMessage());
             }
         }
 
-        // Hitung total durasi (video duration akan 0 untuk sementara)
+        // Hitung total durasi
         $duration = $videoDuration;
 
         // Tentukan type berdasarkan content_types
@@ -209,16 +389,25 @@ class MaterialController extends Controller
             $materialType = 'quiz';
         }
 
-        // Format soal pretest dengan field baru (penjelasan dan poin)
+        // Format soal pretest dengan VALIDASI JSON
         $soalPretest = null;
         if (in_array('pretest', $contentTypes) && !empty($request->pretest_soal)) {
             $soalFormatted = [];
             foreach ($request->pretest_soal as $index => $soal) {
                 // Validasi bahwa semua pilihan terisi
                 if (count(array_filter($soal['pilihan'])) < 4) {
+                    $errorMsg = 'Semua pilihan jawaban untuk setiap soal harus diisi.';
+                    
+                    if ($isAjax) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => $errorMsg
+                        ], 422);
+                    }
+                    
                     return redirect()->back()
                         ->withInput()
-                        ->with('error', 'Semua pilihan jawaban untuk setiap soal harus diisi.');
+                        ->with('error', $errorMsg);
                 }
 
                 $soalFormatted[] = [
@@ -229,19 +418,43 @@ class MaterialController extends Controller
                     'poin' => (int)($soal['poin'] ?? 1)
                 ];
             }
+            
+            // Validasi JSON sebelum disimpan
+            $jsonTest = json_encode($soalFormatted);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                if ($isAjax) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Format soal pretest tidak valid: ' . json_last_error_msg()
+                    ], 422);
+                }
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Format soal pretest tidak valid: ' . json_last_error_msg());
+            }
+            
             $soalPretest = $soalFormatted;
         }
 
-        // Format soal posttest dengan field baru (penjelasan dan poin)
+        // Format soal posttest dengan VALIDASI JSON
         $soalPosttest = null;
         if (in_array('posttest', $contentTypes) && !empty($request->posttest_soal)) {
             $soalFormatted = [];
             foreach ($request->posttest_soal as $index => $soal) {
                 // Validasi bahwa semua pilihan terisi
                 if (count(array_filter($soal['pilihan'])) < 4) {
+                    $errorMsg = 'Semua pilihan jawaban untuk setiap soal harus diisi.';
+                    
+                    if ($isAjax) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => $errorMsg
+                        ], 422);
+                    }
+                    
                     return redirect()->back()
                         ->withInput()
-                        ->with('error', 'Semua pilihan jawaban untuk setiap soal harus diisi.');
+                        ->with('error', $errorMsg);
                 }
 
                 $soalFormatted[] = [
@@ -251,21 +464,66 @@ class MaterialController extends Controller
                     'jawaban_benar' => (int)($soal['jawaban_benar'] ?? 0),
                 ];
             }
+            
+            // Validasi JSON sebelum disimpan
+            $jsonTest = json_encode($soalFormatted);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                if ($isAjax) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Format soal posttest tidak valid: ' . json_last_error_msg()
+                    ], 422);
+                }
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Format soal posttest tidak valid: ' . json_last_error_msg());
+            }
+            
             $soalPosttest = $soalFormatted;
         }
 
-        // Player config
+        // ============================================
+        // PERBAIKAN: PLAYER CONFIG DENGAN VALIDASI JSON
+        // ============================================
+        
         $playerConfig = [
             'allow_skip' => $request->boolean('allow_skip'),
             'disable_forward_seek' => $request->boolean('disable_forward_seek', true),
             'disable_backward_seek' => $request->boolean('disable_backward_seek', false),
             'disable_right_click' => $request->boolean('disable_right_click', true),
             'require_completion' => $request->boolean('require_completion', true),
-            'min_watch_percentage' => $request->input('min_watch_percentage', 90),
             'auto_pause_on_question' => $request->boolean('auto_pause_on_question', true),
             'require_question_completion' => $request->boolean('require_question_completion', false),
             'auto_detect_duration' => true,
+            'player_type' => 'videojs',
+            'videojs_options' => [
+                'controls' => true,
+                'autoplay' => false,
+                'preload' => 'auto',
+                'fluid' => true,
+                'playbackRates' => [0.5, 1, 1.5, 2],
+                'controlBar' => [
+                    'volumePanel' => true,
+                    'currentTimeDisplay' => true,
+                    'timeDivider' => true,
+                    'durationDisplay' => true,
+                    'progressControl' => true,
+                    'remainingTimeDisplay' => true,
+                    'playbackRateMenuButton' => true,
+                    'fullscreenToggle' => true,
+                ],
+                'html5' => [
+                    'nativeTextTracks' => false
+                ]
+            ]
         ];
+
+        // Validasi JSON untuk player_config
+        $playerConfigJson = json_encode($playerConfig);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            Log::error('Invalid player_config JSON: ' . json_last_error_msg());
+            $playerConfig = []; // Fallback ke array kosong
+        }
 
         // Calculate video questions stats
         $hasVideoQuestions = false;
@@ -285,7 +543,10 @@ class MaterialController extends Controller
             }
         }
 
-        // Siapkan data untuk disimpan
+        // ============================================
+        // PERBAIKAN: PERSIAPAN DATA UNTUK DISIMPAN
+        // ============================================
+        
         $materialData = [
             'course_id' => $kursus->id,
             'title' => $request->title,
@@ -294,40 +555,89 @@ class MaterialController extends Controller
             'type' => $type,
             'material_type' => $materialType,
             'duration' => $duration,
-            'file_path' => !empty($filePaths) ? json_encode($filePaths) : null,
             'video_url' => $request->video_url ?? '',
-            'video_type' => $request->video_type ?? 'external',
-            'video_file' => $videoInfo,
+            'video_type' => $request->video_type ?? 'youtube',
+            'video_file' => $videoData, // Biarkan model handle JSON encoding
             'allow_skip' => $request->boolean('allow_skip'),
-            'player_config' => json_encode($playerConfig),
+            'player_config' => $playerConfig, // Biarkan model handle JSON encoding
             'has_video_questions' => $hasVideoQuestions,
             'require_video_completion' => $request->boolean('require_completion', true),
             'question_count' => $questionCount,
             'total_video_points' => $totalVideoPoints,
             'is_active' => $request->boolean('is_active'),
             'attendance_required' => $request->boolean('attendance_required'),
-            'soal_pretest' => $soalPretest,
-            'soal_posttest' => $soalPosttest,
             'learning_objectives' => json_encode($contentTypes),
             'auto_duration' => true,
         ];
 
-        // Tambahkan field durasi khusus
-        if (in_array('pretest', $contentTypes)) {
-            $materialData['durasi_pretest'] = $request->durasi_pretest;
-        }
-        if (in_array('posttest', $contentTypes)) {
-            $materialData['durasi_posttest'] = $request->durasi_posttest;
+        // Handle file_path dengan validasi JSON
+        if (!empty($filePaths)) {
+            $filePathsJson = json_encode($filePaths);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $materialData['file_path'] = $filePathsJson;
+            } else {
+                Log::error('Invalid JSON for file_paths: ' . json_last_error_msg());
+                $materialData['file_path'] = null;
+            }
         }
 
+        // Handle soal pretest dengan validasi JSON
+        if ($soalPretest) {
+            $soalPretestJson = json_encode($soalPretest, JSON_UNESCAPED_UNICODE);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $materialData['soal_pretest'] = $soalPretestJson;
+                $materialData['durasi_pretest'] = $request->durasi_pretest;
+            } else {
+                Log::error('Invalid JSON for soal_pretest: ' . json_last_error_msg());
+            }
+        }
+
+        // Handle soal posttest dengan validasi JSON
+        if ($soalPosttest) {
+            $soalPosttestJson = json_encode($soalPosttest, JSON_UNESCAPED_UNICODE);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $materialData['soal_posttest'] = $soalPosttestJson;
+                $materialData['durasi_posttest'] = $request->durasi_posttest;
+            } else {
+                Log::error('Invalid JSON for soal_posttest: ' . json_last_error_msg());
+            }
+        }
+
+        // Log data sebelum disimpan untuk debugging
+        Log::info('Material data prepared for save', [
+            'has_video_data' => !empty($videoData),
+            'video_data_type' => gettype($videoData),
+            'video_data_sample' => is_array($videoData) ? array_keys($videoData) : 'Not array',
+            'has_player_config' => !empty($playerConfig),
+            'content_types' => $contentTypes
+        ]);
+
         try {
-            // Create material
+            // Create material - Model akan handle JSON encoding via mutator
             $material = Materials::create($materialData);
             
-            // Save video questions
+            Log::info('Material created successfully', [
+                'material_id' => $material->id,
+                'video_type' => $material->video_type,
+                'video_file_exists' => !empty($material->video_file),
+                'video_file_type' => gettype($material->video_file),
+                'is_video_available' => $material->isVideoAvailable()
+            ]);
+            
+            // Save video questions jika ada
             if ($hasVideoQuestions && $request->filled('video_questions')) {
                 foreach ($request->video_questions as $index => $questionData) {
                     if (empty($questionData['question']) || empty($questionData['options'])) {
+                        continue;
+                    }
+                    
+                    // Validasi JSON untuk options
+                    $optionsJson = json_encode($questionData['options']);
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        Log::error('Invalid JSON for video question options', [
+                            'material_id' => $material->id,
+                            'question_index' => $index
+                        ]);
                         continue;
                     }
                     
@@ -336,7 +646,7 @@ class MaterialController extends Controller
                         'order' => $index + 1,
                         'time_in_seconds' => $questionData['time_in_seconds'] ?? 0,
                         'question' => $questionData['question'],
-                        'options' => json_encode($questionData['options']),
+                        'options' => $optionsJson,
                         'correct_option' => $questionData['correct_option'] ?? 0,
                         'points' => $questionData['points'] ?? 1,
                         'explanation' => $questionData['explanation'] ?? null,
@@ -345,10 +655,28 @@ class MaterialController extends Controller
                 }
             }
             
+            // **FIX: SELALU KEMBALIKAN JSON UNTUK AJAX REQUEST**
+            if ($isAjax) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Material berhasil ditambahkan!',
+                    'redirect' => route('admin.kursus.materials.index', $kursus),
+                    'material_id' => $material->id,
+                    'video_status' => [
+                        'is_available' => $material->isVideoAvailable(),
+                        'type' => $material->video_type,
+                        'has_video_data' => !empty($material->video_file)
+                    ]
+                ]);
+            }
+            
+            // Hanya untuk non-AJAX request
             return redirect()->route('admin.kursus.materials.index', $kursus)
                             ->with('success', 'Material berhasil ditambahkan!');
+                            
         } catch (\Exception $e) {
-            Log::error('Error storing material: ' . $e->getMessage());
+            Log::error('Error creating material record: ' . $e->getMessage());
+            Log::error('Trace: ' . $e->getTraceAsString());
             
             // Hapus file yang sudah diupload jika ada error
             foreach ($filePaths as $filePath) {
@@ -356,22 +684,91 @@ class MaterialController extends Controller
             }
             
             // Hapus video file dari Google Drive jika ada error
-            if ($videoInfo) {
+            if (isset($driveInfo) && isset($driveInfo['file_id'])) {
                 try {
-                    $videoData = json_decode($videoInfo, true);
-                    if (isset($videoData['file_id'])) {
-                        $this->deleteFromGoogleDrive($videoData['file_id']);
-                    }
+                    $this->deleteFromGoogleDrive($driveInfo['file_id']);
                 } catch (\Exception $deleteError) {
                     Log::error('Error deleting video from Google Drive: ' . $deleteError->getMessage());
                 }
+            }
+            
+            // Hapus video local jika ada error
+            if ($videoFilePath) {
+                try {
+                    Storage::disk('public')->delete($videoFilePath);
+                } catch (\Exception $deleteError) {
+                    Log::error('Error deleting local video: ' . $deleteError->getMessage());
+                }
+            }
+            
+            if ($isAjax) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal menyimpan material: ' . $e->getMessage(),
+                    'error_details' => $e->getMessage()
+                ], 500);
             }
             
             return redirect()->back()
                             ->withInput()
                             ->with('error', 'Gagal menyimpan material: ' . $e->getMessage());
         }
+                        
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        Log::error('Validation Exception:', $e->errors());
+        
+        if ($isAjax) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $e->errors()
+            ], 422);
+        }
+        
+        return redirect()->back()
+            ->withErrors($e->validator)
+            ->withInput();
+            
+    } catch (\Exception $e) {
+        Log::error('Error storing material: ' . $e->getMessage());
+        Log::error('Trace: ' . $e->getTraceAsString());
+        
+        // Hapus file yang sudah diupload jika ada error
+        foreach ($filePaths as $filePath) {
+            Storage::disk('public')->delete($filePath);
+        }
+        
+        // Hapus video file dari Google Drive jika ada error
+        if (isset($driveInfo) && isset($driveInfo['file_id'])) {
+            try {
+                $this->deleteFromGoogleDrive($driveInfo['file_id']);
+            } catch (\Exception $deleteError) {
+                Log::error('Error deleting video from Google Drive: ' . $deleteError->getMessage());
+            }
+        }
+        
+        // Hapus video local jika ada error
+        if (isset($videoFilePath) && $videoFilePath) {
+            try {
+                Storage::disk('public')->delete($videoFilePath);
+            } catch (\Exception $deleteError) {
+                Log::error('Error deleting local video: ' . $deleteError->getMessage());
+            }
+        }
+        
+        if ($isAjax) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menyimpan material: ' . $e->getMessage(),
+                'error_details' => $e->getMessage()
+            ], 500);
+        }
+        
+        return redirect()->back()
+                        ->withInput()
+                        ->with('error', 'Gagal menyimpan material: ' . $e->getMessage());
     }
+}
 
     public function edit(Kursus $kursus, Materials $material)
     {
@@ -393,10 +790,10 @@ class MaterialController extends Controller
             'attendance_required' => 'boolean',
             'is_active' => 'boolean',
             
-            // Video specific validations
-            'video_type' => 'nullable|required_if:content_types,video|in:youtube,vimeo,hosted,external',
-            'video_url' => 'nullable|required_if:video_type,external,youtube,vimeo|url',
-            'video_file' => 'nullable|file|mimes:mp4,webm,avi,mov,wmv|max:102400',
+            // Video specific validations - PERBAIKAN: HANYA youtube, hosted, local
+            'video_type' => 'nullable|required_if:content_types,video|in:youtube,hosted,local',
+            'video_url' => 'nullable|required_if:video_type,youtube|url',
+            'video_file' => 'nullable|file|mimes:mp4,webm,avi,mov,wmv,mkv|max:102400',
             'allow_skip' => 'boolean',
             
             // Player config validations
@@ -404,7 +801,6 @@ class MaterialController extends Controller
             'disable_backward_seek' => 'boolean',
             'disable_right_click' => 'boolean',
             'require_completion' => 'boolean',
-            'min_watch_percentage' => 'nullable|integer|min:50|max:100',
             'auto_pause_on_question' => 'boolean',
             'require_question_completion' => 'boolean',
             
@@ -452,36 +848,95 @@ class MaterialController extends Controller
             $newFilePaths = [];
         }
 
-        // Handle video upload ke Google Drive
+        // Handle video upload
         $videoInfo = $material->video_file;
         $videoDuration = $material->duration;
         
-        if (in_array('video', $contentTypes) && $request->video_type === 'hosted' && $request->hasFile('video_file')) {
-            try {
-                // Delete old video file dari Google Drive jika ada
-                if ($material->video_file) {
-                    $oldVideoData = json_decode($material->video_file, true);
-                    if ($oldVideoData && isset($oldVideoData['file_id'])) {
-                        $this->deleteFromGoogleDrive($oldVideoData['file_id']);
+        if (in_array('video', $contentTypes)) {
+            // Jika video_type = hosted dan ada file baru
+            if ($request->video_type === 'hosted' && $request->hasFile('video_file')) {
+                try {
+                    // Delete old video file jika ada
+                    if ($material->video_file) {
+                        $oldVideoData = json_decode($material->video_file, true);
+                        if ($oldVideoData && isset($oldVideoData['type']) && $oldVideoData['type'] === 'hosted') {
+                            if (isset($oldVideoData['file_id'])) {
+                                $this->deleteFromGoogleDrive($oldVideoData['file_id']);
+                            }
+                        } elseif ($oldVideoData && isset($oldVideoData['type']) && $oldVideoData['type'] === 'local') {
+                            // Hapus file lokal
+                            if (isset($oldVideoData['path'])) {
+                                Storage::disk('public')->delete($oldVideoData['path']);
+                            }
+                        }
                     }
+                    
+                    $videoFile = $request->file('video_file');
+                    $newVideoInfo = $this->uploadToGoogleDrive($videoFile);
+                    
+                    if ($newVideoInfo) {
+                        $videoInfo = json_encode($newVideoInfo);
+                    } else {
+                        throw new \Exception('Gagal upload video ke Google Drive');
+                    }
+                    
+                } catch (\Exception $e) {
+                    Log::error('Error uploading video to Google Drive: ' . $e->getMessage());
+                    return redirect()->back()
+                        ->withInput()
+                        ->with('error', 'Gagal mengupload video ke Google Drive: ' . $e->getMessage());
                 }
-                
-                $videoFile = $request->file('video_file');
-                $newVideoInfo = $this->uploadToGoogleDrive($videoFile);
-                
-                if ($newVideoInfo) {
-                    $videoInfo = json_encode($newVideoInfo);
-                } else {
-                    throw new \Exception('Gagal upload video ke Google Drive');
-                }
-                
-            } catch (\Exception $e) {
-                Log::error('Error uploading video to Google Drive: ' . $e->getMessage());
-                return redirect()->back()
-                    ->withInput()
-                    ->with('error', 'Gagal mengupload video ke Google Drive: ' . $e->getMessage());
             }
-        }
+            
+            // Jika video_type = local dan ada file baru
+            elseif ($request->video_type === 'local' && $request->hasFile('video_file')) {
+                try {
+                    // Delete old video file jika ada
+                    if ($material->video_file) {
+                        $oldVideoData = json_decode($material->video_file, true);
+                        if ($oldVideoData && isset($oldVideoData['type']) && $oldVideoData['type'] === 'local') {
+                            // Hapus file lokal
+                            if (isset($oldVideoData['path'])) {
+                                Storage::disk('public')->delete($oldVideoData['path']);
+                            }
+                        }
+                    }
+                    
+                    $videoFile = $request->file('video_file');
+                    $videoPath = $videoFile->store('videos', 'public');
+                    $videoDuration = $this->getVideoDuration($videoFile);
+                    
+                    $videoInfo = json_encode([
+                        'type' => 'local',
+                        'path' => $videoPath,
+                        'url' => Storage::url($videoPath),
+                        'size' => Storage::disk('public')->size($videoPath),
+                        'duration' => $videoDuration,
+                        'uploaded_at' => now()->toDateTimeString(),
+                        'direct_play' => true,
+                    ]);
+                    
+                } catch (\Exception $e) {
+                    Log::error('Error uploading video to local storage: ' . $e->getMessage());
+                    return redirect()->back()
+                        ->withInput()
+                        ->with('error', 'Gagal mengupload video: ' . $e->getMessage());
+                }
+            }
+            
+            // Jika video_type = youtube
+            elseif ($request->video_type === 'youtube') {
+                if (!$this->isValidYouTubeUrl($request->video_url)) {
+                    return redirect()->back()
+                        ->withInput()
+                        ->with('error', 'URL YouTube tidak valid.');
+                }
+                
+                // Reset video_info untuk YouTube
+                $videoInfo = null;
+                $videoDuration = 0;
+            }
+        } // PERBAIKAN: Tutup if statement ini dengan benar
 
         // Hitung total durasi
         $duration = $videoDuration;
@@ -520,10 +975,30 @@ class MaterialController extends Controller
             'disable_backward_seek' => $request->boolean('disable_backward_seek', false),
             'disable_right_click' => $request->boolean('disable_right_click', true),
             'require_completion' => $request->boolean('require_completion', true),
-            'min_watch_percentage' => $request->input('min_watch_percentage', 90),
             'auto_pause_on_question' => $request->boolean('auto_pause_on_question', true),
             'require_question_completion' => $request->boolean('require_question_completion', false),
             'auto_detect_duration' => true,
+            'player_type' => 'videojs',
+            'videojs_options' => [
+                'controls' => true,
+                'autoplay' => false,
+                'preload' => 'auto',
+                'fluid' => true,
+                'playbackRates' => [0.5, 1, 1.5, 2],
+                'controlBar' => [
+                    'volumePanel' => true,
+                    'currentTimeDisplay' => true,
+                    'timeDivider' => true,
+                    'durationDisplay' => true,
+                    'progressControl' => true,
+                    'remainingTimeDisplay' => true,
+                    'playbackRateMenuButton' => true,
+                    'fullscreenToggle' => true,
+                ],
+                'html5' => [
+                    'nativeTextTracks' => false
+                ]
+            ]
         ];
 
         // Calculate video questions stats
@@ -573,22 +1048,26 @@ class MaterialController extends Controller
         // Jika bukan video, bersihkan data video
         if (!in_array('video', $contentTypes)) {
             $materialData['video_url'] = null;
-            $materialData['video_type'] = 'external';
+            $materialData['video_type'] = 'youtube'; // PERBAIKAN: ganti dari 'external' ke 'youtube'
             $materialData['video_file'] = null;
             $materialData['player_config'] = null;
             $materialData['has_video_questions'] = false;
             $materialData['question_count'] = 0;
             $materialData['total_video_points'] = 0;
             
-            // Hapus file video dari Google Drive jika ada
+            // Hapus file video jika ada
             if ($material->video_file) {
                 try {
                     $oldVideoData = json_decode($material->video_file, true);
-                    if ($oldVideoData && isset($oldVideoData['file_id'])) {
-                        $this->deleteFromGoogleDrive($oldVideoData['file_id']);
+                    if ($oldVideoData && isset($oldVideoData['type'])) {
+                        if ($oldVideoData['type'] === 'hosted' && isset($oldVideoData['file_id'])) {
+                            $this->deleteFromGoogleDrive($oldVideoData['file_id']);
+                        } elseif ($oldVideoData['type'] === 'local' && isset($oldVideoData['path'])) {
+                            Storage::disk('public')->delete($oldVideoData['path']);
+                        }
                     }
                 } catch (\Exception $e) {
-                    Log::error('Error deleting video from Google Drive: ' . $e->getMessage());
+                    Log::error('Error deleting video file: ' . $e->getMessage());
                 }
             }
         }
@@ -645,6 +1124,15 @@ class MaterialController extends Controller
                 }
             }
             
+            // Hapus video file baru dari local storage jika ada error
+            if ($request->hasFile('video_file') && isset($videoPath)) {
+                try {
+                    Storage::disk('public')->delete($videoPath);
+                } catch (\Exception $deleteError) {
+                    Log::error('Error deleting new video from local storage: ' . $deleteError->getMessage());
+                }
+            }
+            
             return redirect()->back()
                             ->withInput()
                             ->with('error', 'Gagal memperbarui material: ' . $e->getMessage());
@@ -659,10 +1147,26 @@ class MaterialController extends Controller
         
         // Delete files (tetap di local)
         if ($material->file_path) {
-            $files = json_decode($material->file_path, true);
+            // PERBAIKAN: Cek apakah file_path sudah array atau masih string JSON
+            $files = [];
+            
+            if (is_array($material->file_path)) {
+                // Jika sudah array, langsung gunakan
+                $files = $material->file_path;
+            } elseif (is_string($material->file_path) && !empty($material->file_path)) {
+                // Jika string, decode JSON
+                $decoded = json_decode($material->file_path, true);
+                if (is_array($decoded)) {
+                    $files = $decoded;
+                }
+            }
+            
+            // Hapus file dari storage
             if (is_array($files)) {
                 foreach ($files as $filePath) {
-                    Storage::disk('public')->delete($filePath);
+                    if (is_string($filePath) && !empty($filePath)) {
+                        Storage::disk('public')->delete($filePath);
+                    }
                 }
             }
         }
@@ -670,12 +1174,29 @@ class MaterialController extends Controller
         // Delete video file dari Google Drive
         if ($material->video_file) {
             try {
-                $videoData = json_decode($material->video_file, true);
-                if ($videoData && isset($videoData['file_id'])) {
-                    $this->deleteFromGoogleDrive($videoData['file_id']);
+                $videoData = [];
+                
+                // PERBAIKAN: Handle video_file yang bisa array atau string JSON
+                if (is_array($material->video_file)) {
+                    $videoData = $material->video_file;
+                } elseif (is_string($material->video_file) && !empty($material->video_file)) {
+                    $decoded = json_decode($material->video_file, true);
+                    if (is_array($decoded)) {
+                        $videoData = $decoded;
+                    }
+                }
+                
+                if (!empty($videoData)) {
+                    if (isset($videoData['type']) && $videoData['type'] === 'hosted' && isset($videoData['file_id'])) {
+                        // Hapus dari Google Drive
+                        $this->deleteFromGoogleDrive($videoData['file_id']);
+                    } elseif (isset($videoData['type']) && $videoData['type'] === 'local' && isset($videoData['path'])) {
+                        // Hapus dari local storage
+                        Storage::disk('public')->delete($videoData['path']);
+                    }
                 }
             } catch (\Exception $e) {
-                Log::error('Error deleting video from Google Drive: ' . $e->getMessage());
+                Log::error('Error deleting video file: ' . $e->getMessage());
             }
         }
 
@@ -685,6 +1206,10 @@ class MaterialController extends Controller
         // Delete video progress
         UserVideoProgress::where('material_id', $material->id)->delete();
 
+        // Delete material progress
+        MaterialProgress::where('material_id', $material->id)->delete();
+
+        // Delete material
         $material->delete();
 
         // Reorder secara manual (backup jika event deleted tidak jalan)
@@ -694,11 +1219,36 @@ class MaterialController extends Controller
                         ->with('success', 'Material berhasil dihapus!');
     } catch (\Exception $e) {
         Log::error('Error deleting material: ' . $e->getMessage());
+        Log::error('File path data: ' . print_r($material->file_path, true));
+        Log::error('Video file data: ' . print_r($material->video_file, true));
         
         return redirect()->back()
                         ->with('error', 'Gagal menghapus material: ' . $e->getMessage());
     }
 }
+
+private function isValidYouTubeUrl($url)
+    {
+        if (empty($url)) {
+            return false;
+        }
+        
+        $patterns = [
+            '/^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/',
+            '/^(https?\:\/\/)?(www\.)?youtube\.com\/watch\?v=[\w-]+/',
+            '/^(https?\:\/\/)?(www\.)?youtu\.be\/[\w-]+/'
+        ];
+        
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $url)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    
 
 // Tambahkan method helper untuk reorder
 private function reorderMaterials($courseId)
@@ -1016,7 +1566,6 @@ private function reorderMaterials($courseId)
             'disable_backward_seek' => 'boolean',
             'disable_right_click' => 'boolean',
             'require_completion' => 'boolean',
-            'min_watch_percentage' => 'integer|min:50|max:100',
             'auto_pause_on_question' => 'boolean',
             'require_question_completion' => 'boolean',
         ]);
@@ -1028,7 +1577,6 @@ private function reorderMaterials($courseId)
                 'disable_backward_seek' => $request->boolean('disable_backward_seek', false),
                 'disable_right_click' => $request->boolean('disable_right_click', true),
                 'require_completion' => $request->boolean('require_completion', true),
-                'min_watch_percentage' => $request->input('min_watch_percentage', 90),
                 'auto_pause_on_question' => $request->boolean('auto_pause_on_question', true),
                 'require_question_completion' => $request->boolean('require_question_completion', false),
             ];
@@ -1062,105 +1610,252 @@ private function reorderMaterials($courseId)
      */
     // GANTI method uploadToGoogleDrive dengan ini:
     private function uploadToGoogleDrive($file)
-    {
+{
+    try {
+        Log::info('Starting Google Drive upload...');
+        
+        $client = new GoogleClient();
+        
+        // Load credentials
+        $credentialsPath = storage_path('app/google-drive/credentials.json');
+        
+        if (!file_exists($credentialsPath)) {
+            throw new \Exception('Credentials file not found at: ' . $credentialsPath);
+        }
+        
+        $client->setAuthConfig($credentialsPath);
+        $client->addScope(GoogleDrive::DRIVE_FILE);
+        $client->addScope(GoogleDrive::DRIVE_READONLY);
+        
+        // Set subject untuk service account
+        $serviceAccount = json_decode(file_get_contents($credentialsPath), true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new \Exception('Invalid credentials JSON: ' . json_last_error_msg());
+        }
+        
+        if (!isset($serviceAccount['client_email'])) {
+            throw new \Exception('Service account email not found in credentials');
+        }
+        
+        $client->setSubject($serviceAccount['client_email']);
+        
+        $service = new GoogleDrive($client);
+        
+        // Generate unique filename
+        $filename = 'video_' . Str::random(20) . '_' . time() . '.' . $file->getClientOriginalExtension();
+        $originalName = $file->getClientOriginalName();
+        
+        // Upload file ke Google Drive
+        $fileMetadata = new \Google\Service\Drive\DriveFile([
+            'name' => $filename,
+            'parents' => [env('GOOGLE_DRIVE_FOLDER_ID')],
+            'description' => 'Video materi pembelajaran - ' . $originalName,
+            'mimeType' => $file->getMimeType(),
+        ]);
+        
+        $content = file_get_contents($file->getRealPath());
+        
+        $uploadedFile = $service->files->create($fileMetadata, [
+            'data' => $content,
+            'mimeType' => $file->getMimeType(),
+            'uploadType' => 'multipart',
+            'fields' => 'id, name, webViewLink, webContentLink, size, mimeType, thumbnailLink',
+            'supportsAllDrives' => true
+        ]);
+        
+        // Buat file bisa diakses publik
         try {
-            Log::info('Starting Google Drive upload...');
-            
-            $client = new GoogleClient();
-            
-            // Load credentials
-            $credentialsPath = storage_path('app/google-drive/credentials.json');
-            
-            if (!file_exists($credentialsPath)) {
-                throw new \Exception('Credentials file not found');
-            }
-            
-            $client->setAuthConfig($credentialsPath);
-            $client->addScope(GoogleDrive::DRIVE_FILE);
-            $client->addScope(GoogleDrive::DRIVE_READONLY);
-            
-            // Set subject untuk service account
-            $serviceAccount = json_decode(file_get_contents($credentialsPath), true);
-            $client->setSubject($serviceAccount['client_email']);
-            
-            $service = new GoogleDrive($client);
-            
-            // Generate unique filename
-            $filename = 'video_' . Str::random(20) . '_' . time() . '.' . $file->getClientOriginalExtension();
-            $originalName = $file->getClientOriginalName();
-            
-            // Upload file ke Google Drive
-            $fileMetadata = new \Google\Service\Drive\DriveFile([
-                'name' => $filename,
-                'parents' => [env('GOOGLE_DRIVE_FOLDER_ID')],
-                'description' => 'Video materi pembelajaran - ' . $originalName,
-                'mimeType' => $file->getMimeType(),
+            $permission = new \Google\Service\Drive\Permission([
+                'type' => 'anyone',
+                'role' => 'reader',
+                'allowFileDiscovery' => false,
             ]);
             
-            $content = file_get_contents($file->getRealPath());
+            $service->permissions->create($uploadedFile->id, $permission);
             
-            $uploadedFile = $service->files->create($fileMetadata, [
-                'data' => $content,
-                'mimeType' => $file->getMimeType(),
-                'uploadType' => 'multipart',
-                'fields' => 'id, name, webViewLink, webContentLink, size, mimeType, thumbnailLink',
-                'supportsAllDrives' => true
+            Log::info('Google Drive permission set successfully', [
+                'file_id' => $uploadedFile->id
             ]);
-            
-            // Buat file bisa diakses publik
-            try {
-                $permission = new \Google\Service\Drive\Permission([
-                    'type' => 'anyone',
-                    'role' => 'reader',
-                    'allowFileDiscovery' => false,
-                ]);
-                
-                $service->permissions->create($uploadedFile->id, $permission);
-                
-                // Buat embed link khusus
-                $embedLink = 'https://drive.google.com/file/d/' . $uploadedFile->id . '/preview';
-                
-                // Get thumbnail link
-                $thumbnailLink = $uploadedFile->thumbnailLink ?? null;
-                
-                // Return informasi file dengan embed link
-                return [
-                    'file_id' => $uploadedFile->id,
-                    'file_name' => $uploadedFile->name,
-                    'original_name' => $originalName,
-                    'web_view_link' => $uploadedFile->webViewLink,
-                    'web_content_link' => $uploadedFile->webContentLink,
-                    'embed_link' => $embedLink,
-                    'thumbnail_link' => $thumbnailLink,
-                    'size' => $uploadedFile->size,
-                    'mime_type' => $uploadedFile->mimeType,
-                    'uploaded_at' => now()->toDateTimeString(),
-                    'direct_play' => true,
-                ];
-                
-            } catch (\Exception $e) {
-                Log::warning('Failed to make file public: ' . $e->getMessage());
-                
-                // Tetap return data tanpa permission
-                return [
-                    'file_id' => $uploadedFile->id,
-                    'file_name' => $uploadedFile->name,
-                    'original_name' => $originalName,
-                    'web_view_link' => $uploadedFile->webViewLink,
-                    'embed_link' => 'https://drive.google.com/file/d/' . $uploadedFile->id . '/preview',
-                    'size' => $uploadedFile->size,
-                    'mime_type' => $uploadedFile->mimeType,
-                    'uploaded_at' => now()->toDateTimeString(),
-                    'direct_play' => true,
-                ];
-            }
             
         } catch (\Exception $e) {
-            Log::error('Error in uploadToGoogleDrive: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
-            throw $e;
+            Log::warning('Failed to make file public, but continuing: ' . $e->getMessage());
         }
+        
+        // Buat embed link khusus
+        $embedLink = 'https://drive.google.com/file/d/' . $uploadedFile->id . '/preview';
+        
+        // **PERBAIKAN: Return data yang konsisten dan lengkap**
+        $result = [
+            'file_id' => $uploadedFile->id,
+            'file_name' => $uploadedFile->name,
+            'original_name' => $originalName,
+            'web_view_link' => $uploadedFile->webViewLink ?? null,
+            'web_content_link' => $uploadedFile->webContentLink ?? null,
+            'embed_link' => $embedLink,
+            'thumbnail_link' => $uploadedFile->thumbnailLink ?? null,
+            'size' => $uploadedFile->size ?? null,
+            'mime_type' => $uploadedFile->mimeType ?? null,
+            'uploaded_at' => now()->toDateTimeString(),
+            'direct_play' => true,
+        ];
+        
+        // Hapus null values
+        $result = array_filter($result, function($value) {
+            return $value !== null;
+        });
+        
+        // Validasi JSON
+        $jsonTest = json_encode($result);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            Log::error('Invalid JSON from Google Drive upload', [
+                'error' => json_last_error_msg(),
+                'data' => $result
+            ]);
+            throw new \Exception('Invalid JSON data from Google Drive: ' . json_last_error_msg());
+        }
+        
+        Log::info('Google Drive upload successful', [
+            'file_id' => $uploadedFile->id,
+            'embed_link' => $embedLink,
+            'json_valid' => true
+        ]);
+        
+        return $result;
+        
+    } catch (\Exception $e) {
+        Log::error('Error in uploadToGoogleDrive: ' . $e->getMessage());
+        Log::error('Stack trace: ' . $e->getTraceAsString());
+        throw new \Exception('Google Drive upload failed: ' . $e->getMessage());
     }
+}
+
+    /**
+ * Fix video data for all materials
+ */
+public function fixAllVideoData()
+{
+    try {
+        $materials = Materials::whereIn('video_type', ['hosted', 'local'])
+            ->get();
+        
+        $fixed = 0;
+        $errors = [];
+        
+        foreach ($materials as $material) {
+            try {
+                $videoFile = $material->video_file;
+                
+                // Jika video_file adalah string tapi bukan JSON valid
+                if (is_string($videoFile) && !empty($videoFile)) {
+                    // Coba decode
+                    $decoded = json_decode($videoFile, true);
+                    
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        Log::warning('Fixing invalid JSON for material ' . $material->id, [
+                            'error' => json_last_error_msg(),
+                            'video_file_sample' => substr($videoFile, 0, 200)
+                        ]);
+                        
+                        // Set ke null
+                        $material->video_file = null;
+                        $material->save();
+                        $fixed++;
+                    } elseif (is_array($decoded)) {
+                        // JSON valid, simpan ulang untuk memastikan
+                        $material->video_file = $decoded;
+                        $material->save();
+                        $fixed++;
+                    }
+                }
+                // Jika video_file sudah array, simpan ulang untuk validasi
+                elseif (is_array($videoFile)) {
+                    $material->video_file = $videoFile;
+                    $material->save();
+                    $fixed++;
+                }
+                
+            } catch (\Exception $e) {
+                $errors[] = 'Material ' . $material->id . ': ' . $e->getMessage();
+                Log::error('Error fixing video_file for material ' . $material->id . ': ' . $e->getMessage());
+            }
+        }
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Fixed ' . $fixed . ' materials',
+            'errors' => $errors
+        ]);
+        
+    } catch (\Exception $e) {
+        Log::error('Error in fixAllVideoData: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Error: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
+/**
+ * Check video data status
+ */
+public function checkVideoDataStatus()
+{
+    try {
+        $materials = Materials::all();
+        
+        $results = [];
+        $invalidCount = 0;
+        $validCount = 0;
+        
+        foreach ($materials as $material) {
+            $videoFile = $material->video_file;
+            $isValid = true;
+            $error = null;
+            
+            // Check if video_file is valid
+            if (is_string($videoFile) && !empty($videoFile)) {
+                json_decode($videoFile);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    $isValid = false;
+                    $error = 'Invalid JSON: ' . json_last_error_msg();
+                    $invalidCount++;
+                } else {
+                    $validCount++;
+                }
+            } elseif (is_array($videoFile)) {
+                $validCount++;
+            } elseif (empty($videoFile) || $videoFile === null) {
+                // Empty is okay for non-video materials
+                $validCount++;
+            }
+            
+            $results[] = [
+                'id' => $material->id,
+                'title' => $material->title,
+                'video_type' => $material->video_type,
+                'video_file_type' => gettype($videoFile),
+                'is_valid' => $isValid,
+                'error' => $error,
+                'is_video_available' => $material->isVideoAvailable()
+            ];
+        }
+        
+        return response()->json([
+            'success' => true,
+            'total_materials' => count($materials),
+            'valid_video_data' => $validCount,
+            'invalid_video_data' => $invalidCount,
+            'results' => $results
+        ]);
+        
+    } catch (\Exception $e) {
+        Log::error('Error checking video data: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Error: ' . $e->getMessage()
+        ], 500);
+    }
+}
 
 // Juga perbaiki deleteFromGoogleDrive:
 private function deleteFromGoogleDrive($fileId)
@@ -1190,20 +1885,32 @@ private function deleteFromGoogleDrive($fileId)
      * Get video URL from Google Drive
      */
     private function getVideoUrl($material)
-    {
-        if ($material->video_type === 'hosted' && $material->video_file) {
-            try {
-                $videoData = json_decode($material->video_file, true);
-                if ($videoData && isset($videoData['web_view_link'])) {
-                    return $videoData['web_view_link'];
-                }
-            } catch (\Exception $e) {
-                Log::error('Error getting video URL: ' . $e->getMessage());
+{
+    if ($material->video_type === 'local' && $material->video_file) {
+        try {
+            $videoData = json_decode($material->video_file, true);
+            if ($videoData && isset($videoData['url'])) {
+                return $videoData['url'];
             }
+        } catch (\Exception $e) {
+            Log::error('Error getting local video URL: ' . $e->getMessage());
         }
-        
-        return $material->video_url;
     }
+    
+    if ($material->video_type === 'hosted' && $material->video_file) {
+        try {
+            $videoData = json_decode($material->video_file, true);
+            if ($videoData && isset($videoData['embed_link'])) {
+                return $videoData['embed_link'];
+            }
+        } catch (\Exception $e) {
+            Log::error('Error getting hosted video URL: ' . $e->getMessage());
+        }
+    }
+    
+    // YouTube
+    return $material->video_url;
+}
 
     /**
      * Get video ID for embedding
@@ -1221,9 +1928,9 @@ private function deleteFromGoogleDrive($fileId)
             }
         }
         
-        // Untuk YouTube/Vimeo, extract ID dari URL
-        if ($material->video_type === 'youtube' || $material->video_type === 'vimeo') {
-            return $this->extractVideoId($material->video_url, $material->video_type);
+        // Untuk YouTube, extract ID dari URL
+        if ($material->video_type === 'youtube') {
+            return $this->extractYouTubeId($material->video_url);
         }
         
         return null;
@@ -1233,35 +1940,40 @@ private function deleteFromGoogleDrive($fileId)
      * Get video embed URL
      */
     private function getVideoEmbedUrl($material)
-    {
-        $videoId = $this->getVideoId($material);
-        
-        if ($material->video_type === 'youtube' && $videoId) {
-            return 'https://www.youtube.com/embed/' . $videoId;
-        } elseif ($material->video_type === 'vimeo' && $videoId) {
-            return 'https://player.vimeo.com/video/' . $videoId;
-        } elseif ($material->video_type === 'hosted' && $material->video_file) {
-            $videoData = json_decode($material->video_file, true);
-            if ($videoData && isset($videoData['web_view_link'])) {
-                // Untuk Google Drive, ubah view link menjadi embed
-                return str_replace('/view', '/preview', $videoData['web_view_link']);
-            }
+{
+    if ($material->video_type === 'youtube') {
+        $videoId = $this->extractYouTubeId($material->video_url);
+        if ($videoId) {
+            return 'https://www.youtube.com/embed/' . $videoId . '?rel=0&modestbranding=1&showinfo=0';
         }
-        
-        return null;
     }
+    elseif ($material->video_type === 'hosted' && $material->video_file) {
+        try {
+            $videoData = json_decode($material->video_file, true);
+            if ($videoData && isset($videoData['embed_link'])) {
+                return $videoData['embed_link'];
+            }
+        } catch (\Exception $e) {
+            Log::error('Error getting hosted embed URL: ' . $e->getMessage());
+        }
+    }
+    
+    return null;
+}
 
-    /**
-     * Extract video ID from URL
-     */
-    private function extractVideoId($url, $type)
+    private function extractYouTubeId($url)
     {
-        if ($type === 'youtube') {
-            preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', $url, $matches);
-            return $matches[1] ?? null;
-        } elseif ($type === 'vimeo') {
-            preg_match('/vimeo\.com\/(?:video\/)?(\d+)/', $url, $matches);
-            return $matches[1] ?? null;
+        $patterns = [
+            '/youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/',
+            '/youtu\.be\/([a-zA-Z0-9_-]+)/',
+            '/youtube\.com\/embed\/([a-zA-Z0-9_-]+)/',
+            '/youtube\.com\/v\/([a-zA-Z0-9_-]+)/'
+        ];
+        
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $url, $matches)) {
+                return $matches[1];
+            }
         }
         
         return null;
@@ -1312,8 +2024,8 @@ private function deleteFromGoogleDrive($fileId)
             ]);
             
         } catch (\Exception $e) {
-            \Log::error('Error importing soal: ' . $e->getMessage());
-            \Log::error($e->getTraceAsString());
+            Log::error('Error importing soal: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
             
             return response()->json([
                 'success' => false,
@@ -1322,11 +2034,71 @@ private function deleteFromGoogleDrive($fileId)
         }
     }
 
-    /**
-     * Download template Excel
-     */
-    // Di controller Anda (contoh: MaterialController.php)
-// Di App\Http\Controllers\Admin\MaterialController.php
+    private function prepareVideoData($material)
+{
+    $videoData = [
+        'type' => $material->video_type ?? 'youtube',
+        'url' => $material->video_url ?? '',
+        'embed_url' => null,
+        'direct_link' => null,
+        'is_local' => false,
+        'is_hosted' => false,
+        'video_info' => null,
+        'player_config' => $material->player_config ? json_decode($material->player_config, true) : [],
+        'duration' => $material->duration,
+        'auto_play' => false,
+        'controls' => true,
+        'player_type' => 'videojs'
+    ];
+    
+    // YouTube
+    if ($material->video_type === 'youtube' && $material->video_url) {
+        $videoId = $this->extractYouTubeId($material->video_url);
+        if ($videoId) {
+            $videoData['embed_url'] = "https://www.youtube.com/embed/{$videoId}?rel=0&modestbranding=1&showinfo=0";
+            $videoData['direct_link'] = "https://www.youtube.com/watch?v={$videoId}";
+        }
+    }
+    
+    // Google Drive (hosted)
+    elseif ($material->video_type === 'hosted' && $material->video_file) {
+        try {
+            $videoInfo = json_decode($material->video_file, true);
+            if ($videoInfo) {
+                $videoData['is_hosted'] = true;
+                $videoData['video_info'] = $videoInfo;
+                
+                if (isset($videoInfo['embed_link'])) {
+                    $videoData['embed_url'] = $videoInfo['embed_link'];
+                    $videoData['direct_link'] = $videoInfo['web_view_link'] ?? $videoInfo['embed_link'];
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Error preparing hosted video data: ' . $e->getMessage());
+        }
+    }
+    
+    // Local video
+    elseif ($material->video_type === 'local' && $material->video_file) {
+        try {
+            $videoInfo = json_decode($material->video_file, true);
+            if ($videoInfo) {
+                $videoData['is_local'] = true;
+                $videoData['video_info'] = $videoInfo;
+                $videoData['direct_link'] = $videoInfo['url'] ?? Storage::url($videoInfo['path'] ?? '');
+                $videoData['player_type'] = 'videojs';
+                
+                if (isset($videoInfo['size']) && $videoInfo['size'] > 100 * 1024 * 1024) {
+                    $videoData['use_hls'] = true;
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Error preparing local video data: ' . $e->getMessage());
+        }
+    }
+    
+    return $videoData;
+}
 
 /**
  * Download template Excel untuk soal
@@ -1478,7 +2250,7 @@ public function downloadTemplate()
         });
         
         if (count($validPilihan) < 2) {
-            \Log::warning("Soal pada baris {$soal['row_number']} diabaikan: kurang dari 2 pilihan yang valid");
+            Log::warning("Soal pada baris {$soal['row_number']} diabaikan: kurang dari 2 pilihan yang valid");
             continue;
         }
         
@@ -1486,12 +2258,12 @@ public function downloadTemplate()
         
         // Batasi maksimal 500 soal untuk performance
         if (count($soalData) >= 500) {
-            \Log::info("Mencapai batas maksimal 500 soal, menghentikan proses import");
+            Log::info("Mencapai batas maksimal 500 soal, menghentikan proses import");
             break;
         }
     }
     
-    \Log::info("Berhasil memproses " . count($soalData) . " soal dari Excel");
+    Log::info("Berhasil memproses " . count($soalData) . " soal dari Excel");
     return $soalData;
 }
 
@@ -1519,10 +2291,68 @@ public function downloadTemplate()
      * Get video duration (optional - untuk implementasi nanti)
      */
     private function getVideoDuration($file)
-    {
-        // Implementasi untuk mendapatkan durasi video
-        // Bisa menggunakan FFmpeg atau library PHP lainnya
-        // Return dalam detik
-        return 0; // Default 0
+{
+    try {
+        // Cek apakah FFmpeg tersedia di Windows Laragon
+        $ffmpegPath = 'C:\laragon\bin\ffmpeg\bin\ffmpeg.exe';
+        
+        // Jika tidak ada di path default, coba cari di PATH
+        if (!file_exists($ffmpegPath)) {
+            $ffmpegPath = 'ffmpeg';
+        }
+        
+        // Cek jika FFmpeg tersedia
+        $tempPath = $file->getRealPath();
+        
+        // Gunakan shell_exec untuk Windows
+        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+            // Command untuk Windows
+            $command = "\"$ffmpegPath\" -i \"" . escapeshellarg($tempPath) . "\" 2>&1";
+        } else {
+            // Command untuk Linux/Mac
+            $command = "$ffmpegPath -i " . escapeshellarg($tempPath) . " 2>&1";
+        }
+        
+        $output = shell_exec($command);
+        
+        if ($output) {
+            // Parse duration dari output
+            preg_match('/Duration: (\d{2}):(\d{2}):(\d{2})\.\d{2}/', $output, $matches);
+            
+            if (count($matches) >= 4) {
+                $hours = (int)$matches[1];
+                $minutes = (int)$matches[2];
+                $seconds = (int)$matches[3];
+                
+                $totalSeconds = ($hours * 3600) + ($minutes * 60) + $seconds;
+                return (int)$totalSeconds;
+            }
+        }
+        
+        // Fallback: Coba dengan alternatif (getID3)
+        if (class_exists('\getID3')) {
+            $getID3 = new \getID3();
+            $fileInfo = $getID3->analyze($tempPath);
+            
+            if (isset($fileInfo['playtime_seconds'])) {
+                return (int)$fileInfo['playtime_seconds'];
+            }
+        }
+        
+        // Fallback: Coba menggunakan PHP-FFMpeg jika tersedia
+        if (class_exists('\FFMpeg\FFMpeg')) {
+            $ffmpeg = \FFMpeg\FFMpeg::create();
+            $video = $ffmpeg->open($tempPath);
+            $duration = $video->getFormat()->get('duration');
+            
+            return (int)$duration;
+        }
+        
+    } catch (\Exception $e) {
+        Log::warning('Error getting video duration: ' . $e->getMessage());
     }
+    
+    // Default: 0 (durasi tidak diketahui)
+    return 0;
+}
 }

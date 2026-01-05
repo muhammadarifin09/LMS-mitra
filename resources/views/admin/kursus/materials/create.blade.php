@@ -55,7 +55,7 @@
         padding: 20px;
         margin-bottom: 20px;
     }
-    
+
     .posttest-section {
         background: #d1ecf1;
         border: 1px solid #bee5eb;
@@ -214,30 +214,6 @@
         font-size: 12px;
     }
     
-    /* Video Preview */
-    .video-preview-container {
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        overflow: hidden;
-        margin-top: 15px;
-    }
-    
-    .video-preview-header {
-        background: #f8f9fa;
-        padding: 10px 15px;
-        border-bottom: 1px solid #dee2e6;
-        font-weight: 600;
-    }
-    
-    .video-preview-body {
-        padding: 20px;
-        background: white;
-    }
-    
-    .ratio-16x9 {
-        --bs-aspect-ratio: 56.25%; /* 16:9 Aspect Ratio */
-    }
-    
     /* Animation */
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(-10px); }
@@ -248,22 +224,36 @@
         animation: fadeIn 0.3s ease;
     }
     
-    /* Badges */
-    .badge-video {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+    /* Style untuk YouTube preview */
+    .youtube-preview-box {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 10px;
     }
     
-    .badge-hosted {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        color: white;
+    .youtube-preview-box h6 {
+        color: #ff0000;
     }
     
-    .badge-external {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        color: white;
+    /* Style untuk progress bars */
+    .progress-bar-google {
+        background: linear-gradient(135deg, #4285f4, #34a853, #fbbc05, #ea4335);
+        background-size: 400% 400%;
+        animation: gradient 3s ease infinite;
     }
-
+    
+    .progress-bar-local {
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
+    }
+    
+    @keyframes gradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    
     .google-drive-info {
         background: #e8f5e9;
         border: 1px solid #c8e6c9;
@@ -283,18 +273,6 @@
         padding: 15px;
         margin-top: 10px;
         display: none;
-    }
-    
-    .progress-bar-google {
-        background: linear-gradient(135deg, #4285f4, #34a853, #fbbc05, #ea4335);
-        background-size: 400% 400%;
-        animation: gradient 3s ease infinite;
-    }
-    
-    @keyframes gradient {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
     }
     
     .file-size-info {
@@ -391,7 +369,6 @@
     .disabled-option:hover {
         border-color: #e9ecef !important;
     }
-    
     
     /* Responsive adjustments */
     @media (max-width: 768px) {
@@ -545,7 +522,7 @@
                                                     Video Pembelajaran
                                                 </label>
                                             </div>
-                                            <small class="text-muted">Video akan diupload ke Google Drive dengan kontrol seperti Digitalent</small>
+                                            <small class="text-muted">Video akan diupload ke Google Drive atau Local Storage</small>
                                         </div>
                                     </div>
 
@@ -648,22 +625,13 @@
                             </div>
                         </div>
 
-                        <!-- Konten Materi: Video (DIGITALENT STYLE) -->
+                        <!-- Konten Materi: Video -->
                         <div id="video-content-section" class="row mb-3" style="display: none;">
                             <div class="col-12">
                                 <div class="card bg-light">
                                     <div class="card-body">
-                                        <h6 class="card-title"><i class="mdi mdi-video text-primary me-2"></i>Materi Video (Digitalent Style)</h6>
+                                        <h6 class="card-title"><i class="mdi mdi-video text-primary me-2"></i>Materi Video</h6>
                                         
-                                        <!-- Informasi Google Drive -->
-                                        <div class="google-drive-info">
-                                            <h6><i class="mdi mdi-google-drive me-2"></i>Google Drive Storage</h6>
-                                            <small class="text-muted">
-                                                Video akan diupload ke Google Drive untuk keamanan dan penyimpanan yang lebih baik.
-                                                Durasi video akan dideteksi otomatis.
-                                            </small>
-                                        </div>
-
                                         <!-- Video Type Selection -->
                                         <div class="row mb-3">
                                             <div class="col-md-12">
@@ -672,71 +640,122 @@
                                                         id="video_type" name="video_type" onchange="toggleVideoType()">
                                                     <option value="">Pilih Jenis Video</option>
                                                     <option value="youtube" {{ old('video_type') == 'youtube' ? 'selected' : '' }}>YouTube</option>
-                                                    <option value="vimeo" {{ old('video_type') == 'vimeo' ? 'selected' : '' }}>Vimeo</option>
-                                                    <option value="hosted" {{ old('video_type') == 'hosted' ? 'selected' : '' }}>Google Drive (Upload Sendiri)</option>
-                                                    <option value="external" {{ old('video_type') == 'external' ? 'selected' : '' }}>External (Embed)</option>
+                                                    <option value="hosted" {{ old('video_type') == 'hosted' ? 'selected' : '' }}>Google Drive</option>
+                                                    <option value="local" {{ old('video_type') == 'local' ? 'selected' : '' }}>Local Storage</option>
                                                 </select>
-                                                <small class="text-muted mt-1">Pilih "Google Drive" untuk upload video ke cloud storage</small>
+                                                <small class="text-muted mt-1">
+                                                    <strong>Pilihan:</strong><br>
+                                                    • YouTube: Masukkan link YouTube<br>
+                                                    • Google Drive: Upload ke cloud storage Google Drive<br>
+                                                    • Local Storage: Simpan di server lokal (akan menggunakan video.js untuk player)
+                                                </small>
                                                 @error('video_type')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
                                             </div>
                                         </div>
 
-                                        <!-- Video URL (for YouTube, Vimeo, External) -->
+                                        <!-- Video URL (for YouTube only) -->
                                         <div class="row mb-3" id="video-url-section" style="display: none;">
                                             <div class="col-12">
-                                                <label for="video_url" class="form-label">URL Video</label>
+                                                <label for="video_url" class="form-label">URL Video YouTube</label>
                                                 <div class="input-group">
                                                     <span class="input-group-text">
-                                                        <i class="mdi mdi-link"></i>
+                                                        <i class="mdi mdi-youtube text-danger"></i>
                                                     </span>
                                                     <input type="url" class="form-control @error('video_url') is-invalid @enderror" 
                                                            id="video_url" name="video_url" value="{{ old('video_url') }}" 
-                                                           placeholder="Masukkan URL video">
+                                                           placeholder="Contoh: https://youtube.com/watch?v=VIDEO_ID atau https://youtu.be/VIDEO_ID">
                                                 </div>
                                                 <small class="text-muted" id="url-help-text">
-                                                    <!-- Text help akan diisi oleh JavaScript -->
+                                                    Masukkan URL YouTube lengkap. Video akan ditampilkan menggunakan embed player YouTube.
                                                 </small>
                                                 @error('video_url')
+                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                @enderror
+                                                
+                                                <!-- YouTube URL Preview -->
+                                                <div id="youtube-preview" class="mt-3" style="display: none;">
+                                                    <div class="alert alert-info">
+                                                        <i class="mdi mdi-youtube me-2"></i>
+                                                        <strong>YouTube Video Detected</strong>
+                                                        <p class="mb-0 small" id="youtube-info"></p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Video File Upload (for Google Drive) -->
+                                        <div class="row mb-3" id="video-file-hosted-section" style="display: none;">
+                                            <div class="col-12">
+                                                <div class="alert alert-warning">
+                                                    <i class="mdi mdi-google-drive me-2"></i>
+                                                    <strong>Upload ke Google Drive</strong>
+                                                    <p class="mb-0 small">Video akan diupload ke Google Drive untuk penyimpanan cloud yang aman.</p>
+                                                </div>
+                                                
+                                                <label for="video_file_hosted" class="form-label">Upload Video ke Google Drive</label>
+                                                <input type="file" class="form-control @error('video_file') is-invalid @enderror" 
+                                                       id="video_file_hosted" name="video_file" accept=".mp4,.webm,.avi,.mov,.wmv,.mkv" 
+                                                       onchange="previewVideoFile(this, 'hosted')">
+                                                <small class="text-muted">
+                                                    Format: MP4, WebM, AVI, MOV, WMV, MKV. Maksimal 100MB<br>
+                                                    Video akan diupload ke Google Drive secara otomatis.
+                                                </small>
+                                                @error('video_file')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
                                             </div>
                                         </div>
 
-                                        <!-- Video File Upload (for Google Drive) -->
-                                        <div class="row mb-3" id="video-file-section" style="display: none;">
+                                        <!-- Video File Upload (for Local Storage) -->
+                                        <div class="row mb-3" id="video-file-local-section" style="display: none;">
                                             <div class="col-12">
-                                                <label for="video_file" class="form-label">Upload Video ke Google Drive</label>
+                                                <div class="alert alert-info">
+                                                    <i class="mdi mdi-server me-2"></i>
+                                                    <strong>Simpan di Local Storage</strong>
+                                                    <p class="mb-0 small">Video akan disimpan di server lokal dan diputar menggunakan video.js player.</p>
+                                                </div>
+                                                
+                                                <label for="video_file_local" class="form-label">Upload Video ke Local Storage</label>
                                                 <input type="file" class="form-control @error('video_file') is-invalid @enderror" 
-                                                       id="video_file" name="video_file" accept=".mp4,.webm,.avi,.mov,.wmv" 
-                                                       onchange="previewVideoFile(this)">
-                                                <small class="text-muted">Format: MP4, WebM, AVI, MOV, WMV. Maksimal 100MB</small>
+                                                       id="video_file_local" name="video_file" accept=".mp4,.webm,.avi,.mov,.wmv,.mkv" 
+                                                       onchange="previewVideoFile(this, 'local')">
+                                                <small class="text-muted">
+                                                    Format: MP4, WebM, AVI, MOV, WMV, MKV. Maksimal 100MB<br>
+                                                    Video akan disimpan di server lokal dan diputar menggunakan <strong>video.js</strong>.
+                                                </small>
                                                 @error('video_file')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
                                                 
-                                                <!-- Video Preview -->
-                                                <div id="video-preview" style="display: none;">
+                                                <!-- Video Preview untuk Local -->
+                                                <div id="video-preview-local" style="display: none;">
                                                     <div class="video-preview-thumbnail mt-3">
                                                         <i class="mdi mdi-video"></i>
                                                     </div>
-                                                    <div id="video-file-info" class="file-size-info"></div>
-                                                </div>
-                                                
-                                                <!-- Upload Progress -->
-                                                <div id="upload-progress" class="upload-progress">
-                                                    <div class="d-flex justify-content-between mb-2">
-                                                        <span>Uploading to Google Drive...</span>
-                                                        <span id="upload-percentage">0%</span>
+                                                    <div id="video-file-info-local" class="file-size-info"></div>
+                                                    
+                                                    <div class="alert alert-success mt-2">
+                                                        <i class="mdi mdi-timer-sand me-2"></i>
+                                                        <strong>Durasi Video:</strong> 
+                                                        <span id="duration-display-local">Akan terdeteksi otomatis setelah upload</span>
                                                     </div>
-                                                    <div class="progress">
-                                                        <div id="upload-progress-bar" class="progress-bar progress-bar-google" 
-                                                             role="progressbar" style="width: 0%"></div>
-                                                    </div>
-                                                    <div id="upload-status" class="upload-status mt-2"></div>
                                                 </div>
                                             </div>
+                                        </div>
+
+                                        <!-- Upload Progress -->
+                                        <div id="upload-progress" class="upload-progress">
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span id="upload-message">Uploading video...</span>
+                                                <span id="upload-percentage">0%</span>
+                                            </div>
+                                            <div class="progress">
+                                                <div id="upload-progress-bar" class="progress-bar" 
+                                                     role="progressbar" style="width: 0%"></div>
+                                            </div>
+                                            <div id="upload-status" class="upload-status mt-2"></div>
                                         </div>
 
                                         <!-- Durasi Video (Otomatis) -->
@@ -750,7 +769,7 @@
                                             </div>
                                         </div>
 
-                                        <!-- Player Configuration (Digitalent Style) -->
+                                        <!-- Player Configuration -->
                                         <div class="video-control-section fade-in" id="player-config-section" style="display: none;">
                                             <h6><i class="mdi mdi-cog me-2"></i>Pengaturan Video Player</h6>
                                             <small class="text-muted d-block mb-3">Kontrol seperti platform Digitalent - video tidak bisa di-skip</small>
@@ -811,19 +830,6 @@
                                                         </label>
                                                     </div>
                                                     <small class="text-muted">Peserta harus menonton video hingga selesai</small>
-                                                </div>
-
-                                                <div class="config-item">
-                                                    <label for="min_watch_percentage" class="form-label">Persentase Minimal Tontonan</label>
-                                                    <input type="range" class="form-range" id="min_watch_percentage" 
-                                                           name="min_watch_percentage" min="50" max="100" step="5" 
-                                                           value="{{ old('min_watch_percentage', 90) }}">
-                                                    <div class="d-flex justify-content-between">
-                                                        <small>50%</small>
-                                                        <span id="percentage-value" class="fw-bold">90%</span>
-                                                        <small>100%</small>
-                                                    </div>
-                                                    <small class="text-muted d-block mt-1">Minimal persentase video yang harus ditonton</small>
                                                 </div>
 
                                                 <!-- Video Questions -->
@@ -908,9 +914,9 @@
                                             </div>
                                         </div>
                                         <div class="card-body">
-                                        <div class="alert alert-info">
-    <strong>Format Excel:</strong> Gunakan template di atas. Kolom wajib: PERTANYAAN, PILIHAN_A, PILIHAN_B, PILIHAN_C, PILIHAN_D, JAWABAN_BENAR
-</div>
+                                            <div class="alert alert-info">
+                                                <strong>Format Excel:</strong> Gunakan template di atas. Kolom wajib: PERTANYAAN, PILIHAN_A, PILIHAN_B, PILIHAN_C, PILIHAN_D, JAWABAN_BENAR
+                                            </div>
                                             
                                             <div class="row">
                                                 <div class="col-md-8">
@@ -1011,9 +1017,9 @@
                                             </div>
                                         </div>
                                         <div class="card-body">
-                                        <div class="alert alert-info">
-    <strong>Format Excel:</strong> Gunakan template di atas. Kolom wajib: PERTANYAAN, PILIHAN_A, PILIHAN_B, PILIHAN_C, PILIHAN_D, JAWABAN_BENAR
-</div>
+                                            <div class="alert alert-info">
+                                                <strong>Format Excel:</strong> Gunakan template di atas. Kolom wajib: PERTANYAAN, PILIHAN_A, PILIHAN_B, PILIHAN_C, PILIHAN_D, JAWABAN_BENAR
+                                            </div>
                                             
                                             <div class="row">
                                                 <div class="col-md-8">
@@ -1130,6 +1136,7 @@ let currentExcelFilePosttest = null;
 // Variabel untuk menyimpan file yang dipilih
 let selectedFiles = [];
 let currentVideoFile = null;
+let currentVideoType = null;
 
 // Helper untuk escape HTML
 function escapeHtml(text) {
@@ -1137,6 +1144,16 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Fungsi untuk validasi URL sederhana
+function isValidUrl(string) {
+    try {
+        new URL(string);
+        return true;
+    } catch (_) {
+        return false;
+    }
 }
 
 // Preview file Excel untuk pretest
@@ -1288,8 +1305,6 @@ function downloadTemplate() {
     }, 1000);
 }
 
-// Import soal dari Excel
-// Import soal dari Excel
 // Import soal dari Excel
 async function importSoal(type) {
     let currentExcelFile;
@@ -1463,7 +1478,6 @@ function replaceAllSoal(type, data) {
     addImportedSoal(type, data);
 }
 
-// Tambahkan soal dari data import
 // Tambahkan soal dari data import
 function addImportedSoal(type, data) {
     if (!data || !Array.isArray(data) || data.length === 0) {
@@ -1757,54 +1771,126 @@ function toggleContentSection(type, isVisible) {
 function toggleVideoType() {
     const videoType = document.getElementById('video_type').value;
     const urlSection = document.getElementById('video-url-section');
-    const fileSection = document.getElementById('video-file-section');
+    const fileHostedSection = document.getElementById('video-file-hosted-section');
+    const fileLocalSection = document.getElementById('video-file-local-section');
     const urlHelp = document.getElementById('url-help-text');
     const videoUrlInput = document.getElementById('video_url');
-    
-    // Reset
-    if (urlSection) urlSection.style.display = 'none';
-    if (fileSection) fileSection.style.display = 'none';
-    const videoPreview = document.getElementById('video-preview');
-    if (videoPreview) videoPreview.style.display = 'none';
+    const youtubePreview = document.getElementById('youtube-preview');
     const uploadProgress = document.getElementById('upload-progress');
-    if (uploadProgress) uploadProgress.style.display = 'none';
-    if (videoUrlInput) videoUrlInput.placeholder = 'Masukkan URL video';
+    const playerConfig = document.getElementById('player-config-section');
+    const videoQuestions = document.getElementById('video-questions-section');
+    const durationInfo = document.getElementById('duration-info-section');
+    setupVideoField();
     
-    // Show appropriate section
+    // Reset semua section
+    if (urlSection) urlSection.style.display = 'none';
+    if (fileHostedSection) fileHostedSection.style.display = 'none';
+    if (fileLocalSection) fileLocalSection.style.display = 'none';
+    if (youtubePreview) youtubePreview.style.display = 'none';
+    if (uploadProgress) uploadProgress.style.display = 'none';
+    
+    // Reset input files
+    const hostedInput = document.getElementById('video_file_hosted');
+    const localInput = document.getElementById('video_file_local');
+    if (hostedInput) hostedInput.value = '';
+    if (localInput) localInput.value = '';
+    
+    // Reset preview
+    const previewLocal = document.getElementById('video-preview-local');
+    if (previewLocal) previewLocal.style.display = 'none';
+    
+    // Reset current video file
+    currentVideoFile = null;
+    currentVideoType = null;
+    
+    // Tampilkan section sesuai jenis video
     if (videoType === 'youtube') {
         if (urlSection) urlSection.style.display = 'block';
-        if (urlHelp) urlHelp.textContent = 'Format: https://youtube.com/watch?v=ID_VIDEO atau https://youtu.be/ID_VIDEO';
-        if (videoUrlInput) videoUrlInput.placeholder = 'Contoh: https://youtube.com/watch?v=dQw4w9WgXcQ';
-        const durationDisplay = document.getElementById('duration-display');
-        if (durationDisplay) durationDisplay.textContent = 'Durasi akan dideteksi dari YouTube';
-    } else if (videoType === 'vimeo') {
-        if (urlSection) urlSection.style.display = 'block';
-        if (urlHelp) urlHelp.textContent = 'Format: https://vimeo.com/ID_VIDEO';
-        if (videoUrlInput) videoUrlInput.placeholder = 'Contoh: https://vimeo.com/123456789';
-        const durationDisplay = document.getElementById('duration-display');
-        if (durationDisplay) durationDisplay.textContent = 'Durasi akan dideteksi dari Vimeo';
-    } else if (videoType === 'external') {
-        if (urlSection) urlSection.style.display = 'block';
-        if (urlHelp) urlHelp.textContent = 'Masukkan URL embed video (iframe src)';
-        if (videoUrlInput) videoUrlInput.placeholder = 'Contoh: https://example.com/embed/video';
-        const durationDisplay = document.getElementById('duration-display');
-        if (durationDisplay) durationDisplay.textContent = 'Masukkan durasi manual jika diperlukan';
+        if (urlHelp) urlHelp.textContent = 'Format: https://youtube.com/watch?v=VIDEO_ID atau https://youtu.be/VIDEO_ID';
+        if (videoUrlInput) {
+            videoUrlInput.placeholder = 'Contoh: https://youtube.com/watch?v=dQw4w9WgXcQ';
+            videoUrlInput.oninput = checkYouTubeUrl;
+        }
+        if (playerConfig) playerConfig.style.display = 'block';
+        if (videoQuestions) videoQuestions.style.display = 'block';
+        if (durationInfo) durationInfo.style.display = 'block';
     } else if (videoType === 'hosted') {
-        if (fileSection) fileSection.style.display = 'block';
-        const durationDisplay = document.getElementById('duration-display');
-        if (durationDisplay) durationDisplay.textContent = 'Durasi akan dideteksi otomatis setelah upload';
+        if (fileHostedSection) fileHostedSection.style.display = 'block';
+        if (playerConfig) playerConfig.style.display = 'block';
+        if (videoQuestions) videoQuestions.style.display = 'block';
+        if (durationInfo) durationInfo.style.display = 'block';
+        // Progress bar khusus Google Drive
+        const progressBar = document.getElementById('upload-progress-bar');
+        if (progressBar) {
+            progressBar.className = 'progress-bar progress-bar-google';
+        }
+    } else if (videoType === 'local') {
+        if (fileLocalSection) fileLocalSection.style.display = 'block';
+        if (playerConfig) playerConfig.style.display = 'block';
+        if (videoQuestions) videoQuestions.style.display = 'block';
+        if (durationInfo) durationInfo.style.display = 'block';
+        // Progress bar untuk local
+        const progressBar = document.getElementById('upload-progress-bar');
+        if (progressBar) {
+            progressBar.className = 'progress-bar progress-bar-local';
+        }
+    } else {
+        // Jika tidak ada pilihan, sembunyikan semua
+        if (playerConfig) playerConfig.style.display = 'none';
+        if (videoQuestions) videoQuestions.style.display = 'none';
+        if (durationInfo) durationInfo.style.display = 'none';
+    }
+}
+
+function checkYouTubeUrl() {
+    const url = this.value;
+    const youtubePreview = document.getElementById('youtube-preview');
+    const youtubeInfo = document.getElementById('youtube-info');
+    
+    if (!url) {
+        if (youtubePreview) youtubePreview.style.display = 'none';
+        return;
+    }
+    
+    // Pattern untuk detect YouTube URL
+    const patterns = [
+        /(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]+)/,
+        /(?:youtu\.be\/)([a-zA-Z0-9_-]+)/,
+        /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]+)/
+    ];
+    
+    let videoId = null;
+    for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match && match[1]) {
+            videoId = match[1];
+            break;
+        }
+    }
+    
+    if (videoId) {
+        if (youtubePreview) youtubePreview.style.display = 'block';
+        if (youtubeInfo) {
+            youtubeInfo.innerHTML = `
+                Video ID: <strong>${videoId}</strong><br>
+                Preview: <a href="https://www.youtube.com/embed/${videoId}" target="_blank">https://www.youtube.com/embed/${videoId}</a>
+            `;
+        }
+    } else {
+        if (youtubePreview) youtubePreview.style.display = 'none';
     }
 }
 
 // Preview video file sebelum upload
-function previewVideoFile(input) {
-    const preview = document.getElementById('video-preview');
-    const fileInfo = document.getElementById('video-file-info');
+function previewVideoFile(input, type) {
+    const preview = document.getElementById(`video-preview-${type}`);
+    const fileInfo = document.getElementById(`video-file-info-${type}`);
     const uploadProgress = document.getElementById('upload-progress');
     
     if (input.files && input.files[0]) {
         const file = input.files[0];
         currentVideoFile = file;
+        currentVideoType = type;
         
         // Show preview
         if (preview) preview.style.display = 'block';
@@ -1816,7 +1902,7 @@ function previewVideoFile(input) {
             fileInfo.innerHTML = `
                 <strong>${escapeHtml(file.name)}</strong><br>
                 Size: ${fileSize} MB | Type: ${file.type}<br>
-                Video akan diupload ke Google Drive secara otomatis.
+                Video akan diupload ke ${type === 'hosted' ? 'Google Drive' : 'Local Storage'} secara otomatis.
             `;
         }
         
@@ -1824,6 +1910,7 @@ function previewVideoFile(input) {
         const progressBar = document.getElementById('upload-progress-bar');
         const percentage = document.getElementById('upload-percentage');
         const status = document.getElementById('upload-status');
+        const uploadMessage = document.getElementById('upload-message');
         
         if (progressBar) progressBar.style.width = '0%';
         if (percentage) percentage.textContent = '0%';
@@ -1831,13 +1918,18 @@ function previewVideoFile(input) {
             status.className = 'upload-status';
             status.innerHTML = '';
         }
+        if (uploadMessage) {
+            uploadMessage.textContent = type === 'hosted' 
+                ? 'Uploading to Google Drive...' 
+                : 'Uploading to Local Storage...';
+        }
     } else {
         if (preview) preview.style.display = 'none';
         currentVideoFile = null;
+        currentVideoType = null;
     }
 }
 
-// Tambah soal baru
 // Tambah soal baru
 function addSoal(type) {
     const container = document.getElementById(`soal-${type}-container`);
@@ -2161,38 +2253,41 @@ function updateFileInputs() {
 // FUNGSI HELPER
 // ============================================
 
-// Fungsi untuk validasi URL sederhana
-function isValidUrl(string) {
-    try {
-        new URL(string);
-        return true;
-    } catch (_) {
-        return false;
-    }
-}
-
 function getCsrfToken() {
     return document.querySelector('meta[name="csrf-token"]')?.content || 
            document.querySelector('input[name="_token"]')?.value ||
            '{{ csrf_token() }}';
 }
 
-// Helper untuk escape HTML
-function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+// Helper untuk menampilkan loading progress
+function showUploadProgress(percentage, message) {
+    const progressBar = document.getElementById('upload-progress-bar');
+    const percentageElement = document.getElementById('upload-percentage');
+    const statusElement = document.getElementById('upload-status');
+    
+    if (progressBar) {
+        progressBar.style.width = percentage + '%';
+    }
+    if (percentageElement) {
+        percentageElement.textContent = percentage + '%';
+    }
+    if (statusElement) {
+        statusElement.textContent = message;
+        
+        // Update class berdasarkan status
+        if (percentage === 100) {
+            statusElement.className = 'upload-status status-success';
+        } else if (percentage > 0) {
+            statusElement.className = 'upload-status status-uploading';
+        }
+    }
 }
 
-// Fungsi untuk validasi URL sederhana
-function isValidUrl(string) {
-    try {
-        new URL(string);
-        return true;
-    } catch (_) {
-        return false;
-    }
+// Helper untuk mengecek apakah request AJAX
+function isAjaxRequest() {
+    return window.XMLHttpRequest && 
+           (new XMLHttpRequest()).responseType === 'json' || 
+           navigator.userAgent.indexOf('XMLHttpRequest') !== -1;
 }
 
 // Fungsi untuk simulasi progress bar
@@ -2217,48 +2312,178 @@ function simulateProgressBar() {
     }, 100); // Update setiap 100ms
 }
 
-// Fungsi untuk submit form dengan monitoring progress
+function setupVideoField() {
+    const videoType = document.getElementById('video_type').value;
+    
+    // Sembunyikan/sembunyikan input file yang tidak aktif
+    const hostedInput = document.getElementById('video_file_hosted');
+    const localInput = document.getElementById('video_file_local');
+    
+    if (hostedInput && localInput) {
+        // Nonaktifkan semua input file
+        hostedInput.disabled = true;
+        localInput.disabled = true;
+        hostedInput.required = false;
+        localInput.required = false;
+        
+        // Aktifkan input sesuai tipe video
+        if (videoType === 'hosted') {
+            hostedInput.disabled = false;
+            hostedInput.required = true;
+            hostedInput.name = 'video_file'; // Set nama ke 'video_file'
+            localInput.name = 'video_file_disabled'; // Ubah nama untuk local
+        } else if (videoType === 'local') {
+            localInput.disabled = false;
+            localInput.required = true;
+            localInput.name = 'video_file'; // Set nama ke 'video_file'
+            hostedInput.name = 'video_file_disabled'; // Ubah nama untuk hosted
+        } else {
+            // Untuk YouTube, kosongkan nama
+            hostedInput.name = '';
+            localInput.name = '';
+        }
+    }
+}
+
+// Validasi URL YouTube
+function isValidYouTubeUrl(url) {
+    if (!url) return false;
+    
+    const patterns = [
+        /^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/,
+        /^(https?\:\/\/)?(www\.)?youtube\.com\/watch\?v=[\w-]+/,
+        /^(https?\:\/\/)?(www\.)?youtu\.be\/[\w-]+/
+    ];
+    
+    for (const pattern of patterns) {
+        if (pattern.test(url)) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+// ============================================
+// FUNGSI SUBMIT FORM YANG DIPERBAIKI
+// ============================================
+
 async function submitFormWithProgress() {
     const form = document.getElementById('materialForm');
     if (!form) return;
     
+    console.log('Starting form submission...');
+    
     const formData = new FormData(form);
     
-    // Tambahkan timeout header
+    // Debug: Log form data
+    console.log('Form data entries:');
+    for (let [key, value] of formData.entries()) {
+        if (key === 'video_file' || key === 'file_path[]') {
+            console.log(`${key}: [File]`);
+        } else {
+            console.log(`${key}:`, value);
+        }
+    }
+    
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 menit timeout
     
     try {
+        console.log('Sending request to:', form.action);
+        
         const response = await fetch(form.action, {
             method: 'POST',
             body: formData,
             signal: controller.signal,
             headers: {
-                'X-Requested-With': 'XMLHttpRequest'
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': getCsrfToken()
             }
         });
         
         clearTimeout(timeoutId);
         
-        if (response.ok) {
-            // Redirect ke halaman materi
-            window.location.href = response.url || "{{ route('admin.kursus.materials.index', $kursus) }}";
-        } else {
-            const errorText = await response.text();
-            throw new Error(`HTTP ${response.status}: ${response.statusText}\n${errorText}`);
+        console.log('Response status:', response.status);
+        console.log('Response OK?', response.ok);
+        
+        // Dapatkan response sebagai text dulu
+        const responseText = await response.text();
+        console.log('Response received, length:', responseText.length);
+        
+        // Coba parse sebagai JSON
+        try {
+            const result = JSON.parse(responseText);
+            console.log('JSON parsed successfully:', result);
+            
+            if (result.success) {
+                console.log('Success! Redirecting to:', result.redirect);
+                
+                // Tampilkan success message
+                Swal.fire({
+                    title: 'Berhasil!',
+                    text: result.message,
+                    icon: 'success',
+                    confirmButtonColor: '#1e3c72',
+                    timer: 2000,
+                    timerProgressBar: true
+                }).then(() => {
+                    // Redirect setelah alert ditutup
+                    if (result.redirect) {
+                        window.location.href = result.redirect;
+                    } else {
+                        window.location.href = "{{ route('admin.kursus.materials.index', $kursus) }}";
+                    }
+                });
+                
+                return result;
+            } else {
+                // Server mengembalikan success: false
+                console.error('Server returned error:', result);
+                throw new Error(result.message || 'Gagal menyimpan data');
+            }
+            
+        } catch (jsonError) {
+            console.error('JSON parse error:', jsonError);
+            console.log('Response preview (first 500 chars):', responseText.substring(0, 500));
+            
+            // Jika bukan JSON, berarti server mengembalikan HTML
+            if (responseText.includes('<!DOCTYPE html>') || responseText.includes('<html')) {
+                // Coba extract error dari HTML
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(responseText, 'text/html');
+                
+                let errorMessage = 'Server mengembalikan halaman HTML';
+                
+                // Cari error message
+                const errorElement = doc.querySelector('.error-message, .alert-danger, .invalid-feedback, .alert');
+                if (errorElement) {
+                    errorMessage = errorElement.textContent.trim();
+                }
+                
+                throw new Error(`HTTP ${response.status}: ${errorMessage}`);
+            } else {
+                // Jika bukan HTML juga, tampilkan raw text
+                throw new Error(`Server error: ${responseText.substring(0, 200)}`);
+            }
         }
         
     } catch (error) {
+        console.error('Fetch error:', error);
+        
         if (error.name === 'AbortError') {
             throw new Error('Request timeout - proses terlalu lama. Silakan coba lagi dengan file yang lebih kecil.');
         }
+        
         throw error;
     }
 }
 
-// Function untuk submit form
+// Function untuk submit form (yang utama)
 async function submitForm() {
     const submitBtn = document.getElementById('submitBtn');
+    const formStatus = document.getElementById('form-status');
     const originalText = submitBtn ? submitBtn.innerHTML : '';
     
     // Disable button dan ubah text
@@ -2268,34 +2493,41 @@ async function submitForm() {
     }
     
     // Show loading indicator
-    const formStatus = document.getElementById('form-status');
     if (formStatus) {
         formStatus.innerHTML = `
-            <div class="alert alert-info d-flex align-items-center" role="alert">
+            <div class="alert alert-info d-flex align-items-center mb-0" role="alert">
                 <div class="spinner-border spinner-border-sm me-2" role="status"></div>
                 <div>Menyimpan materi, harap tunggu...</div>
             </div>
         `;
     }
     
-    // Jika ada video hosted, tampilkan progress
+    // Jika ada video hosted, tampilkan progress (hanya visual)
     const videoType = document.getElementById('video_type');
     if (videoType && videoType.value === 'hosted' && currentVideoFile) {
         const uploadProgress = document.getElementById('upload-progress');
         const uploadStatus = document.getElementById('upload-status');
         
-        if (uploadProgress) uploadProgress.style.display = 'block';
-        if (uploadStatus) {
-            uploadStatus.className = 'upload-status status-uploading';
-            uploadStatus.innerHTML = 'Mengupload ke Google Drive...';
+        if (uploadProgress) {
+            uploadProgress.style.display = 'block';
+            uploadProgress.innerHTML = `
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Mengupload video ke Google Drive...</span>
+                    <span id="upload-percentage">0%</span>
+                </div>
+                <div class="progress">
+                    <div id="upload-progress-bar" class="progress-bar progress-bar-google" 
+                         role="progressbar" style="width: 0%"></div>
+                </div>
+                <div id="upload-status" class="upload-status status-uploading mt-2">
+                    Sedang memproses upload...
+                </div>
+            `;
         }
-        
-        // Simulasi progress
-        simulateProgressBar();
     }
     
     try {
-        // Submit form dengan Fetch API untuk monitoring progress
+        // Submit form dengan Fetch API
         await submitFormWithProgress();
         
     } catch (error) {
@@ -2307,23 +2539,45 @@ async function submitForm() {
             submitBtn.innerHTML = originalText;
         }
         
-        // Show error message
+        // Clear loading indicator
         if (formStatus) {
-            formStatus.innerHTML = `
-                <div class="alert alert-danger" role="alert">
-                    <i class="mdi mdi-alert-circle me-2"></i>
-                    Gagal menyimpan: ${escapeHtml(error.message)}
-                </div>
-            `;
+            formStatus.innerHTML = '';
         }
         
-        // Show SweetAlert error
+        // Hide progress bar jika ada
+        const uploadProgress = document.getElementById('upload-progress');
+        if (uploadProgress) {
+            uploadProgress.style.display = 'none';
+        }
+        
+        // Show error message dengan detail
+        let errorMessage = error.message;
+        
+        // Tambahkan saran berdasarkan error
+        let suggestion = '';
+        if (errorMessage.includes('Google Drive')) {
+            suggestion = 'Coba gunakan YouTube atau Local Storage sebagai alternatif.';
+        } else if (errorMessage.includes('timeout')) {
+            suggestion = 'File mungkin terlalu besar. Coba dengan file yang lebih kecil.';
+        } else if (errorMessage.includes('validation') || errorMessage.includes('Validasi')) {
+            suggestion = 'Periksa kembali data yang Anda masukkan.';
+        }
+        
         Swal.fire({
             title: 'Gagal Menyimpan',
-            text: error.message,
+            html: `
+                <div style="text-align:left;">
+                    <p><strong>Error:</strong> ${escapeHtml(errorMessage)}</p>
+                    ${suggestion ? `<p class="text-muted small mt-2">${suggestion}</p>` : ''}
+                </div>
+            `,
             icon: 'error',
-            confirmButtonColor: '#1e3c72'
+            confirmButtonColor: '#1e3c72',
+            confirmButtonText: 'Mengerti'
         });
+        
+        // Scroll ke atas untuk melihat error
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 }
 
@@ -2332,19 +2586,7 @@ async function submitForm() {
 // ============================================
 
 // Update percentage value display
-document.addEventListener('DOMContentLoaded', function() {
-    const percentageSlider = document.getElementById('min_watch_percentage');
-    const percentageValue = document.getElementById('percentage-value');
-    
-    if (percentageSlider && percentageValue) {
-        percentageSlider.addEventListener('input', function() {
-            percentageValue.textContent = this.value + '%';
-        });
-        
-        // Set initial value
-        percentageValue.textContent = percentageSlider.value + '%';
-    }
-    
+document.addEventListener('DOMContentLoaded', function() { 
     // Initialize selected options
     const contentTypes = ['file', 'video', 'pretest', 'posttest'];
     contentTypes.forEach(type => {
@@ -2380,7 +2622,14 @@ document.addEventListener('DOMContentLoaded', function() {
     if (materialForm) {
         materialForm.addEventListener('submit', async function(e) {
             e.preventDefault();
+            e.stopPropagation();
             
+            console.log('Form submit triggered');
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const originalBtnText = submitBtn.innerHTML;
+            
+            // Validasi client-side
             const contentTypes = Array.from(document.querySelectorAll('input[name="content_types[]"]:checked'))
                 .map(cb => cb.value);
             
@@ -2429,17 +2678,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!videoType) {
                     warnings.push('Jenis video harus dipilih');
                 } else {
-                    if (videoType === 'hosted') {
-                        const videoFile = document.getElementById('video_file').value;
-                        if (!videoFile) {
-                            warnings.push('File video harus diupload untuk Google Drive');
-                        }
-                    } else {
+                    if (videoType === 'youtube') {
                         const videoUrl = document.getElementById('video_url').value;
                         if (!videoUrl) {
-                            warnings.push('URL video harus diisi');
-                        } else if (!isValidUrl(videoUrl)) {
-                            warnings.push('URL video tidak valid');
+                            warnings.push('URL YouTube harus diisi');
+                        } else if (!isValidYouTubeUrl(videoUrl)) {
+                            warnings.push('URL YouTube tidak valid');
+                        }
+                    } else if (videoType === 'hosted') {
+                        const videoFile = document.getElementById('video_file_hosted');
+                        if (!videoFile || !videoFile.value) {
+                            warnings.push('File video harus diupload untuk Google Drive');
+                        }
+                    } else if (videoType === 'local') {
+                        const videoFile = document.getElementById('video_file_local');
+                        if (!videoFile || !videoFile.value) {
+                            warnings.push('File video harus diupload untuk Local Storage');
                         }
                     }
                 }
@@ -2473,7 +2727,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (warnings.length > 0) {
                 const warningMessage = 'Perhatikan hal berikut:\n\n' + warnings.join('\n');
                 
-                Swal.fire({
+                const result = await Swal.fire({
                     title: 'Data Belum Lengkap',
                     text: warningMessage,
                     icon: 'warning',
@@ -2481,17 +2735,29 @@ document.addEventListener('DOMContentLoaded', function() {
                     confirmButtonColor: '#1e3c72',
                     cancelButtonColor: '#6c757d',
                     confirmButtonText: 'Ya, Simpan',
-                    cancelButtonText: 'Perbaiki Data'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Jika user memilih untuk lanjut, submit form
-                        submitForm();
-                    }
+                    cancelButtonText: 'Perbaiki Data',
+                    reverseButtons: true
                 });
+                
+                if (result.isConfirmed) {
+                    // Jika user memilih untuk lanjut, submit form
+                    await submitForm();
+                }
             } else {
                 // Jika tidak ada warning, langsung submit
-                submitForm();
+                await submitForm();
             }
+            
+            return false;
+        });
+    }
+    
+    // Juga tambahkan event listener untuk tombol submit biasa (fallback)
+    const submitButton = document.querySelector('button[type="submit"]');
+    if (submitButton && !materialForm) {
+        submitButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            submitForm();
         });
     }
 });

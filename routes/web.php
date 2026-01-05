@@ -10,11 +10,12 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\KursusController;
 use App\Http\Controllers\Admin\BiodataController;
 use App\Http\Controllers\Admin\MaterialController;
+use App\Http\Controllers\Admin\DashboardController; // TAMBAHKAN INI
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Mitra\BerandaController;
 use App\Http\Controllers\Mitra\KursusController as MitraKursusController;
-use App\Http\Controllers\Mitra\DashboardController;
+use App\Http\Controllers\Mitra\DashboardController as MitraDashboardController; // GUNAKAN ALIAS
 use App\Http\Controllers\Mitra\CertificateController;
 
 // Login
@@ -32,8 +33,9 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Admin
 Route::middleware(['auth', 'role:admin'])->group(function () {
-    Route::get('/admin/dashboard', fn() => view('admin.dashboard'))->name('admin.dashboard');
-
+    Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('/admin/dashboard/refresh', [DashboardController::class, 'refresh'])->name('admin.dashboard.refresh');
+    
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('users', UserController::class);
         
@@ -108,7 +110,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 Route::middleware(['auth', 'role:mitra'])->group(function () {
     // Route tanpa prefix (untuk kompatibilitas)
     Route::get('/beranda', [BerandaController::class, 'index'])->name('mitra.beranda');
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('mitra.dashboard');
+    Route::get('/dashboard', [MitraDashboardController::class, 'index'])->name('mitra.dashboard');
     
     // Route dengan prefix mitra
     Route::prefix('mitra')->name('mitra.')->group(function () {
@@ -165,12 +167,16 @@ Route::middleware(['auth', 'role:mitra'])->group(function () {
                 ->name('kursus.progress');
             
             // ============================
-            // VIDEO ROUTES
+            // VIDEO ROUTES - FIXED
             // ============================
             
             // Route untuk menampilkan video player
             Route::get('/materials/{material}/video', [MitraKursusController::class, 'viewMaterialVideo'])
                 ->name('kursus.material.video');
+            
+            // Route untuk streaming video lokal
+            Route::get('/materials/{material}/video/stream/{token}', [MitraKursusController::class, 'streamVideo'])
+                ->name('kursus.material.video.stream');
             
             // Route untuk video progress tracking
             Route::post('/materials/{material}/video/complete', [MitraKursusController::class, 'markVideoAsComplete'])
@@ -264,15 +270,6 @@ Route::prefix('admin')
         });
     });
 
-//     Route::prefix('admin/laporan')->name('admin.laporan.')->group(function () {
-
-//     Route::get('/kursus/export-excel', [LaporanController::class, 'exportKursusExcel'])
-//         ->name('kursus.excel');
-
-//     Route::get('/kursus/{kursus}/export-excel', [LaporanController::class, 'exportKursusDetailExcel'])
-//         ->name('kursus.detail.excel');   
-// });
-
 Route::prefix('admin/laporan')->name('admin.laporan.')->group(function () {
 
     // =====================
@@ -302,9 +299,6 @@ Route::prefix('admin/laporan')->name('admin.laporan.')->group(function () {
         ->name('mitra.detail');
 });
 
-
-
-
 Route::get('/test-csv', [\App\Http\Controllers\Admin\LaporanController::class, 'exportKursusCsv']);
 Route::get('/test-csv', [\App\Http\Controllers\Admin\LaporanController::class, 'exportKursusCsv'])
     ->name('test.csv');
@@ -317,9 +311,14 @@ Route::post(
     [LaporanController::class, 'generateLaporanMitra']
 )->name('admin.laporan.mitra.generate');
 
-
-
 // Sertifikat Routes
+
+Route::middleware(['auth'])->prefix('sertifikat')->name('sertifikat.')->group(function () {
+    Route::get('/', [CertificateController::class, 'index'])->name('index');
+    Route::get('/{certificate}', [CertificateController::class, 'show'])->name('show');
+    Route::get('/{certificate}/unduh', [CertificateController::class, 'download'])->name('download');
+});
+
 // Route::middleware(['auth'])->prefix('certificates')->group(function () {
 //     Route::get('/', [CertificateController::class, 'index'])->name('index');
 //     Route::get('/{certificate}', [CertificateController::class, 'show'])->name('show');
@@ -362,6 +361,7 @@ Route::get('/sertifikat/{id_kredensial}/pdf',
 )->name('certificates.publicPdf');
 
 
+
 Route::middleware(['auth', 'role:mitra'])
     ->prefix('mitra')
     ->name('mitra.')
@@ -372,3 +372,4 @@ Route::middleware(['auth', 'role:mitra'])
         Route::post('/nilai/simpan', [NilaiController::class, 'simpan'])
             ->name('nilai.simpan');
     });
+

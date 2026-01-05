@@ -23,9 +23,10 @@ return new class extends Migration
             $table->json('file_path')->nullable();
             $table->string('video_url')->nullable();
             
-            // Video control columns (Google Drive integrated)
-            $table->enum('video_type', ['youtube', 'vimeo', 'hosted', 'external'])->default('external');
-            $table->text('video_file')->nullable()->comment('JSON for Google Drive file info');
+            // Video control columns
+            $table->enum('video_type', ['youtube', 'hosted', 'local'])->default('youtube')
+                  ->comment('youtube: YouTube video, hosted: Google Drive video, local: Local server video');
+            $table->text('video_file')->nullable()->comment('JSON for Google Drive file info (for hosted type)');
             $table->boolean('allow_skip')->default(false);
             $table->json('player_config')->nullable();
             $table->boolean('has_video_questions')->default(false);
@@ -65,6 +66,7 @@ return new class extends Migration
             $table->index(['course_id', 'is_active']);
             $table->index(['course_id', 'type']);
             $table->index(['material_type']);
+            $table->index(['video_type']);
         });
     }
 

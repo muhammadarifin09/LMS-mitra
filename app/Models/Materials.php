@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Support\Facades\Log;
 
 class Materials extends Model
 {
@@ -28,6 +30,19 @@ class Materials extends Model
         'durasi_pretest',
         'soal_posttest',
         'durasi_posttest',
+        'video_file',
+        'player_config',
+        'allow_skip',
+        'has_video_questions',
+        'require_video_completion',
+        'question_count',
+        'total_video_points',
+        'auto_duration',
+        'is_pretest',
+        'is_posttest',
+        'total_views',
+        'total_completions',
+        'avg_completion_time',
     ];
 
     protected $casts = [
@@ -37,12 +52,164 @@ class Materials extends Model
         'durasi_posttest' => 'integer',
         'order' => 'integer',
         'duration' => 'integer',
+        'allow_skip' => 'boolean',
+        'has_video_questions' => 'boolean',
+        'require_video_completion' => 'boolean',
+        'question_count' => 'integer',
+        'total_video_points' => 'integer',
+        'auto_duration' => 'boolean',
+        'is_pretest' => 'boolean',
+        'is_posttest' => 'boolean',
+        'total_views' => 'integer',
+        'total_completions' => 'integer',
+        'avg_completion_time' => 'decimal:2',
         // JSON casting untuk semua field JSON
         'file_path' => 'array',
         'learning_objectives' => 'array',
         'soal_pretest' => 'array',
         'soal_posttest' => 'array',
+        'video_file' => 'array',
+        'player_config' => 'array',
     ];
+
+    /**
+     * Mutator untuk video_file dengan validasi JSON yang kuat
+     */
+    protected function videoFile(): Attribute
+    {
+        return Attribute::make(
+            get: function ($value) {
+                // Jika null atau string "null", return null
+                if (is_null($value) || $value === 'null' || $value === '') {
+                    return null;
+                }
+                
+                // Jika sudah array, langsung return
+                if (is_array($value)) {
+                    return $value;
+                }
+                
+                // Jika string, coba decode JSON
+                if (is_string($value)) {
+                    // Coba decode
+                    $decoded = json_decode($value, true);
+                    
+                    // Jika decode berhasil, return array
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                        return $decoded;
+                    }
+                    
+                    // Jika decode gagal, log error dan return null
+                    Log::warning('JSON decode error in video_file mutator', [
+                        'material_id' => $this->id,
+                        'error' => json_last_error_msg(),
+                        'json_value_sample' => substr($value, 0, 200)
+                    ]);
+                    return null;
+                }
+                
+                // Untuk tipe data lain, return null
+                return null;
+            },
+            set: function ($value) {
+                // Jika value null atau string "null", simpan null
+                if (is_null($value) || $value === 'null') {
+                    return null;
+                }
+                
+                // Jika value array, encode ke JSON
+                if (is_array($value)) {
+                    $json = json_encode($value);
+                    
+                    // Validasi JSON sebelum disimpan
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        Log::error('JSON encode error in video_file mutator', [
+                            'material_id' => $this->id,
+                            'error' => json_last_error_msg(),
+                            'value_sample' => json_encode(array_slice($value, 0, 3))
+                        ]);
+                        return null;
+                    }
+                    
+                    return $json;
+                }
+                
+                // Jika value sudah string JSON, validasi dulu
+                if (is_string($value)) {
+                    // Coba decode untuk validasi
+                    json_decode($value);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        return $value;
+                    }
+                    
+                    Log::warning('Invalid JSON string in video_file mutator', [
+                        'material_id' => $this->id,
+                        'error' => json_last_error_msg(),
+                        'string_sample' => substr($value, 0, 200)
+                    ]);
+                    return null;
+                }
+                
+                // Untuk tipe data lain, simpan null
+                return null;
+            }
+        );
+    }
+
+    /**
+     * Mutator untuk player_config dengan validasi JSON
+     */
+    protected function playerConfig(): Attribute
+    {
+        return Attribute::make(
+            get: function ($value) {
+                if (empty($value) || $value === 'null') {
+                    return [];
+                }
+                
+                if (is_array($value)) {
+                    return $value;
+                }
+                
+                if (is_string($value)) {
+                    $decoded = json_decode($value, true);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        return $decoded ?: [];
+                    }
+                }
+                
+                return [];
+            },
+            set: function ($value) {
+                if (empty($value)) {
+                    return null;
+                }
+                
+                if (is_array($value)) {
+                    return json_encode($value);
+                }
+                
+                if (is_string($value) && $this->isValidJson($value)) {
+                    return $value;
+                }
+                
+                return null;
+            }
+        );
+    }
+
+    /**
+     * Check if string is valid JSON
+     */
+    private function isValidJson($string): bool
+    {
+        if (!is_string($string)) {
+            return false;
+        }
+        
+        json_decode($string);
+        return json_last_error() === JSON_ERROR_NONE;
+    }
 
     /**
      * The "booted" method of the model.
@@ -106,9 +273,6 @@ class Materials extends Model
             ->orderBy('order');
     }
 
-    // Hapus semua accessors yang complex
-    // Tidak perlu get...Attribute() methods untuk appends
-    
     // Helper methods sederhana
     public function getFileCount(): int
     {
@@ -137,5 +301,196 @@ class Materials extends Model
     public function scopeOrdered($query)
     {
         return $query->orderBy('order')->orderBy('created_at');
+    }
+
+    /**
+     * Check if video is available
+     */
+    public function isVideoAvailable(): bool
+    {
+        if (!$this->is_active) {
+            return false;
+        }
+
+        $videoType = $this->video_type;
+        
+        if (empty($videoType)) {
+            return false;
+        }
+        
+        // YouTube videos
+        if ($videoType === 'youtube') {
+            return !empty($this->video_url) && $this->isValidYouTubeUrl($this->video_url);
+        }
+        
+        // Hosted (Google Drive) or Local videos
+        if (in_array($videoType, ['hosted', 'local'])) {
+            $videoFile = $this->video_file;
+            
+            // Jika video_file null atau tidak array
+            if (empty($videoFile) || !is_array($videoFile)) {
+                return false;
+            }
+            
+            // Untuk Google Drive videos
+            if ($videoType === 'hosted') {
+                $hasEmbedLink = !empty($videoFile['embed_link']);
+                $hasFileId = !empty($videoFile['file_id']);
+                $hasWebViewLink = !empty($videoFile['web_view_link']);
+                
+                return $hasEmbedLink || $hasFileId || $hasWebViewLink;
+            }
+            
+            // Untuk Local videos
+            if ($videoType === 'local') {
+                $hasPath = !empty($videoFile['path']);
+                $hasUrl = !empty($videoFile['url']);
+                
+                if ($hasPath) {
+                    return \Illuminate\Support\Facades\Storage::disk('public')->exists($videoFile['path']);
+                }
+                
+                return $hasUrl;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Check if YouTube URL is valid
+     */
+    private function isValidYouTubeUrl($url): bool
+    {
+        if (empty($url)) {
+            return false;
+        }
+        
+        $patterns = [
+            '/^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/',
+            '/^(https?\:\/\/)?(www\.)?youtube\.com\/watch\?v=[\w-]+/',
+            '/^(https?\:\/\/)?(www\.)?youtu\.be\/[\w-]+/'
+        ];
+        
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $url)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Get video embed URL
+     */
+    public function getVideoEmbedUrl()
+    {
+        if (!$this->isVideoAvailable()) {
+            return null;
+        }
+        
+        $videoType = $this->video_type;
+        
+        if ($videoType === 'youtube') {
+            $videoId = $this->extractYouTubeId($this->video_url);
+            if ($videoId) {
+                return 'https://www.youtube.com/embed/' . $videoId . '?rel=0&modestbranding=1&showinfo=0';
+            }
+        }
+        
+        if ($videoType === 'hosted') {
+            $videoFile = $this->video_file;
+            if (isset($videoFile['embed_link'])) {
+                return $videoFile['embed_link'];
+            }
+            
+            if (isset($videoFile['file_id'])) {
+                return 'https://drive.google.com/file/d/' . $videoFile['file_id'] . '/preview';
+            }
+        }
+        
+        if ($videoType === 'local') {
+            $videoFile = $this->video_file;
+            if (isset($videoFile['url'])) {
+                return $videoFile['url'];
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Extract YouTube ID from URL
+     */
+    private function extractYouTubeId($url)
+    {
+        $patterns = [
+            '/youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/',
+            '/youtu\.be\/([a-zA-Z0-9_-]+)/',
+            '/youtube\.com\/embed\/([a-zA-Z0-9_-]+)/',
+            '/youtube\.com\/v\/([a-zA-Z0-9_-]+)/'
+        ];
+        
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $url, $matches)) {
+                return $matches[1];
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Get clean video data for frontend
+     */
+    public function getCleanVideoData(): array
+    {
+        if (!$this->isVideoAvailable()) {
+            return [
+                'is_available' => false,
+                'error_message' => 'Video tidak tersedia'
+            ];
+        }
+        
+        $videoType = $this->video_type;
+        $videoFile = $this->video_file;
+        
+        $data = [
+            'type' => $videoType,
+            'is_available' => true,
+            'player_config' => $this->player_config,
+            'allow_skip' => $this->allow_skip ?? false,
+            'require_completion' => $this->require_video_completion ?? true,
+            'has_video_questions' => $this->has_video_questions ?? false,
+        ];
+        
+        if ($videoType === 'youtube') {
+            $data['url'] = $this->video_url;
+            $data['embed_url'] = $this->getVideoEmbedUrl();
+            $data['thumbnail'] = 'https://img.youtube.com/vi/' . $this->extractYouTubeId($this->video_url) . '/maxresdefault.jpg';
+        }
+        
+        if ($videoType === 'hosted' && is_array($videoFile)) {
+            $data = array_merge($data, [
+                'embed_url' => $videoFile['embed_link'] ?? $this->getVideoEmbedUrl(),
+                'file_id' => $videoFile['file_id'] ?? null,
+                'web_view_link' => $videoFile['web_view_link'] ?? null,
+                'thumbnail' => $videoFile['thumbnail_link'] ?? null,
+                'file_name' => $videoFile['file_name'] ?? null,
+                'size' => $videoFile['size'] ?? null,
+            ]);
+        }
+        
+        if ($videoType === 'local' && is_array($videoFile)) {
+            $data = array_merge($data, [
+                'url' => $videoFile['url'] ?? Storage::url($videoFile['path'] ?? ''),
+                'path' => $videoFile['path'] ?? null,
+                'size' => $videoFile['size'] ?? null,
+                'duration' => $videoFile['duration'] ?? $this->duration,
+            ]);
+        }
+        
+        return $data;
     }
 }
