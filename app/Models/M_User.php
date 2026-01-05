@@ -51,4 +51,10 @@ class M_User extends Authenticatable
     {
         return $this->enrollments()->where('kursus_id', $kursus_id)->exists();
     }
+
+        public function nilai()
+    {
+        return $this->hasMany(Nilai::class);
+    }
+
 }

@@ -1,3 +1,8 @@
+@php
+    use Illuminate\Support\Str;
+@endphp
+
+
 @extends('layouts.admin')
 
 @section('title', 'MOOC BPS - Edit Materi')

@@ -4,6 +4,7 @@ use App\Models\Enrollment;
 use Illuminate\Support\Facades\Mail; 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfilController;
+use App\Http\Controllers\NilaiController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\KursusController;
@@ -359,3 +360,15 @@ Route::get('/sertifikat/{id_kredensial}', [App\Http\Controllers\Mitra\Certificat
 Route::get('/sertifikat/{id_kredensial}/pdf', 
     [App\Http\Controllers\Mitra\CertificateController::class, 'publicPdf']
 )->name('certificates.publicPdf');
+
+
+Route::middleware(['auth', 'role:mitra'])
+    ->prefix('mitra')
+    ->name('mitra.')
+    ->group(function () {
+
+        Route::get('/nilai', [NilaiController::class, 'index'])
+            ->name('nilai');
+        Route::post('/nilai/simpan', [NilaiController::class, 'simpan'])
+            ->name('nilai.simpan');
+    });

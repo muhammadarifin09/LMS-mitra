@@ -1,0 +1,666 @@
+@extends('mitra.layouts.app')
+
+@section('title', 'Nilai')
+
+@section('content')
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h1 class="h3 fw-bold text-primary mb-1">📊 Nilai Kursus</h1>
+            <p class="text-muted">Lihat perkembangan dan hasil evaluasi kursus Anda</p>
+        </div>
+        
+        <!-- Tombol Action Group -->
+        <div class="d-flex align-items-center gap-2">
+            <!-- Tombol Ekspor PDF -->
+            <button id="exportPdfBtn" class="btn btn-danger">
+                <i class="fas fa-file-pdf me-2"></i> Ekspor PDF
+            </button>
+            
+            <!-- Tombol Simpan ke Arsip -->
+            <form action="{{ route('mitra.nilai.simpan') }}" method="POST" class="m-0">
+                @csrf
+                <button type="submit" class="btn btn-success" id="simpanArsipBtn">
+                    <i class="fas fa-save me-2"></i> Simpan ke Arsip
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Data mitra untuk PDF (hidden) -->
+    @php
+        $user = auth()->user();
+        $namaMitra = $user->name ?? ($user->nama ?? 'Mitra');
+    @endphp
+    <div id="mitraData" 
+         data-nama="{{ $namaMitra }}"
+         style="display: none;">
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-start border-primary border-3 shadow-sm h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col me-2">
+                            <div class="text-xs fw-bold text-primary text-uppercase mb-1">
+                                Total Kursus
+                            </div>
+                            <div class="h5 mb-0 fw-bold text-gray-800">{{ count($nilai) }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-book fa-2x text-primary opacity-25"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-start border-success border-3 shadow-sm h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col me-2">
+                            <div class="text-xs fw-bold text-success text-uppercase mb-1">
+                                Lulus
+                            </div>
+                            <div class="h5 mb-0 fw-bold text-gray-800">
+                                {{ count(array_filter($nilai, function($item) { 
+                                    return isset($item['status']) && $item['status'] === 'lulus'; 
+                                })) }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-success opacity-25"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-start border-danger border-3 shadow-sm h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col me-2">
+                            <div class="text-xs fw-bold text-danger text-uppercase mb-1">
+                                Tidak Lulus
+                            </div>
+                            <div class="h5 mb-0 fw-bold text-gray-800">
+                                {{ count(array_filter($nilai, function($item) { 
+                                    return isset($item['status']) && $item['status'] === 'tidak_lulus'; 
+                                })) }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-times-circle fa-2x text-danger opacity-25"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-start border-secondary border-3 shadow-sm h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col me-2">
+                            <div class="text-xs fw-bold text-secondary text-uppercase mb-1">
+                                Belum Dinilai
+                            </div>
+                            <div class="h5 mb-0 fw-bold text-gray-800">
+                                {{ count(array_filter($nilai, function($item) { 
+                                    return !isset($item['nilai']) || $item['nilai'] === null; 
+                                })) }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-secondary opacity-25"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Card -->
+    <div class="card shadow-lg border-0">
+        <div class="card-header bg-white py-3 border-bottom">
+            <h5 class="mb-0 fw-bold">
+                <i class="fas fa-list-check me-2 text-primary"></i> Daftar Nilai Kursus
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="nilaiTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Kursus</th>
+                            <th class="text-center">Nilai</th>
+                            <th class="text-center">Status</th>
+                            <!-- <th class="text-center">Aksi</th> -->
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($nilai as $n)
+                            <tr class="align-middle">
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                                                <i class="fas fa-graduation-cap text-primary"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h6 class="mb-1 fw-bold">{{ $n['kursus']->judul_kursus }}</h6>
+                                            <small class="text-muted">
+                                                <i class="far fa-calendar me-1"></i> 
+                                                {{ $n['kursus']->created_at->format('d M Y') }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </td>
+                                
+                                <td class="text-center">
+                                    @if(isset($n['nilai']) && $n['nilai'] !== null)
+                                        <div class="d-inline-block">
+                                            <span class="display-6 fw-bold 
+                                                @if($n['nilai'] >= 80) text-success
+                                                @elseif($n['nilai'] >= 60) text-warning
+                                                @else text-danger
+                                                @endif">
+                                                {{ $n['nilai'] }}
+                                            </span>
+                                            <div class="progress mt-1" style="height: 6px; width: 80px; margin: 0 auto;">
+                                                <div class="progress-bar 
+                                                    @if($n['nilai'] >= 80) bg-success
+                                                    @elseif($n['nilai'] >= 60) bg-warning
+                                                    @else bg-danger
+                                                    @endif" 
+                                                    role="progressbar" 
+                                                    style="width: {{ min($n['nilai'], 100) }}%">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <span class="text-muted fst-italic">Belum ada nilai</span>
+                                    @endif
+                                </td>
+                                
+                                <td class="text-center">
+                                    @if(isset($n['status']) && $n['status'] === 'lulus')
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill py-2 px-3">
+                                            <i class="fas fa-check-circle me-1"></i> Lulus
+                                        </span>
+                                    @elseif(isset($n['status']) && $n['status'] === 'tidak_lulus')
+                                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill py-2 px-3">
+                                            <i class="fas fa-times-circle me-1"></i> Tidak Lulus
+                                        </span>
+                                    @else
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 rounded-pill py-2 px-3">
+                                            <i class="fas fa-clock me-1"></i> Belum selesai
+                                        </span>
+                                    @endif
+                                </td>
+                                
+                                <!-- <td class="text-center">
+                                    @if(isset($n['nilai']) && $n['nilai'] !== null)
+                                        <button class="btn btn-outline-primary btn-sm view-details" 
+                                                data-course="{{ $n['kursus']->judul_kursus }}"
+                                                data-grade="{{ $n['nilai'] }}"
+                                                data-status="{{ $n['status'] ?? 'belum' }}">
+                                            <i class="fas fa-eye me-1"></i> Detail
+                                        </button>
+                                    @else
+                                        <span class="text-muted fst-italic">-</span>
+                                    @endif
+                                </td> -->
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="text-center py-5">
+                                    <div class="py-5">
+                                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                        <h5 class="text-muted">Belum ada data nilai</h5>
+                                        <p class="text-muted">Silakan ikuti kursus terlebih dahulu</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        @if(count($nilai) > 0)
+            <div class="card-footer bg-white py-3">
+                <div class="row align-items-center">
+                    <div class="col text-muted">
+                        Menampilkan {{ count($nilai) }} dari {{ count($nilai) }} kursus
+                    </div>
+                </div>
+            </div>
+        @endif
+    </div>
+</div>
+
+<!-- Modal for Details -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detail Nilai</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label text-muted">Kursus</label>
+                    <h6 id="modalCourseTitle" class="fw-bold"></h6>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-muted">Nilai</label>
+                    <h2 id="modalGrade" class="fw-bold"></h2>
+                </div>
+                <div>
+                    <label class="form-label text-muted">Status</label>
+                    <div id="modalStatus"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PDF Export Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-file-pdf me-2 text-danger"></i> Konfirmasi Ekspor PDF</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <div class="mb-3">
+                        <i class="fas fa-file-pdf fa-4x text-danger mb-3"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">Apakah Anda yakin ingin mengekspor data nilai?</h5>
+                    <p class="text-muted">
+                        Dokumen PDF akan berisi data nilai kursus Anda dengan format yang rapi.
+                    </p>
+                </div>
+                
+                <div class="alert alert-info">
+                    <div class="d-flex align-items-start">
+                        <i class="fas fa-info-circle me-2 mt-1"></i>
+                        <div>
+                            <small>
+                                <strong>Informasi:</strong> PDF akan berisi:
+                                <ul class="mb-0 mt-2">
+                                    <li>Nama mitra</li>
+                                    <li>Tanggal cetak</li>
+                                    <li>Daftar nilai kursus lengkap</li>
+                                </ul>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> Batal
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmExport">
+                    <i class="fas fa-download me-1"></i> Ya, Ekspor PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 12px;
+        transition: transform 0.2s;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .table td, .table th {
+        vertical-align: middle;
+    }
+    
+    .progress {
+        border-radius: 10px;
+    }
+    
+    .progress-bar {
+        border-radius: 10px;
+    }
+    
+    .badge {
+        font-weight: 500;
+        letter-spacing: 0.3px;
+    }
+    
+    .display-6 {
+        font-size: 1.8rem;
+    }
+    
+    .border-start {
+        border-left-width: 4px !important;
+    }
+    
+    /* Tombol action group */
+    .gap-2 {
+        gap: 0.5rem;
+    }
+</style>
+
+<!-- SELALU LOAD JSPDF, tidak perlu kondisi -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Detail Modal
+    const detailButtons = document.querySelectorAll('.view-details');
+    const detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
+    
+    detailButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const course = this.getAttribute('data-course');
+            const grade = this.getAttribute('data-grade');
+            const status = this.getAttribute('data-status');
+            
+            document.getElementById('modalCourseTitle').textContent = course;
+            document.getElementById('modalGrade').textContent = grade;
+            
+            let statusBadge = '';
+            if (status === 'lulus') {
+                statusBadge = '<span class="badge bg-success">Lulus</span>';
+            } else if (status === 'tidak_lulus') {
+                statusBadge = '<span class="badge bg-danger">Tidak Lulus</span>';
+            } else {
+                statusBadge = '<span class="badge bg-secondary">Belum Dinilai</span>';
+            }
+            
+            document.getElementById('modalStatus').innerHTML = statusBadge;
+            detailModal.show();
+        });
+    });
+    
+    // PDF Export
+    const exportPdfBtn = document.getElementById('exportPdfBtn');
+    const exportModal = new bootstrap.Modal(document.getElementById('exportModal'));
+    const confirmExportBtn = document.getElementById('confirmExport');
+    
+    exportPdfBtn.addEventListener('click', function() {
+        exportModal.show();
+    });
+    
+    confirmExportBtn.addEventListener('click', async function() {
+        exportModal.hide();
+        
+        // Tampilkan loading
+        showAlert('info', 'Membuat PDF...');
+        
+        try {
+            await exportToPDF();
+        } catch (error) {
+            console.error('PDF export error:', error);
+            showAlert('danger', 'Gagal membuat PDF: ' + error.message);
+        }
+    });
+    
+    // Handle form submit untuk Simpan ke Arsip
+    const simpanArsipForm = document.querySelector('form[action*="simpan"]');
+    if (simpanArsipForm) {
+        simpanArsipForm.addEventListener('submit', function(e) {
+            // Tampilkan loading
+            showAlert('info', 'Menyimpan ke arsip...');
+            
+            // Bisa juga tambahkan spinner pada tombol
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Menyimpan...';
+            submitBtn.disabled = true;
+            
+            // Set timeout untuk mengembalikan tombol ke normal (jika form submit terlalu cepat)
+            setTimeout(() => {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }, 3000);
+            
+            // Lanjutkan submit form
+            // Notifikasi sukses akan ditampilkan setelah redirect dari controller
+        });
+    }
+    
+    // Cek jika ada session message dari controller setelah simpan ke arsip
+    @if(session('success'))
+        showAlert('success', '{{ session('success') }}');
+    @endif
+    
+    @if(session('error'))
+        showAlert('danger', '{{ session('error') }}');
+    @endif
+    
+    async function exportToPDF() {
+        // Pastikan jsPDF sudah terload
+        if (typeof window.jspdf === 'undefined') {
+            throw new Error('jsPDF belum terload. Silakan refresh halaman.');
+        }
+        
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        
+        // Get mitra data from hidden element
+        const mitraData = document.getElementById('mitraData');
+        const namaMitra = mitraData ? mitraData.getAttribute('data-nama') : 'Mitra';
+        
+        // Page dimensions
+        const pageWidth = doc.internal.pageSize.width;
+        const pageHeight = doc.internal.pageSize.height;
+        const margin = 15;
+        
+        // ==================== HEADER ====================
+        // Logo/Title
+        doc.setFontSize(16);
+        doc.setTextColor(41, 128, 185);
+        doc.setFont(undefined, 'bold');
+        doc.text('LAPORAN NILAI KURSUS', margin, 20);
+        
+        doc.setFontSize(12);
+        doc.setTextColor(100, 100, 100);
+        doc.setFont(undefined, 'normal');
+        doc.text('SISTEM PEMBELAJARAN ONLINE', margin, 27);
+        
+        // Line separator
+        doc.setDrawColor(200, 200, 200);
+        doc.line(margin, 32, pageWidth - margin, 32);
+        
+        // ==================== MITRA INFO ====================
+        const infoY = 40;
+        
+        doc.setFontSize(14);
+        doc.setTextColor(60, 60, 60);
+        doc.setFont(undefined, 'bold');
+        doc.text('MITRA', margin, infoY);
+        
+        // Nama mitra
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'normal');
+        doc.text('Nama: ' + namaMitra, margin + 5, infoY + 10);
+        
+        // Tanggal cetak
+        const currentDate = new Date().toLocaleDateString('id-ID', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+        doc.text('Tanggal Cetak: ' + currentDate, margin + 5, infoY + 18);
+        
+        // ==================== TABLE ====================
+        const tableStartY = infoY + 30;
+        
+        // Table title
+        doc.setFontSize(14);
+        doc.setTextColor(60, 60, 60);
+        doc.setFont(undefined, 'bold');
+        doc.text('DAFTAR NILAI KURSUS', margin, tableStartY);
+        
+        // Prepare table data
+        const headers = [['NO', 'NAMA KURSUS', 'NILAI', 'STATUS']];
+        const rows = [];
+        
+        // Convert PHP data for PDF
+        @foreach($nilai as $index => $n)
+            rows.push([
+                '{{ $index + 1 }}',
+                '{{ $n['kursus']->judul_kursus }}',
+                @if(isset($n['nilai']) && $n['nilai'] !== null)
+                    '{{ $n['nilai'] }}'
+                @else
+                    '-'
+                @endif,
+                @if($n['status'] === 'lulus')
+                    'LULUS'
+                @elseif($n['status'] === 'tidak_lulus')
+                    'TIDAK LULUS'
+                @else
+                    'BELUM DINILAI'
+                @endif
+            ]);
+        @endforeach
+        
+        // Create table
+        doc.autoTable({
+            head: headers,
+            body: rows,
+            startY: tableStartY + 8,
+            margin: { 
+                left: margin, 
+                right: margin
+            },
+            theme: 'grid',
+            headStyles: { 
+                fillColor: [41, 128, 185], 
+                textColor: 255,
+                fontSize: 11,
+                fontStyle: 'bold',
+                halign: 'center'
+            },
+            bodyStyles: { 
+                fontSize: 10,
+                textColor: [60, 60, 60],
+                cellPadding: 4
+            },
+            alternateRowStyles: {
+                fillColor: [248, 248, 248]
+            },
+            columnStyles: {
+                0: { 
+                    cellWidth: 15, 
+                    halign: 'center'
+                },
+                1: { 
+                    cellWidth: 100,
+                    halign: 'left'
+                },
+                2: { 
+                    cellWidth: 25, 
+                    halign: 'center'
+                },
+                3: { 
+                    cellWidth: 35, 
+                    halign: 'center'
+                }
+            },
+            styles: {
+                overflow: 'linebreak',
+                cellPadding: 4
+            },
+            didDrawPage: function(data) {
+                // Footer
+                const pageCount = doc.internal.getNumberOfPages();
+                
+                doc.setFontSize(9);
+                doc.setTextColor(120, 120, 120);
+                
+                // Page number
+                doc.text(
+                    `Halaman ${data.pageNumber} dari ${pageCount}`,
+                    pageWidth / 2,
+                    pageHeight - 10,
+                    { align: 'center' }
+                );
+            }
+        });
+        
+        // ==================== SAVE PDF ====================
+        // Generate filename
+        const cleanName = namaMitra
+            .replace(/[^\w\s-]/gi, '')
+            .replace(/\s+/g, '_')
+            .toLowerCase();
+        
+        const fileName = `laporan_nilai_${cleanName}.pdf`;
+        
+        // Save PDF
+        doc.save(fileName);
+        
+        // Show success notification
+        showAlert('success', 'Laporan PDF berhasil diunduh!');
+    }
+    
+    function showAlert(type, message) {
+        // Remove existing alerts
+        const existingAlerts = document.querySelectorAll('.custom-alert');
+        existingAlerts.forEach(alert => alert.remove());
+        
+        // Create new alert
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `custom-alert alert alert-${type} alert-dismissible fade show position-fixed`;
+        alertDiv.style.cssText = `
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border: none;
+            border-radius: 8px;
+        `;
+        
+        const icons = {
+            'success': 'check-circle',
+            'danger': 'exclamation-circle',
+            'info': 'info-circle',
+            'warning': 'exclamation-triangle'
+        };
+        
+        alertDiv.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="fas fa-${icons[type] || 'info-circle'} me-2"></i>
+                <div>${message}</div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(alertDiv);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    }
+});
+</script>
+@endsection

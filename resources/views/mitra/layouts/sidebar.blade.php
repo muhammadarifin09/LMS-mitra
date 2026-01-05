@@ -209,10 +209,12 @@
             <i class="fas fa-user"></i>
             <span>Profil</span>
         </a>
-        <a href="#" class="sidebar-item">
+        <a href="{{ route('mitra.nilai') }}"
+        class="sidebar-item {{ request()->routeIs('mitra.nilai') ? 'active' : '' }}">
             <i class="fas fa-chart-line"></i>
             <span>Nilai</span>
         </a>
+
         <a href="{{ route('sertifikat.index') }}" class="sidebar-item {{ request()->routeIs('sertifikat.*') ? 'active' : '' }}">
             <i class="fas fa-certificate"></i>
             <span>Sertifikat</span>
@@ -239,14 +241,15 @@
             <div class="mobile-nav-label">Profil</div>
         </a>
         
-        <a href="#" 
-           class="mobile-nav-item"
-           title="Nilai">
+       <a href="{{ route('mitra.nilai') }}"
+        class="mobile-nav-item {{ request()->routeIs('mitra.nilai') ? 'active' : '' }}"
+        title="Nilai">
             <div class="mobile-nav-icon">
                 <i class="fas fa-chart-line"></i>
             </div>
-            <div class="mobile-nav-label">Nilai</div>
+            <div class="mobile-nav-label">Nilaiiiiiiiiiiii</div>
         </a>
+
         
         <a href="{{ route('sertifikat.index') }}" 
         class="mobile-nav-item {{ request()->routeIs('sertifikat.*') ? 'active' : '' }}"
