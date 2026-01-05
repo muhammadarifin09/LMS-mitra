@@ -12,8 +12,8 @@
     
     /* Adjust main content to full width */
     .main-content {
-        margin-left: 0 !important;
-        width: 100% !important;
+        margin-left:  !important;
+        width: flex;
     }
 
     .sequential-flow {
@@ -24,7 +24,7 @@
     .flow-step {
         background: white;
         border-radius: 12px;
-        padding: 1.5rem;
+        padding: rem;
         margin-bottom: 1rem;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         border-left: 4px solid #e9ecef;
@@ -265,6 +265,8 @@
         border: 1px solid #c3e6cb;
     }
 
+    
+
     /* Material description */
     .material-description {
         font-size: 0.9rem;
@@ -320,7 +322,52 @@
         color: #721c24;
         border: 1px solid #f5c6cb;
     }
+    
+    /* Tambahan styling untuk video info */
+    .video-info-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        background: #e3f2fd;
+        color: #1565c0;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        margin-top: 5px;
+    }
+    
+    .video-info-badge i {
+        margin-right: 5px;
+    }
 
+    .video-debug-info {
+        font-size: 0.75rem;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 8px;
+        margin-top: 5px;
+        color: #6c757d;
+    }
+    
+    .video-debug-info strong {
+        color: #495057;
+    }
+    
+    /* Styling untuk warning video tidak tersedia */
+    .video-not-available {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 4px;
+        padding: 8px;
+        margin-top: 5px;
+        color: #856404;
+        font-size: 0.8rem;
+    }
+    
+    .video-not-available i {
+        color: #856404;
+        margin-right: 5px;
+    }
 </style>
 
 <div class="container-fluid py-4">
@@ -335,6 +382,48 @@
         </div>
     </div>
     
+    <!-- DEBUG INFO (optional, bisa dihilangkan setelah fix) -->
+    @php
+        // Cek material dengan video untuk debugging
+        $videoMaterials = [];
+        foreach($materials as $index => $material) {
+            if($material['has_video']) {
+                $videoMaterials[] = [
+                    'index' => $index,
+                    'id' => $material['id'],
+                    'title' => $material['title'],
+                    'video_type' => $material['video_type'],
+                    'has_video_data' => !empty($material['video_data']),
+                    'video_data_keys' => !empty($material['video_data']) ? array_keys($material['video_data']) : [],
+                    'has_embed_url' => !empty($material['video_data']['embed_url'] ?? ''),
+                    'embed_url' => $material['video_data']['embed_url'] ?? null,
+                    'has_direct_link' => !empty($material['video_data']['direct_link'] ?? ''),
+                    'is_hosted' => $material['video_data']['is_hosted'] ?? false,
+                    'is_local' => $material['video_data']['is_local'] ?? false,
+                ];
+            }
+        }
+    @endphp
+    
+    @if(!empty($videoMaterials) && false) {{-- Set false untuk disable debug setelah fix --}}
+    <div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+        <h6 style="color: #1e3c72; margin-bottom: 10px;">
+            <i class="fas fa-bug me-2"></i>Debug Info: Video Materials
+        </h6>
+        @foreach($videoMaterials as $video)
+        <div style="font-size: 0.85rem; padding: 8px; border-bottom: 1px solid #eee;">
+            <strong>{{ $video['title'] }}</strong><br>
+            Type: {{ $video['video_type'] }} | 
+            Has Data: {{ $video['has_video_data'] ? '✅' : '❌' }} | 
+            Embed URL: {{ $video['has_embed_url'] ? '✅' : '❌' }}<br>
+            @if($video['has_video_data'])
+            Keys: {{ implode(', ', $video['video_data_keys']) }}
+            @endif
+        </div>
+        @endforeach
+    </div>
+    @endif
+    
     <!-- Sequential Flow -->
     <div class="sequential-flow">
         @foreach($materials as $material)
@@ -342,9 +431,10 @@
              data-material-status="{{ $material['status'] }}"
              data-attendance-status="{{ $material['attendance_status'] ?? 'pending' }}"
              data-material-id="{{ $material['id'] }}"
-             data-has-attendance="{{ $material['attendance_required'] ?? false ? 'true' : 'false' }}"
-             data-has-material="{{ $material['has_material'] ?? false ? 'true' : 'false' }}"
-             data-has-video="{{ $material['has_video'] ?? false ? 'true' : 'false' }}">
+             data-has-attendance="{{ $material['has_attendance'] ? 'true' : 'false' }}"
+             data-has-material="{{ $material['has_file'] ? 'true' : 'false' }}"
+             data-has-video="{{ $material['has_video'] ? 'true' : 'false' }}">
+            
             @if($material['type'] == 'material')
             <!-- Header untuk material -->
             <div class="step-header" onclick="toggleSubTasks({{ $material['id'] }})">
@@ -355,6 +445,21 @@
                     @if($material['description'])
                     <div class="material-description">
                         {{ $material['description'] }}
+                    </div>
+                    @endif
+                    
+                    <!-- Tampilkan ikon jenis konten yang tersedia -->
+                    @php
+                        $availableContent = [];
+                        if($material['has_attendance']) $availableContent[] = 'Kehadiran';
+                        if($material['has_file']) $availableContent[] = 'Materi';
+                        if($material['has_video']) $availableContent[] = 'Video';
+                    @endphp
+                    
+                    @if(!empty($availableContent))
+                    <div style="font-size: 0.85rem; color: #6c757d; margin-top: 5px;">
+                        <i class="fas fa-list-check me-1"></i>
+                        Konten: {{ implode(', ', $availableContent) }}
                     </div>
                     @endif
                 </div>
@@ -381,7 +486,7 @@
                 @endphp
 
                 <!-- Kehadiran -->
-                @if($material['attendance_required'] ?? true)
+                @if($material['has_attendance'])
                     @php $hasContent = true; @endphp
                     <div class="sub-task">
                         <div class="task-icon" id="attendance-icon-{{ $material['id'] }}" 
@@ -412,17 +517,14 @@
                 @endif
 
                 <!-- Materi Pelatihan -->
-                @if($material['has_material'] ?? false)
+                @if($material['has_file'])
                     @php 
                         $hasContent = true; 
                         $filePaths = $material['file_paths'] ?? [];
                         $fileCount = count($filePaths);
                         
-                        // LOGIKA PERBAIKAN: Tombol download aktif jika:
-                        // 1. Status material adalah 'current' DAN
-                        // 2. Attendance sudah selesai ATAU attendance tidak diperlukan
                         $canDownload = $material['status'] == 'current' && 
-                                      ($material['attendance_status'] == 'completed' || !($material['attendance_required'] ?? true));
+                                      ($material['attendance_status'] == 'completed' || !$material['has_attendance']);
                     @endphp
                     <div class="sub-task">
                         <div class="task-icon" id="material-icon-{{ $material['id'] }}"
@@ -433,7 +535,6 @@
                         <div class="task-info">
                             <div class="task-name">Materi Pelatihan</div>
                             <div class="task-description">
-                                <!-- PERUBAHAN DI SINI: Hanya tampilkan "(akan diunduh dalam format ZIP)" jika lebih dari 1 file -->
                                 @if($fileCount > 1)
                                     {{ $fileCount }} file tersedia (akan diunduh dalam format ZIP)
                                 @else
@@ -448,8 +549,6 @@
                                         $fileName = basename($filePath);
                                         $fileExtension = pathinfo($fileName, PATHINFO_EXTENSION);
                                         $fileIcon = getFileIcon($fileExtension);
-                                        
-                                        // Cek apakah file ini sudah didownload (dari progress ZIP)
                                         $isDownloaded = $material['material_status'] == 'completed';
                                     @endphp
                                     
@@ -463,11 +562,8 @@
                                         <div class="file-status">
                                             @if($isDownloaded)
                                                 <i class="fas fa-check text-success"></i>
-                                            @else
-                                                <!-- Hanya tampilkan ini untuk multiple files -->
-                                                @if($fileCount > 1)
-                                                    <span class="text-muted small">Akan diunduh dalam ZIP</span>
-                                                @endif
+                                            @elseif($fileCount > 1)
+                                                <span class="text-muted small">Akan diunduh dalam ZIP</span>
                                             @endif
                                         </div>
                                     </div>
@@ -481,13 +577,11 @@
                                     <i class="fas fa-check"></i> Selesai
                                 </span>
                             @elseif($canDownload)
-                                <!-- Hanya tombol Download All (ZIP) -->
                                 <a href="javascript:void(0)" 
                                    class="btn-simple btn-primary"
                                    id="download-button-{{ $material['id'] }}"
                                    onclick="handleDownload(event, {{ $material['id'] }}, {{ $kursus->id }})">
                                     <i class="fas fa-download"></i> 
-                                    <!-- PERUBAHAN DI SINI: Sesuaikan teks tombol -->
                                     @if($fileCount > 1)
                                         Download Semua
                                     @else
@@ -503,57 +597,132 @@
                     </div>
                 @endif
 
-                <!-- Video Pelatihan -->
-                <!-- Video Pelatihan -->
-@if($material['has_video'] ?? false)
-    @php 
-        $canWatchVideo = $material['status'] == 'current' && 
-                        ($material['material_status'] == 'completed' || !($material['has_material'] ?? false)) &&
-                        ($material['attendance_status'] == 'completed' || !($material['attendance_required'] ?? true));
-    @endphp
-    <div class="sub-task">
-        <div class="task-icon" id="video-icon-{{ $material['id'] }}"
-             style="background: {{ $material['video_status'] == 'completed' ? '#28a745' : '#e9ecef' }}; 
-                    color: {{ $material['video_status'] == 'completed' ? 'white' : '#6c757d' }};">
-            <i class="fas fa-play-circle"></i>
-        </div>
-        <div class="task-info">
-            <div class="task-name">Video Pelatihan</div>
-            <div class="task-description">Tonton video materi</div>
-            @if(isset($material['video_type']) && $material['video_type'] == 'hosted')
-                <small class="text-muted">
-                    <i class="fas fa-cloud me-1"></i> Video dari Google Drive
-                </small>
-            @elseif(isset($material['video_type']) && $material['video_type'] == 'youtube')
-                <small class="text-muted">
-                    <i class="fab fa-youtube me-1"></i> Video YouTube
-                </small>
-            @elseif(isset($material['video_type']) && $material['video_type'] == 'vimeo')
-                <small class="text-muted">
-                    <i class="fab fa-vimeo me-1"></i> Video Vimeo
-                </small>
-            @endif
-        </div>
-        <div class="task-action">
-            @if($material['video_status'] == 'completed')
-            <span class="btn-simple btn-success" id="video-button-{{ $material['id'] }}">
-                <i class="fas fa-check"></i> Selesai
-            </span>
-            @elseif($canWatchVideo)
-            <a href="{{ route('mitra.kursus.material.video', ['kursus' => $kursus->id, 'material' => $material['id']]) }}" 
-               class="btn-simple btn-primary"
-               id="video-link-{{ $material['id'] }}"
-               onclick="handleVideoWatch(event, {{ $material['id'] }}, {{ $kursus->id }})">
-                <i class="fas fa-play"></i> Tonton Video
-            </a>
-            @else
-            <button class="btn-simple btn-secondary" disabled id="locked-video-{{ $material['id'] }}">
-                <i class="fas fa-lock"></i>
-            </button>
-            @endif
-        </div>
-    </div>
-@endif
+                <!-- Video Pelatihan - PERBAIKAN UTAMA -->
+                @if($material['has_video'])
+                    @php 
+                        $hasContent = true;
+                        
+                        // Data video dari controller
+                        $videoData = $material['video_data'] ?? [];
+                        $videoType = $material['video_type'] ?? null;
+                        
+                        // Debug info
+                        $hasVideoData = !empty($videoData);
+                        $hasEmbedUrl = !empty($videoData['embed_url'] ?? '');
+                        $hasDirectLink = !empty($videoData['direct_link'] ?? '');
+                        $isVideoAvailable = $hasEmbedUrl || $hasDirectLink;
+                        
+                        // LOGIKA AKSES VIDEO YANG DIPERBAIKI
+                        $canWatchVideo = $material['status'] == 'current' && $isVideoAvailable &&
+                                        // Jika ada materi, materi harus selesai dulu
+                                        (!$material['has_file'] || $material['material_status'] == 'completed') &&
+                                        // Jika ada attendance, attendance harus selesai dulu
+                                        (!$material['has_attendance'] || $material['attendance_status'] == 'completed');
+                        
+                        // Tentukan nama platform video
+                        $platformName = 'Video';
+                        $platformIcon = 'fas fa-video';
+                        
+                        if($videoData['is_youtube'] ?? false) {
+                            $platformName = 'YouTube';
+                            $platformIcon = 'fab fa-youtube';
+                            $videoType = 'youtube';
+                        } elseif($videoData['is_hosted'] ?? false) {
+                            $platformName = 'Google Drive';
+                            $platformIcon = 'fab fa-google-drive';
+                            $videoType = 'hosted';
+                        } elseif($videoData['is_local'] ?? false) {
+                            $platformName = 'Video Lokal';
+                            $platformIcon = 'fas fa-server';
+                            $videoType = 'local';
+                        } elseif($videoData['is_vimeo'] ?? false) {
+                            $platformName = 'Vimeo';
+                            $platformIcon = 'fab fa-vimeo';
+                            $videoType = 'vimeo';
+                        } elseif($videoType == 'youtube') {
+                            $platformName = 'YouTube';
+                            $platformIcon = 'fab fa-youtube';
+                        } elseif($videoType == 'hosted') {
+                            $platformName = 'Google Drive';
+                            $platformIcon = 'fab fa-google-drive';
+                        } elseif($videoType == 'local') {
+                            $platformName = 'Video Lokal';
+                            $platformIcon = 'fas fa-server';
+                        } elseif($videoType == 'vimeo') {
+                            $platformName = 'Vimeo';
+                            $platformIcon = 'fab fa-vimeo';
+                        }
+                    @endphp
+                    
+                    <div class="sub-task">
+                        <div class="task-icon" id="video-icon-{{ $material['id'] }}"
+                             style="background: {{ $material['video_status'] == 'completed' ? '#28a745' : '#e9ecef' }}; 
+                                    color: {{ $material['video_status'] == 'completed' ? 'white' : '#6c757d' }};">
+                            <i class="fas fa-play-circle"></i>
+                        </div>
+                        <div class="task-info">
+                            <div class="task-name">Video Pelatihan</div>
+                            <div class="task-description">Tonton video materi</div>
+                            
+                            <!-- Informasi platform video -->
+                            <div class="video-info-badge">
+                                <i class="{{ $platformIcon }}"></i> {{ $platformName }}
+                            </div>
+                            
+                            <!-- Durasi video jika ada -->
+                            @if(!empty($videoData['duration']) && $videoData['duration'] > 0)
+                            <div style="font-size: 0.8rem; color: #6c757d; margin-top: 3px;">
+                                <i class="fas fa-clock me-1"></i>
+                                Durasi: {{ gmdate("i:s", $videoData['duration']) }}
+                            </div>
+                            @endif
+                            
+                            <!-- Debug info (bisa dihilangkan setelah fix) -->
+                            @if(!$isVideoAvailable && $material['has_video'])
+                            <div class="video-not-available">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Video tidak tersedia atau format tidak didukung.
+                                
+                                @if(app()->environment('local'))
+                                <div class="video-debug-info">
+                                    <strong>Debug Info:</strong><br>
+                                    Type: {{ $videoType }}<br>
+                                    Has Data: {{ $hasVideoData ? 'Yes' : 'No' }}<br>
+                                    Has Embed URL: {{ $hasEmbedUrl ? 'Yes' : 'No' }}<br>
+                                    Has Direct Link: {{ $hasDirectLink ? 'Yes' : 'No' }}<br>
+                                    @if($hasVideoData)
+                                    Data Keys: {{ implode(', ', array_keys($videoData)) }}
+                                    @endif
+                                </div>
+                                @endif
+                            </div>
+                            @endif
+                        </div>
+                        <div class="task-action">
+                            @if($material['video_status'] == 'completed')
+                                <span class="btn-simple btn-success" id="video-button-{{ $material['id'] }}">
+                                    <i class="fas fa-check"></i> Selesai
+                                </span>
+                            @elseif($canWatchVideo && $isVideoAvailable)
+                                <a href="{{ route('mitra.kursus.material.video', ['kursus' => $kursus->id, 'material' => $material['id']]) }}" 
+                                   class="btn-simple btn-primary"
+                                   id="video-link-{{ $material['id'] }}"
+                                   onclick="handleVideoWatch(event, {{ $material['id'] }}, {{ $kursus->id }})">
+                                    <i class="fas fa-play"></i> Tonton Video
+                                </a>
+                            @else
+                                <button class="btn-simple btn-secondary" disabled id="locked-video-{{ $material['id'] }}">
+                                    <i class="fas fa-lock"></i> 
+                                    @if(!$isVideoAvailable)
+                                        Video Tidak Tersedia
+                                    @else
+                                        Video Terkunci
+                                    @endif
+                                </button>
+                            @endif
+                        </div>
+                    </div>
+                @endif
 
                 @if(!$hasContent)
                     <div class="no-content-message">
@@ -564,28 +733,25 @@
             </div>
 
             @else
-            <!-- Header untuk pretest, posttest, dan recap (TIDAK bisa diklik) -->
+            <!-- Header untuk pretest, posttest, dan recap -->
             <div class="step-header no-toggle">
                 <div class="header-content">
                     <h3 class="step-title">
                         {{ $loop->iteration }}. {{ $material['title'] }}
                     </h3>
                     
-                    <!-- Tampilkan deskripsi jika ada -->
                     @if($material['description'])
                     <div class="material-description">
                         {{ $material['description'] }}
                     </div>
                     @endif
                     
-                    <!-- Tampilkan info test untuk pretest dan posttest -->
                     @if(in_array($material['type'], ['pre_test', 'post_test']))
                     <div class="test-info">
                         <span class="info-badge badge-warning">
                             <i class="fas fa-clock me-1"></i>
                             {{ $material['type'] == 'pre_test' ? $material['durasi_pretest'] : $material['durasi_posttest'] }} menit
                         </span>
-                        <!-- HAPUS PASSING GRADE DARI SINI -->
                         <span class="info-badge badge-success">
                             <i class="fas fa-list-ol me-1"></i>
                             @if($material['type'] == 'pre_test')
@@ -660,10 +826,12 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 // ==============================================
-// FUNGSI UTAMA: PENAMBAHAN FITUR STATUS OTOMATIS
+// FUNGSI UTAMA YANG DIPERBAIKI
 // ==============================================
 
-// Fungsi untuk memeriksa apakah semua sub-tasks dalam material sudah selesai
+/**
+ * Deteksi apakah semua sub-tasks dalam material sudah selesai
+ */
 function checkAllSubTasksCompleted(materialId) {
     const materialStep = document.getElementById(`material-${materialId}`);
     if (!materialStep) return false;
@@ -675,116 +843,102 @@ function checkAllSubTasksCompleted(materialId) {
     
     let allCompleted = true;
     
-    // Periksa kehadiran (jika diperlukan)
+    // Periksa kehadiran
     if (hasAttendance) {
         const attendanceIcon = document.getElementById(`attendance-icon-${materialId}`);
-        const attendanceStatus = materialStep.getAttribute('data-attendance-status');
-        const attendanceCompleted = attendanceStatus === 'completed' || 
-                                  (attendanceIcon && attendanceIcon.style.backgroundColor === 'rgb(40, 167, 69)') ||
-                                  (attendanceIcon && attendanceIcon.style.backgroundColor === '#28a745');
+        const attendanceCompleted = attendanceIcon && 
+                                   (attendanceIcon.style.backgroundColor === 'rgb(40, 167, 69)' || 
+                                    attendanceIcon.style.backgroundColor === '#28a745');
         
-        if (!attendanceCompleted) {
-            allCompleted = false;
-        }
+        if (!attendanceCompleted) allCompleted = false;
     }
     
-    // Periksa materi (jika ada)
+    // Periksa materi
     if (hasMaterial) {
         const materialIcon = document.getElementById(`material-icon-${materialId}`);
         const materialCompleted = materialIcon && 
                                  (materialIcon.style.backgroundColor === 'rgb(40, 167, 69)' || 
                                   materialIcon.style.backgroundColor === '#28a745');
         
-        if (!materialCompleted) {
-            allCompleted = false;
-        }
+        if (!materialCompleted) allCompleted = false;
     }
     
-    // Periksa video (jika ada)
+    // Periksa video
     if (hasVideo) {
         const videoIcon = document.getElementById(`video-icon-${materialId}`);
         const videoCompleted = videoIcon && 
                               (videoIcon.style.backgroundColor === 'rgb(40, 167, 69)' || 
                                videoIcon.style.backgroundColor === '#28a745');
         
-        if (!videoCompleted) {
-            allCompleted = false;
-        }
+        if (!videoCompleted) allCompleted = false;
     }
     
     return allCompleted;
 }
 
-// Fungsi untuk update status material menjadi selesai
+/**
+ * Update status material menjadi selesai
+ */
 function updateMaterialToCompleted(materialId) {
     const materialStep = document.getElementById(`material-${materialId}`);
-    if (!materialStep) return;
+    if (!materialStep || !materialStep.classList.contains('current')) return;
     
-    // Hanya update jika status saat ini adalah 'current'
-    if (materialStep.classList.contains('current')) {
-        // Update class
-        materialStep.classList.remove('current');
-        materialStep.classList.add('completed');
-        
-        // Update border color
-        materialStep.style.borderLeftColor = '#28a745';
-        materialStep.style.background = '#f8fff9';
-        
-        // Update status text
-        const statusSpan = materialStep.querySelector('.step-status');
-        if (statusSpan) {
-            statusSpan.innerHTML = '<i class="fas fa-check"></i> Selesai';
-            statusSpan.className = 'step-status status-completed';
-        }
-        
-        // Update data attribute
-        materialStep.setAttribute('data-material-status', 'completed');
-        
-        console.log(`Material ${materialId} berubah dari "Sedang Berjalan" menjadi "Selesai"`);
-        
-        // Cek dan unlock material berikutnya (jika ada)
-        unlockNextMaterial(materialId);
-        
-        // Update progress bar
-        updateProgressBar();
-        
-        // Kirim notifikasi ke server (opsional)
-        notifyServerMaterialCompleted(materialId);
+    // Update UI
+    materialStep.classList.remove('current');
+    materialStep.classList.add('completed');
+    materialStep.style.borderLeftColor = '#28a745';
+    materialStep.style.background = '#f8fff9';
+    
+    // Update status text
+    const statusSpan = materialStep.querySelector('.step-status');
+    if (statusSpan) {
+        statusSpan.innerHTML = '<i class="fas fa-check"></i> Selesai';
+        statusSpan.className = 'step-status status-completed';
     }
+    
+    // Update data attribute
+    materialStep.setAttribute('data-material-status', 'completed');
+    
+    console.log(`✅ Material ${materialId} selesai`);
+    
+    // Unlock material berikutnya
+    unlockNextMaterial(materialId);
+    
+    // Update progress
+    updateProgressBar();
+    
+    // Notifikasi ke server
+    notifyServerMaterialCompleted(materialId);
 }
 
-// Fungsi untuk membuka material berikutnya
+/**
+ * Membuka material berikutnya yang terkunci
+ */
 function unlockNextMaterial(currentMaterialId) {
-    // Dapatkan semua material
     const allMaterials = document.querySelectorAll('.flow-step');
     let foundCurrent = false;
     let nextMaterial = null;
     
-    allMaterials.forEach((material, index) => {
+    allMaterials.forEach(material => {
         const materialId = material.getAttribute('id').replace('material-', '');
         
-        // Jika ini material saat ini, tandai untuk membuka yang berikutnya
         if (materialId == currentMaterialId) {
             foundCurrent = true;
             return;
         }
         
-        // Jika sudah menemukan material saat ini dan material berikutnya terkunci
         if (foundCurrent && material.classList.contains('locked')) {
             nextMaterial = material;
-            foundCurrent = false; // Reset flag
+            foundCurrent = false;
         }
     });
     
-    // Buka material berikutnya jika ditemukan
     if (nextMaterial) {
         const nextMaterialId = nextMaterial.getAttribute('id').replace('material-', '');
         
-        // Buka material berikutnya
+        // Update UI
         nextMaterial.classList.remove('locked');
         nextMaterial.classList.add('current');
-        
-        // Update border color
         nextMaterial.style.borderLeftColor = '#1e3c72';
         nextMaterial.style.background = '#f8f9fa';
         
@@ -798,9 +952,9 @@ function unlockNextMaterial(currentMaterialId) {
         // Update data attribute
         nextMaterial.setAttribute('data-material-status', 'current');
         
-        console.log(`Material ${nextMaterialId} berubah dari "Terkunci" menjadi "Sedang Berjalan"`);
+        console.log(`🔓 Material ${nextMaterialId} terbuka`);
         
-        // Auto-expand material yang baru dibuka
+        // Auto-expand material baru
         setTimeout(() => {
             const header = nextMaterial.querySelector('.step-header');
             if (header && !header.classList.contains('no-toggle')) {
@@ -814,7 +968,9 @@ function unlockNextMaterial(currentMaterialId) {
     }
 }
 
-// Fungsi untuk notifikasi ke server (opsional)
+/**
+ * Notifikasi ke server
+ */
 function notifyServerMaterialCompleted(materialId) {
     const kursusId = {{ $kursus->id }};
     
@@ -822,42 +978,41 @@ function notifyServerMaterialCompleted(materialId) {
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
         }
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            console.log(`Server mencatat material ${materialId} selesai`);
+            console.log(`📡 Server mencatat material ${materialId} selesai`);
         }
     })
     .catch(error => {
-        console.error('Error notifying server:', error);
+        console.error('❌ Error notifying server:', error);
     });
 }
 
-// ==============================================
-// FUNGSI EXISTING DIMODIFIKASI
-// ==============================================
-
-// Fungsi untuk menangani download dengan feedback yang lebih baik
+/**
+ * Handle download file
+ */
 function handleDownload(event, materialId, kursusId) {
     event.preventDefault();
     
-    // Tampilkan loading
     Swal.fire({
         title: 'Menyiapkan file...',
         text: 'Sedang mempersiapkan file untuk didownload.',
         icon: 'info',
         showConfirmButton: false,
         allowOutsideClick: false,
-        allowEscapeKey: false
+        allowEscapeKey: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
     });
     
-    // URL untuk download
     const downloadUrl = `/mitra/kursus/${kursusId}/materials/${materialId}/download`;
     
-    // Gunakan fetch untuk download dengan progress
     fetch(downloadUrl, {
         headers: {
             'X-Requested-With': 'XMLHttpRequest'
@@ -868,7 +1023,6 @@ function handleDownload(event, materialId, kursusId) {
             throw new Error('Gagal mendownload file');
         }
         
-        // Dapatkan nama file dari header atau tentukan default
         const contentDisposition = response.headers.get('Content-Disposition');
         let fileName = 'materi.zip';
         
@@ -879,10 +1033,7 @@ function handleDownload(event, materialId, kursusId) {
         return response.blob().then(blob => ({ blob, fileName }));
     })
     .then(({ blob, fileName }) => {
-        // Buat URL object untuk blob
         const url = window.URL.createObjectURL(blob);
-        
-        // Buat elemen <a> untuk download
         const link = document.createElement('a');
         link.href = url;
         link.download = fileName;
@@ -891,14 +1042,11 @@ function handleDownload(event, materialId, kursusId) {
         document.body.appendChild(link);
         link.click();
         
-        // Bersihkan
         window.URL.revokeObjectURL(url);
         document.body.removeChild(link);
         
-        // Tutup loading
         Swal.close();
         
-        // Tampilkan success message
         Swal.fire({
             title: 'Berhasil!',
             text: 'File berhasil didownload.',
@@ -907,7 +1055,6 @@ function handleDownload(event, materialId, kursusId) {
             showConfirmButton: false
         });
         
-        // Update material status
         updateMaterialStatus(materialId, kursusId);
     })
     .catch(error => {
@@ -915,16 +1062,18 @@ function handleDownload(event, materialId, kursusId) {
         
         Swal.fire({
             title: 'Error!',
-            text: 'Gagal mendownload file: ' + error.message,
+            text: 'Gagal mendownload file: ' . error.message,
             icon: 'error',
             confirmButtonText: 'OK'
         });
     });
 }
 
-// Fungsi untuk update status material setelah download
+/**
+ * Update status material setelah download
+ */
 function updateMaterialStatus(materialId, kursusId) {
-    // Update material icon langsung
+    // Update material icon
     const materialIcon = document.getElementById(`material-icon-${materialId}`);
     if (materialIcon) {
         materialIcon.style.background = '#28a745';
@@ -940,7 +1089,7 @@ function updateMaterialStatus(materialId, kursusId) {
         downloadButton.href = '#';
     }
     
-    // Update semua file status
+    // Update file status
     const fileItems = document.querySelectorAll(`#material-${materialId} .file-item`);
     fileItems.forEach(item => {
         const fileStatus = item.querySelector('.file-status');
@@ -949,7 +1098,13 @@ function updateMaterialStatus(materialId, kursusId) {
         }
     });
     
-    // Cek apakah semua sub-tasks sudah selesai
+    // Update material progress
+    const materialStep = document.getElementById(`material-${materialId}`);
+    if (materialStep) {
+        materialStep.setAttribute('data-material-status', 'completed');
+    }
+    
+    // Cek semua sub-tasks
     if (checkAllSubTasksCompleted(materialId)) {
         updateMaterialToCompleted(materialId);
     } else {
@@ -957,11 +1112,12 @@ function updateMaterialStatus(materialId, kursusId) {
     }
 }
 
-// Fungsi untuk menangani video watch (TANPA membuka tab baru)
+/**
+ * Handle video watch
+ */
 function handleVideoWatch(event, materialId, kursusId) {
     event.preventDefault();
     
-    // Tampilkan loading
     Swal.fire({
         title: 'Membuka video...',
         text: 'Video akan segera dibuka.',
@@ -970,12 +1126,11 @@ function handleVideoWatch(event, materialId, kursusId) {
         showConfirmButton: false
     });
     
-    // Arahkan ke halaman video di tab yang sama
     setTimeout(() => {
         window.location.href = `/mitra/kursus/${kursusId}/materials/${materialId}/video`;
     }, 500);
     
-    // Kirim request untuk mencatat progress video (opsional - bisa dilakukan di halaman video)
+    // Record video progress
     fetch(`/mitra/kursus/${kursusId}/materials/${materialId}/record-video`, {
         method: 'POST',
         headers: {
@@ -983,18 +1138,14 @@ function handleVideoWatch(event, materialId, kursusId) {
             'Content-Type': 'application/json'
         }
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            console.log('Progress video dicatat');
-        }
-    })
     .catch(error => {
         console.error('Error recording video:', error);
     });
 }
 
-// Fungsi untuk update video progress
+/**
+ * Update video progress (dipanggil dari halaman video)
+ */
 function updateVideoProgress(materialId) {
     const videoIcon = document.getElementById(`video-icon-${materialId}`);
     if (videoIcon) {
@@ -1017,7 +1168,13 @@ function updateVideoProgress(materialId) {
         videoLink.href = '#';
     }
     
-    // Cek apakah semua sub-tasks sudah selesai
+    // Update material progress
+    const materialStep = document.getElementById(`material-${materialId}`);
+    if (materialStep) {
+        materialStep.setAttribute('data-video-status', 'completed');
+    }
+    
+    // Cek semua sub-tasks
     if (checkAllSubTasksCompleted(materialId)) {
         updateMaterialToCompleted(materialId);
     } else {
@@ -1025,7 +1182,9 @@ function updateVideoProgress(materialId) {
     }
 }
 
-// Fungsi untuk mark attendance
+/**
+ * Mark attendance
+ */
 function markAttendance(materialId) {
     const kursusId = {{ $kursus->id }};
     
@@ -1061,10 +1220,7 @@ function markAttendance(materialId) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Update UI attendance
                     updateAttendanceUI(materialId);
-                    
-                    // Unlock download button
                     unlockDownloadButton(materialId, kursusId);
                     
                     Swal.fire({
@@ -1075,7 +1231,6 @@ function markAttendance(materialId) {
                         timer: 2000
                     });
                     
-                    // Cek apakah semua sub-tasks sudah selesai
                     if (checkAllSubTasksCompleted(materialId)) {
                         updateMaterialToCompleted(materialId);
                     } else {
@@ -1096,7 +1251,9 @@ function markAttendance(materialId) {
     });
 }
 
-// Fungsi untuk update attendance UI
+/**
+ * Update attendance UI
+ */
 function updateAttendanceUI(materialId) {
     const materialStep = document.getElementById(`material-${materialId}`);
     const attendanceIcon = document.getElementById(`attendance-icon-${materialId}`);
@@ -1106,7 +1263,6 @@ function updateAttendanceUI(materialId) {
         attendanceIcon.style.color = 'white';
     }
     
-    // Update data attribute
     if (materialStep) {
         materialStep.setAttribute('data-attendance-status', 'completed');
     }
@@ -1121,11 +1277,12 @@ function updateAttendanceUI(materialId) {
     }
 }
 
-// Fungsi untuk unlock download button setelah attendance
+/**
+ * Unlock download button setelah attendance
+ */
 function unlockDownloadButton(materialId, kursusId) {
     const lockedButton = document.getElementById(`locked-material-${materialId}`);
     if (lockedButton) {
-        // Ambil jumlah file dari data attribute
         const materialStep = document.getElementById(`material-${materialId}`);
         const fileList = materialStep.querySelector('.file-list');
         const fileItems = fileList ? fileList.querySelectorAll('.file-item') : [];
@@ -1145,11 +1302,9 @@ function unlockDownloadButton(materialId, kursusId) {
     }
 }
 
-// ==============================================
-// FUNGSI PENDUKUNG
-// ==============================================
-
-// Fungsi untuk update progress bar
+/**
+ * Update progress bar
+ */
 function updateProgressBar() {
     fetch(`/mitra/kursus/{{ $kursus->id }}/progress`, {
         method: 'GET',
@@ -1160,7 +1315,6 @@ function updateProgressBar() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Update progress bar
             const progressFill = document.querySelector('.progress-fill');
             const progressInfo = document.querySelector('.progress-info span:first-child');
             const progressPercentageSpan = document.querySelector('.progress-info span:last-child');
@@ -1183,7 +1337,9 @@ function updateProgressBar() {
     });
 }
 
-// Fungsi toggle sub-tasks
+/**
+ * Toggle sub-tasks
+ */
 function toggleSubTasks(materialId) {
     const subTasks = document.getElementById('subTasks' + materialId);
     const toggleIcon = document.getElementById('toggle' + materialId);
@@ -1206,27 +1362,27 @@ function toggleSubTasks(materialId) {
     }
 }
 
-// ==============================================
-// INISIALISASI SAAT HALAMAN DIMUAT
-// ==============================================
-
-// Fungsi untuk memeriksa status material saat halaman dimuat
+/**
+ * Cek status material saat halaman dimuat
+ */
 function checkInitialMaterialStatus() {
-    // Dapatkan semua material dengan status 'current'
     const currentMaterials = document.querySelectorAll('.flow-step.current');
     
     currentMaterials.forEach(materialStep => {
         const materialId = materialStep.getAttribute('id').replace('material-', '');
         
-        // Periksa apakah semua sub-tasks sudah selesai
         if (checkAllSubTasksCompleted(materialId)) {
             updateMaterialToCompleted(materialId);
         }
     });
 }
 
-// Auto-expand current material
+// ==============================================
+// INISIALISASI
+// ==============================================
+
 document.addEventListener('DOMContentLoaded', function() {
+    // Auto-expand current material
     const currentMaterials = document.querySelectorAll('.flow-step.current');
     currentMaterials.forEach(step => {
         const header = step.querySelector('.step-header');

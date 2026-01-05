@@ -14,7 +14,15 @@ return new class extends Migration
             $table->foreignId('material_id')->constrained()->onDelete('cascade');
             $table->enum('attendance_status', ['pending', 'completed'])->default('pending');
             $table->enum('material_status', ['pending', 'downloaded', 'completed'])->default('pending');
-            $table->enum('video_status', ['pending', 'watching', 'completed'])->default('pending');
+            
+            // Video status dengan ENUM yang sudah diperbaiki
+            $table->enum('video_status', ['pending', 'in_progress', 'completed'])->default('pending');
+            
+            // Kolom untuk tracking download per file
+            $table->json('downloaded_files')->nullable();
+            $table->integer('total_files')->default(0);
+            $table->boolean('all_files_downloaded')->default(false);
+            
             $table->json('quiz_answers')->nullable();
             
             // Kolom untuk menyimpan hasil test
@@ -30,6 +38,11 @@ return new class extends Migration
 
             // Unique constraint
             $table->unique(['user_id', 'material_id']);
+            
+            // Indexes
+            $table->index(['user_id', 'is_completed']);
+            $table->index(['material_id', 'is_completed']);
+            $table->index(['user_id', 'material_id', 'is_completed']);
         });
     }
 
