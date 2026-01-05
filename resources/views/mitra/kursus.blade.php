@@ -2,13 +2,168 @@
     use Illuminate\Support\Str;
 @endphp
 
-
 @extends('mitra.layouts.app')
 
 @section('title', 'MOOC BPS - Kursus Tersedia')
 
 @section('content')
 <style>
+    /* ===== GAYA UNTUK NOTIFIKASI ERROR ENROLL CODE ===== */
+    .enroll-error-notification {
+        background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+        border: 2px solid #fc8181;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(252, 129, 129, 0.2);
+        animation: slideDown 0.5s ease;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .enroll-error-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .enroll-error-icon {
+        background: #e53e3e;
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        font-size: 1.2rem;
+    }
+
+    .enroll-error-title {
+        color: #c53030;
+        font-weight: 700;
+        font-size: 1.2rem;
+        margin: 0;
+    }
+
+    .enroll-error-body {
+        color: #742a2a;
+        font-size: 1rem;
+        line-height: 1.6;
+        margin-bottom: 15px;
+    }
+
+    .enroll-error-code {
+        background: #fed7d7;
+        border: 1px solid #fc8181;
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-family: monospace;
+        font-weight: 600;
+        color: #c53030;
+        margin: 5px 0 15px 0;
+        display: inline-block;
+    }
+
+    .enroll-error-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .btn-enroll-retry {
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+    }
+
+    .btn-enroll-retry:hover {
+        background: linear-gradient(135deg, #152c5b, #1e3c72);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(30, 60, 114, 0.3);
+    }
+
+    .btn-enroll-ok {
+        background: linear-gradient(135deg, #38a169, #2f855a);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+    }
+
+    .btn-enroll-ok:hover {
+        background: linear-gradient(135deg, #2f855a, #276749);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(56, 161, 105, 0.3);
+    }
+
+    /* ===== GAYA UNTUK NOTIFIKASI SUKSES ===== */
+    .enroll-success-notification {
+        background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+        border: 2px solid #9ae6b4;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(154, 230, 180, 0.2);
+        animation: slideDown 0.5s ease;
+    }
+
+    .enroll-success-icon {
+        background: #38a169;
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        font-size: 1.2rem;
+    }
+
+    .enroll-success-title {
+        color: #276749;
+        font-weight: 700;
+        font-size: 1.2rem;
+        margin: 0;
+    }
+
+    /* ===== GAYA UNTUK MODAL (TANPA AUTO-OPEN) ===== */
+    .modal-content {
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    /* ===== GAYA UNTUK KURSUS (YANG SUDAH ADA) ===== */
     /* Kursus Header */
     .kursus-header {
         margin-bottom: 30px;
@@ -159,12 +314,13 @@
     }
 
     .course-action-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
         margin-top: auto;
-        padding-top: 15px;
-        border-top: 1px solid #e9ecef;
+        width: 100%;
+        min-width: 0;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        padding-top: 10px;
     }
 
     /* Tombol Ikuti Kursus - Warna biru */
@@ -177,7 +333,6 @@
         font-weight: 600;
         transition: all 0.3s ease;
         text-decoration: none;
-        display: inline-flex;
         align-items: center;
         gap: 6px;
         font-size: 0.8rem;
@@ -235,7 +390,6 @@
         font-weight: 600;
         transition: all 0.3s ease;
         text-decoration: none;
-        display: inline-flex;
         align-items: center;
         gap: 6px;
         font-size: 0.8rem;
@@ -293,44 +447,6 @@
         }
     }
 
-    @media (max-width: 768px) {
-        .course-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .kursus-title {
-            font-size: 1.8rem;
-        }
-    }
-
-    @media (max-width: 576px) {
-        .course-content-wrapper {
-            padding: 15px;
-        }
-        
-        .course-main-title {
-            font-size: 1rem;
-        }
-        
-        .course-meta-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .course-image-wrapper {
-            height: 140px;
-        }
-        
-        .course-action-row {
-            flex-direction: column;
-            gap: 10px;
-        }
-        
-        .btn-follow-course, .btn-view-course-white {
-            width: 100%;
-            justify-content: center;
-        }
-    }
-
     /* Empty State */
     .empty-state-container {
         display: flex;
@@ -343,50 +459,57 @@
         width: 100%;
     }
     
-    .kursus-saya-container > div > div:last-child {
-        padding: 20px 10px !important;
-    }
-    
-    .kursus-saya-container i.fa-book-open {
-        font-size: 2rem !important;
-        color: #667eea !important;
-        margin-bottom: 15px !important;
-    }
-    
-    .kursus-saya-container h4 {
-        font-size: 1.2rem !important;
-        color: #1e3c72 !important;
-        margin-bottom: 10px !important;
-    }
-    
-    .kursus-saya-container p {
-        font-size: 0.9rem !important;
-        color: #6c757d !important;
-        margin-bottom: 20px !important;
-    }
-    
-    .kursus-saya-container a.btn-empty-state {
-        background: #1e3c72 !important;
-        color: white !important;
-        padding: 8px 20px !important;
-        border-radius: 5px !important;
-        text-decoration: none !important;
-        font-size: 0.9rem !important;
-        display: inline-block;
-        transition: all 0.3s ease;
-    }
-    
-    .kursus-saya-container a.btn-empty-state:hover {
-        background: #152c5b !important;
-        transform: translateY(-2px);
-    }
+    /* ===== RESPONSIVE DESIGN UNTUK MOBILE ===== */
+    @media (max-width: 500px) {
+        /* Notifikasi Error */
+        .enroll-error-notification,
+        .enroll-success-notification {
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .enroll-error-header {
+            flex-direction: column;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        
+        .enroll-error-icon,
+        .enroll-success-icon {
+            margin-bottom: 10px;
+            margin-right: 0;
+            width: 35px;
+            height: 35px;
+            font-size: 1rem;
+        }
+        
+        .enroll-error-title,
+        .enroll-success-title {
+            font-size: 1rem;
+        }
+        
+        .enroll-error-body {
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        
+        .enroll-error-actions {
+            flex-direction: column;
+            width: 100%;
+        }
+        
+        .btn-enroll-retry,
+        .btn-enroll-ok {
+            width: 100%;
+            justify-content: center;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
 
-    /* ===== RESPONSIVE DESIGN UNTUK MOBILE KECIL (≤400px) ===== */
-    @media (max-width: 400px) {
         /* Header Kursus */
         .main-content {
-            padding: 15px 12px !important; /* Tambah kiri-kanan 12px */
-            margin: 10px 10px !important; /* Tambah margin kiri-kanan 8px */
+            padding: 15px 12px !important;
+            margin: 10px 10px !important;
         }
 
         .kursus-header {
@@ -395,16 +518,16 @@
         }
         
         .kursus-title {
-            font-size: 1.5rem !important; /* Turun dari 2.2rem */
+            font-size: 1.5rem !important;
             margin-bottom: 8px !important;
         }
         
         .kursus-subtitle {
-            font-size: 0.9rem !important; /* Turun dari 1.1rem */
+            font-size: 0.9rem !important;
             line-height: 1.4;
         }
         
-        /* Course Grid - 1 kolom dengan padding lebih kecil */
+        /* Course Grid - 1 kolom */
         .course-grid {
             grid-template-columns: 1fr !important;
             gap: 15px !important;
@@ -418,7 +541,7 @@
         
         /* Course Image */
         .course-image-wrapper {
-            height: 120px !important; /* Lebih kecil dari 160px */
+            height: 120px !important;
         }
         
         .course-badge {
@@ -431,7 +554,7 @@
         
         /* Course Content */
         .course-content-wrapper {
-            padding: 12px !important; /* Lebih kecil dari 20px */
+            padding: 12px !important;
         }
         
         .course-date {
@@ -440,8 +563,8 @@
         }
         
         .course-main-title {
-            font-size: 0.95rem !important; /* Turun dari 1.1rem */
-            height: 2.4em !important; /* Sesuaikan tinggi */
+            font-size: 0.95rem !important;
+            height: 2.4em !important;
             line-height: 1.2 !important;
             margin-bottom: 6px !important;
         }
@@ -452,15 +575,15 @@
         }
         
         .course-description {
-            font-size: 0.75rem !important; /* Turun dari 0.8rem */
+            font-size: 0.75rem !important;
             line-height: 1.4 !important;
-            height: 3.2em !important; /* Sesuaikan tinggi */
+            height: 3.2em !important;
             margin-bottom: 10px !important;
         }
         
         /* Meta Information */
         .course-meta-grid {
-            grid-template-columns: repeat(2, 1fr) !important; /* Tetap 2 kolom */
+            grid-template-columns: repeat(2, 1fr) !important;
             gap: 6px !important;
             margin-bottom: 10px !important;
         }
@@ -471,27 +594,22 @@
         }
         
         .meta-value {
-            font-size: 0.8rem !important; /* Turun dari 0.9rem */
+            font-size: 0.8rem !important;
             margin-bottom: 1px !important;
         }
         
         .meta-label {
-            font-size: 0.65rem !important; /* Turun dari 0.7rem */
-        }
-        
-        /* Action Row */
-        .course-action-row {
-            flex-direction: row !important; /* Tetap horizontal */
-            gap: 8px !important;
-            padding-top: 10px !important;
+            font-size: 0.65rem !important;
         }
         
         .btn-follow-course, 
         .btn-view-course-white {
             padding: 6px 10px !important;
-            font-size: 0.7rem !important; /* Lebih kecil */
-            gap: 4px !important;
-            flex: 1; /* Membagi ruang sama rata */
+            font-size: 0.7rem !important;
+            flex: 1;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
         }
         
         /* Modal Responsive */
@@ -522,7 +640,7 @@
         
         .info-item strong {
             font-size: 0.8rem;
-            min-width: 120px !important; /* Lebih kecil */
+            min-width: 120px !important;
         }
         
         /* Card di modal */
@@ -564,91 +682,99 @@
             transform: none !important;
             box-shadow: 0 4px 15px rgba(0,0,0,0.08) !important;
         }
-        
-        .btn-follow-course:hover,
-        .btn-view-course-white:hover {
-            transform: none !important;
-            box-shadow: none !important;
-        }
-    }
 
-    /* ===== OPTIMASI TAMBAHAN UNTUK SEMUA UKURAN MOBILE ===== */
-    @media (max-width: 576px) {
-        /* Pastikan gambar di modal responsif */
-        .modal-course-image {
-            max-height: 200px !important;
-        }
-        
-        .modal-image-placeholder {
-            height: 150px !important;
-            font-size: 2rem !important;
-        }
-        
-        /* Kolom di modal menjadi 1 kolom */
-        .modal-body .row .col-md-6 {
-            width: 100% !important;
-            margin-bottom: 15px;
-        }
-        
-        /* Judul section di modal */
-        .fw-bold.text-primary {
-            font-size: 0.9rem;
-        }
-        
-        /* Course info di modal */
-        .course-info .card-body {
-            padding: 12px;
-        }
-    }
-
-    /* ===== RESPONSIVE FONT SIZE GLOBAL UNTUK MOBILE ===== */
-    @media (max-width: 400px) {
-        /* Ukuran font dasar untuk mobile */
         body {
             font-size: 14px;
         }
-        
-        /* Headers di modal */
-        h5, h6 {
-            font-size: 0.9rem;
-        }
-        
-        /* Text di card */
-        .card-text {
-            font-size: 0.8rem;
-            line-height: 1.4;
-        }
     }
 
-    /* ===== FIX UNTUK OVERFLOW TEXT ===== */
-    @media (max-width: 400px) {
-        /* Pastikan teks tidak overflow */
-        .course-main-title,
-        .course-description,
-        .modal-title,
-        .card-text {
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            hyphens: auto;
-        }
-        
-        /* Tombol dengan teks panjang */
-        .btn-follow-course,
-        .btn-view-course-white {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-    }
 </style>
 
-<!-- Kursus Header -->
+<!-- ===== NOTIFIKASI ERROR ENROLL CODE (DI ATAS HALAMAN) ===== -->
+@if(session('error_type') == 'enroll_code' && session('enroll_course_id'))
+    @php
+        $errorCourseId = session('enroll_course_id');
+        $attemptedCode = session('attempted_code', '');
+        $errorCourse = $kursus->firstWhere('id', $errorCourseId);
+    @endphp
+    
+    @if($errorCourse)
+    <div class="enroll-error-notification" id="enrollErrorNotification">
+        <div class="enroll-error-header">
+            <div class="enroll-error-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h4 class="enroll-error-title">Kode Enroll Salah!</h4>
+        </div>
+        
+        <div class="enroll-error-body">
+            <p>Kode enroll yang Anda masukkan untuk kursus <strong>"{{ $errorCourse->judul_kursus }}"</strong> tidak sesuai.</p>
+            
+            <!-- @if($attemptedCode)
+                <p>Kode yang Anda coba: <span class="enroll-error-code">{{ $attemptedCode }}</span></p>
+            @endif -->
+            
+            <p>Silakan masukkan kembali kode yang benar.</p>
+        </div>
+        
+        <div class="enroll-error-actions">
+            <button type="button" 
+                    class="btn-enroll-retry" 
+                    onclick="openEnrollModal({{ $errorCourseId }})">
+                <i class="fas fa-redo me-1"></i>
+                Coba Lagi
+            </button>
+            
+            <button type="button" 
+                    class="btn-enroll-ok" 
+                    onclick="dismissEnrollError()">
+                <i class="fas fa-close me-1"></i>
+                Tutup
+            </button>
+        </div>
+    </div>
+    @endif
+@endif
+
+<!-- ===== NOTIFIKASI ERROR LAINNYA ===== -->
+@if(session('error') && session('error_type') != 'enroll_code')
+    <div class="alert alert-danger alert-dismissible fade show" role="alert" style="margin-bottom: 25px;">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        {{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+
+<!-- ===== NOTIFIKASI SUKSES ===== -->
+@if(session('success'))
+    <div class="enroll-success-notification">
+        <div class="enroll-error-header">
+            <div class="enroll-success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h4 class="enroll-success-title">Berhasil!</h4>
+        </div>
+        
+        <div class="enroll-error-body">
+            <p>{{ session('success') }}</p>
+        </div>
+        
+        <button type="button" 
+                class="btn-enroll-ok" 
+                onclick="dismissSuccessNotification()">
+            <i class="fas fa-check me-1"></i>
+            Oke
+        </button>
+    </div>
+@endif
+
+<!-- ===== KURSUS HEADER ===== -->
 <div class="kursus-header">
     <h1 class="kursus-title">Kursus Tersedia</h1>
     <p class="kursus-subtitle">Pilih dan ikuti kursus yang sesuai dengan minat Anda</p>
 </div>
 
-<!-- Course Grid from Database -->
+<!-- ===== COURSE GRID FROM DATABASE ===== -->
 @if(isset($kursus) && $kursus->count() > 0)
     <div class="course-grid">
         @foreach($kursus as $item)
@@ -672,10 +798,10 @@
                     
                     <!-- Level Badge -->
                     <div class="course-badge level-badge 
-                        @if($item->tingkat_kesulitan == 'pemula') level-pemula
-                        @elseif($item->tingkat_kesulitan == 'menengah') level-menengah
+                        @if($item->kategori == 'pemula') level-pemula
+                        @elseif($item->kategori == 'menengah') level-menengah
                         @else level-lanjutan @endif">
-                        {{ $item->tingkat_kesulitan }}
+                        {{ $item->kategori }}
                     </div>
                 </div>
 
@@ -694,7 +820,7 @@
 
                     <!-- Category/Publisher -->
                     <div class="course-category">
-                        {{ $item->penerbit }}
+                        {{ $item->pelaksana }}
                     </div>
 
                     <!-- Description -->
@@ -705,25 +831,75 @@
                     <!-- Meta Information -->
                     <div class="course-meta-grid">
                         <div class="meta-card">
-                            <div class="meta-value">{{ $item->durasi_jam }}h</div>
-                            <div class="meta-label">Durasi</div>
+                            <div class="meta-value">{{ $item->durasi_jam }} JP</div>
+                            <div class="meta-label">Jam Pelajaran</div>
                         </div>
-                        <div class="meta-card">
-                            <div class="meta-value">{{ $item->peserta_terdaftar }}</div>
-                            <div class="meta-label">Peserta</div>
+                       <div class="meta-card">
+                            <div class="meta-value">
+                                @if($item->kuota_peserta && $item->kuota_peserta > 0)
+                                    {{ $item->kuota_peserta }}
+                                @else
+                                    <span>Tidak Terbatas</span>
+                                @endif
+                            </div>
+                            <div class="meta-label">Kuota Peserta</div>
                         </div>
                     </div>
 
                     <!-- Action Row -->
                     <div class="course-action-row">
-                        <form action="{{ route('mitra.kursus.enroll', $item->id) }}" method="POST" class="d-inline">
-                            @csrf
-                            <button type="submit" class="btn-follow-course">
-                                <i class="fas fa-play-circle"></i>
-                                Ikuti Kursus
+                        @php
+                            $sudahIkut = $item->enrollments
+                                ->where('user_id', auth()->id())
+                                ->count() > 0;
+
+                            $pakaiEnrollCode = !empty($item->enroll_code);
+                        @endphp
+
+                        {{-- PRIORITAS 1: SUDAH IKUT --}}
+                        @if($sudahIkut)
+                            <a href="{{ route('mitra.kursus.saya') }}" class="btn-follow-course">
+                                <i class="fas fa-arrow-right"></i>
+                                Lanjutkan Kursus
+                            </a>
+
+                        {{-- PRIORITAS 2: KUOTA PENUH --}}
+                        @elseif($item->isPenuh())
+                            <button class="btn-follow-course" disabled
+                                style="background:#adb5bd; cursor:not-allowed;">
+                                <i class="fas fa-lock"></i>
+                                Kuota Penuh
                             </button>
-                        </form>
-                        <button type="button" class="btn-view-course-white" data-bs-toggle="modal" data-bs-target="#detailModal{{ $item->id }}">
+
+                        {{-- PRIORITAS 3: BISA DAFTAR --}}
+                        @else
+                            {{-- 🔐 JIKA ADA ENROLL CODE → POPUP --}}
+                            @if($pakaiEnrollCode)
+                                <button type="button"
+                                    class="btn-follow-course"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#enrollModal{{ $item->id }}">
+                                    <i class="fas fa-play-circle"></i>
+                                    Ikuti Kursus
+                                </button>
+                            {{-- 🔓 TANPA ENROLL CODE → LANGSUNG --}}
+                            @else
+                                <form action="{{ route('mitra.kursus.enroll', $item->id) }}"
+                                    method="POST" class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="btn-follow-course">
+                                        <i class="fas fa-play-circle"></i>
+                                        Ikuti kursus
+                                    </button>
+                                </form>
+                            @endif
+                        @endif
+
+                        {{-- DETAIL --}}
+                        <button type="button"
+                            class="btn-view-course-white"
+                            data-bs-toggle="modal"
+                            data-bs-target="#detailModal{{ $item->id }}">
                             <i class="fas fa-eye"></i>
                             Lihat Kursus
                         </button>
@@ -740,7 +916,9 @@
                                 <i class="fas fa-info-circle me-2"></i>
                                 Detail Kursus: {{ $item->judul_kursus }}
                             </h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <i class="fas fa-times"></i>
+                            </button>
                         </div>
                         <div class="modal-body" style="margin-right: 20px; margin-left: 20px;">
                             <!-- Gambar Kursus jika ada -->
@@ -760,12 +938,12 @@
                             <div class="row mb-4">
                                 <div class="col-md-6">
                                     <div class="info-item">
-                                        <strong><i class="fas fa-user-tie me-2"></i>Penerbit:</strong>
-                                        <span>{{ $item->penerbit }}</span>
+                                        <strong><i class="fas fa-user-tie me-2"></i>Pelaksana:</strong>
+                                        <span>{{ $item->pelaksana }}</span>
                                     </div>
                                     <div class="info-item">
-                                        <strong><i class="fas fa-clock me-2"></i>Durasi:</strong>
-                                        <span>{{ $item->durasi_jam }} jam</span>
+                                        <strong><i class="fas fa-clock me-2"></i>JP:</strong>
+                                        <span>{{ $item->durasi_jam }} JP</span>
                                     </div>
                                     <div class="info-item">
                                         <strong><i class="fas fa-users me-2"></i>Peserta:</strong>
@@ -780,11 +958,11 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="info-item">
-                                        <strong><i class="fas fa-chart-line me-2"></i>Kesulitan:</strong>
+                                        <strong><i class="fas fa-chart-line me-2"></i>Kategori:</strong>
                                         <span>
-                                            @if($item->tingkat_kesulitan == 'pemula')
+                                            @if($item->kategori == 'pemula')
                                                 <span class="badge bg-primary">Pemula</span>
-                                            @elseif($item->tingkat_kesulitan == 'menengah')
+                                            @elseif($item->kategori == 'menengah')
                                                 <span class="badge bg-warning">Menengah</span>
                                             @else
                                                 <span class="badge bg-danger">Lanjutan</span>
@@ -888,116 +1066,303 @@
                             @endif
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                <i class="fas fa-times me-2"></i>Tutup
-                            </button>
-                            <form action="{{ route('mitra.kursus.enroll', $item->id) }}" method="POST" class="d-inline">
-                                @csrf
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-play-circle me-2"></i>Ikuti Kursus
+                            @if($item->isPenuh())
+                                <button type="button" class="btn btn-secondary" disabled>
+                                    <i class="fas fa-lock me-2"></i>Kuota Sudah Penuh
                                 </button>
-                            </form>
+                            @endif
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- 🔐 MODAL ENROLL CODE (TANPA AUTO-OPEN) -->
+            @if(!empty($item->enroll_code))
+            <div class="modal fade" id="enrollModal{{ $item->id }}" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="fas fa-key me-2"></i>
+                                Masukkan Kode Enroll
+                            </h5>
+                            <button type="button"
+                                    class="btn-close"
+                                    data-bs-dismiss="modal"
+                                    onclick="clearEnrollError()"></button>
+                        </div>
+
+                        <form action="{{ route('mitra.kursus.enroll', $item->id) }}" method="POST" id="enrollForm{{ $item->id }}">
+                            @csrf
+                            <div class="modal-body">
+                                <p class="text-muted mb-4">
+                                    Kursus ini hanya untuk mitra tertentu.
+                                    Masukkan kode enroll yang diberikan.
+                                </p>
+
+                                <div class="mb-3">
+                                    <label for="enroll_code{{ $item->id }}" class="form-label">
+                                        <i class="fas fa-lock me-1"></i>Kode Enroll
+                                    </label>
+                                    <input type="text"
+                                        id="enroll_code{{ $item->id }}"
+                                        name="enroll_code"
+                                        class="form-control"
+                                        placeholder="Contoh: BPS2025"
+                                        value="{{ old('enroll_code') }}"
+                                        required
+                                        autofocus>
+                                    <div class="form-text">Masukkan kode dengan benar (case-sensitive)</div>
+                                </div>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button"
+                                        class="btn btn-secondary"
+                                        data-bs-dismiss="modal"
+                                        onclick="clearEnrollError()">
+                                    <i class="fas fa-times me-1"></i>Batal
+                                </button>
+
+                                <button type="submit"
+                                        class="btn btn-primary">
+                                    <i class="fas fa-check me-1"></i>
+                                    Ikuti Kursus
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            @endif
             @endif
         @endforeach
-    @else
-        <!-- Empty State Simple -->
-        <div style="text-align: center;">
-            <i class="fas fa-book-open" style="font-size: 3rem; color: #667eea; margin-bottom: 15px;"></i>
-            <h4 style="color: #1e3c72; margin-bottom: 10px;">Tidak Ada Kursus</h4>
-            <p style="color: #6c757d; margin-bottom: 20px;">Lihat kursus pertama Anda</p>
-            <a href="{{ route('mitra.kursus.saya') }}" style="
-                background: #1e3c72; 
-                color: white; 
-                padding: 8px 20px; 
-                border-radius: 5px; 
-                text-decoration: none;
-            ">
-                Lihat Kursus
-            </a>
-        </div>
-    @endif
-</div>
+    </div>
+@else
+    <!-- Empty State Simple -->
+    <div style="text-align: center;">
+        <i class="fas fa-book-open" style="font-size: 3rem; color: #667eea; margin-bottom: 15px;"></i>
+        <h4 style="color: #1e3c72; margin-bottom: 10px;">Tidak Ada Kursus</h4>
+        <p style="color: #6c757d; margin-bottom: 20px;">Lihat kursus pertama Anda</p>
+        <a href="{{ route('mitra.kursus.saya') }}" style="
+            background: #1e3c72; 
+            color: white; 
+            padding: 8px 20px; 
+            border-radius: 5px; 
+            text-decoration: none;
+        ">
+            Lihat Kursus
+        </a>
+    </div>
+@endif
 
-<!-- Copyright -->
-<!-- Di file layout app.blade.php -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    // JavaScript khusus untuk halaman kursus
-    document.addEventListener('DOMContentLoaded', function() {
-        // Handle course image errors
-        document.querySelectorAll('.course-main-image[src]').forEach(img => {
-            img.addEventListener('error', function() {
-                this.style.display = 'none';
-                const placeholder = this.nextElementSibling;
-                if (placeholder && placeholder.classList.contains('course-main-image')) {
-                    placeholder.style.display = 'flex';
+// ===== FUNGSI UTAMA =====
+
+// Fungsi untuk membuka modal enroll (hanya ketika tombol "Coba Lagi" ditekan)
+function openEnrollModal(courseId) {
+    const modalElement = document.querySelector(`#enrollModal${courseId}`);
+    if (modalElement) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+        
+        // Auto-focus ke input field setelah modal terbuka
+        setTimeout(() => {
+            const inputField = modalElement.querySelector('input[name="enroll_code"]');
+            if (inputField) {
+                inputField.focus();
+                // Kosongkan nilai sebelumnya
+                inputField.value = '';
+            }
+        }, 300);
+    }
+}
+
+// Fungsi untuk menutup notifikasi error enroll
+function dismissEnrollError() {
+    const errorNotification = document.querySelector('.enroll-error-notification');
+    if (errorNotification) {
+        // Animasi fade out
+        errorNotification.style.animation = 'slideUp 0.5s ease';
+        errorNotification.style.transform = 'translateY(-20px)';
+        errorNotification.style.opacity = '0';
+        
+        // Hapus elemen setelah animasi selesai
+        setTimeout(() => {
+            errorNotification.remove();
+            // Hapus session data dari URL (optional)
+            if (window.history.replaceState) {
+                const url = new URL(window.location);
+                url.searchParams.delete('error');
+                url.searchParams.delete('error_type');
+                url.searchParams.delete('enroll_course_id');
+                window.history.replaceState({}, '', url);
+            }
+        }, 500);
+    }
+}
+
+// Fungsi untuk membersihkan error saat modal ditutup
+function clearEnrollError() {
+    // Hapus notifikasi error jika masih ada
+    dismissEnrollError();
+}
+
+// Fungsi untuk menutup notifikasi sukses
+function dismissSuccessNotification() {
+    const successNotification = document.querySelector('.enroll-success-notification');
+    if (successNotification) {
+        // Animasi fade out
+        successNotification.style.animation = 'slideUp 0.5s ease';
+        successNotification.style.transform = 'translateY(-20px)';
+        successNotification.style.opacity = '0';
+        
+        // Hapus elemen setelah animasi selesai
+        setTimeout(() => {
+            successNotification.remove();
+        }, 500);
+    }
+}
+
+// Tambahkan CSS untuk animasi slideUp
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideUp {
+        from {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+    }
+`;
+document.head.appendChild(style);
+
+// ===== EVENT LISTENERS =====
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Kursus page loaded - Modal will NOT auto-open');
+
+    // Handle course image errors
+    document.querySelectorAll('.course-main-image[src]').forEach(img => {
+        img.addEventListener('error', function() {
+            this.style.display = 'none';
+            const placeholder = this.nextElementSibling;
+            if (placeholder && placeholder.classList.contains('course-main-image')) {
+                placeholder.style.display = 'flex';
+            }
+        });
+    });
+
+    // Handle modal image errors
+    document.querySelectorAll('.modal-course-image[src]').forEach(img => {
+        img.addEventListener('error', function() {
+            this.style.display = 'none';
+            const placeholder = this.nextElementSibling;
+            if (placeholder && placeholder.classList.contains('modal-image-placeholder')) {
+                placeholder.style.display = 'flex';
+            }
+        });
+    });
+
+    // Validasi form enroll sebelum submit
+    document.querySelectorAll('form[action*="enroll"]').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const enrollCodeInput = this.querySelector('input[name="enroll_code"]');
+            if (enrollCodeInput) {
+                const code = enrollCodeInput.value.trim();
+                if (!code) {
+                    e.preventDefault();
+                    // Tambahkan styling error
+                    enrollCodeInput.classList.add('is-invalid');
+                    
+                    // Buat pesan error
+                    if (!enrollCodeInput.nextElementSibling || !enrollCodeInput.nextElementSibling.classList.contains('invalid-feedback')) {
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'invalid-feedback';
+                        errorDiv.textContent = 'Harap masukkan kode enroll';
+                        enrollCodeInput.parentNode.appendChild(errorDiv);
+                    }
+                    
+                    enrollCodeInput.focus();
+                }
+            }
+        });
+        
+        // Hapus error saat user mulai mengetik
+        const input = form.querySelector('input[name="enroll_code"]');
+        if (input) {
+            input.addEventListener('input', function() {
+                this.classList.remove('is-invalid');
+                const errorDiv = this.nextElementSibling;
+                if (errorDiv && errorDiv.classList.contains('invalid-feedback')) {
+                    errorDiv.remove();
                 }
             });
-        });
+        }
+    });
 
-        // Course button interactions
-        document.querySelectorAll('.btn-follow-course').forEach(button => {
-            button.addEventListener('click', function(e) {
-                const courseTitle = this.closest('.modern-course-card').querySelector('.course-main-title').textContent;
-                console.log(`Mengikuti kursus: ${courseTitle}`);
-            });
-        });
-
-        // View course button interactions
-        document.querySelectorAll('.btn-view-course-white').forEach(button => {
-            button.addEventListener('click', function(e) {
-                const courseTitle = this.closest('.modern-course-card').querySelector('.course-main-title').textContent;
-                console.log(`Melihat detail kursus: ${courseTitle}`);
+    // Reset form saat modal ditutup
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('hidden.bs.modal', function() {
+            // Reset form inputs
+            const forms = this.querySelectorAll('form');
+            forms.forEach(form => {
+                form.reset();
+                // Hapus kelas invalid
+                const invalidInputs = form.querySelectorAll('.is-invalid');
+                invalidInputs.forEach(input => {
+                    input.classList.remove('is-invalid');
+                });
+                
+                // Hapus invalid feedback
+                const invalidFeedbacks = form.querySelectorAll('.invalid-feedback');
+                invalidFeedbacks.forEach(feedback => {
+                    feedback.remove();
+                });
             });
         });
     });
-</script>
 
-<script>
-    // JavaScript khusus untuk halaman kursus
-    document.addEventListener('DOMContentLoaded', function() {
-        // Handle course image errors
-        document.querySelectorAll('.course-main-image[src]').forEach(img => {
-            img.addEventListener('error', function() {
-                this.style.display = 'none';
-                const placeholder = this.nextElementSibling;
-                if (placeholder && placeholder.classList.contains('course-main-image')) {
-                    placeholder.style.display = 'flex';
-                }
-            });
-        });
+    // Tutup notifikasi dengan tombol Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            dismissEnrollError();
+            dismissSuccessNotification();
+        }
+    });
 
-        // Course button interactions
-        document.querySelectorAll('.btn-follow-course').forEach(button => {
-            button.addEventListener('click', function(e) {
-                const courseTitle = this.closest('.modern-course-card').querySelector('.course-main-title').textContent;
-                console.log(`Mengikuti kursus: ${courseTitle}`);
-            });
-        });
-
-        // View course button interactions - MODAL
-        document.querySelectorAll('.btn-view-course-white').forEach(button => {
-            button.addEventListener('click', function(e) {
-                const courseTitle = this.closest('.modern-course-card').querySelector('.course-main-title').textContent;
-                console.log(`Membuka modal detail kursus: ${courseTitle}`);
-            });
-        });
-
-        // Handle modal image errors
-        document.querySelectorAll('.modal-course-image[src]').forEach(img => {
-            img.addEventListener('error', function() {
-                this.style.display = 'none';
-                const placeholder = this.nextElementSibling;
-                if (placeholder && placeholder.classList.contains('modal-image-placeholder')) {
-                    placeholder.style.display = 'flex';
-                }
-            });
+    // Auto focus ke input saat modal terbuka
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('shown.bs.modal', function() {
+            const input = this.querySelector('input[name="enroll_code"]');
+            if (input) {
+                setTimeout(() => {
+                    input.focus();
+                }, 100);
+            }
         });
     });
+});
+
+// Logging untuk debugging
+document.querySelectorAll('.btn-follow-course').forEach(button => {
+    button.addEventListener('click', function(e) {
+        if (!this.disabled) {
+            const courseTitle = this.closest('.modern-course-card')?.querySelector('.course-main-title')?.textContent;
+            console.log(`Mengikuti kursus: ${courseTitle || 'Unknown'}`);
+        }
+    });
+});
+
+document.querySelectorAll('.btn-view-course-white').forEach(button => {
+    button.addEventListener('click', function(e) {
+        const courseTitle = this.closest('.modern-course-card')?.querySelector('.course-main-title')?.textContent;
+        console.log(`Membuka modal detail kursus: ${courseTitle || 'Unknown'}`);
+    });
+});
 </script>
 @endsection

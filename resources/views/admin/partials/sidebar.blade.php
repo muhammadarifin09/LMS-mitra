@@ -55,6 +55,13 @@
                         <i class="fas fa-book-open"></i>
                         <span>Laporan Kursus</span>
                     </a>
+                    <a href="{{ route('admin.laporan.mitra') }}"  
+                       class="sidebar-subitem 
+                       {{ request()->routeIs('admin.laporan.mitra') || 
+                          request()->routeIs('admin.laporan.mitra.*') ? 'active' : '' }}">
+                        <i class="fas fa-book-open"></i>
+                        <span>Laporan Mitra</span>
+                    </a>
                     
                  
                 </div>

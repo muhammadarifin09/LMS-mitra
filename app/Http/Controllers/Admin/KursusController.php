@@ -42,8 +42,8 @@ class KursusController extends Controller
         $validated = $request->validate([
             'judul_kursus' => 'required|string|max:255',
             'deskripsi_kursus' => 'required|string',
-            'penerbit' => 'required|string|max:255',
-            'tingkat_kesulitan' => 'required|in:pemula,menengah,lanjutan',
+            'pelaksana' => 'required|string|max:255',
+            'kategori' => 'required|in:pemula,menengah,lanjutan',
             'gambar_kursus' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'durasi_jam' => 'required|integer|min:0',
             'status' => 'required|in:draft,aktif,nonaktif',
@@ -52,7 +52,9 @@ class KursusController extends Controller
             'output_pelatihan' => 'nullable|string',
             'persyaratan' => 'nullable|string',
             'fasilitas' => 'nullable|string',
-            'kuota_peserta' => 'nullable|integer|min:1'
+            'kuota_peserta' => 'nullable|integer|min:1',
+            'enroll_code' => 'nullable|string|max:50',
+
         ]);
 
         // Upload gambar jika ada
@@ -100,8 +102,8 @@ class KursusController extends Controller
         $validated = $request->validate([
             'judul_kursus' => 'required|string|max:255',
             'deskripsi_kursus' => 'required|string',
-            'penerbit' => 'required|string|max:255',
-            'tingkat_kesulitan' => 'required|in:pemula,menengah,lanjutan',
+            'pelaksana' => 'required|string|max:255',
+            'kategori' => 'required|in:pemula,menengah,lanjutan',
             'gambar_kursus' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'durasi_jam' => 'required|integer|min:0',
             'status' => 'required|in:draft,aktif,nonaktif',
@@ -110,7 +112,9 @@ class KursusController extends Controller
             'output_pelatihan' => 'nullable|string',
             'persyaratan' => 'nullable|string',
             'fasilitas' => 'nullable|string',
-            'kuota_peserta' => 'nullable|integer|min:1'
+            'kuota_peserta' => 'nullable|integer|min:1',
+            'enroll_code' => 'nullable|string|max:50',
+
         ]);
 
         // Upload gambar baru jika ada

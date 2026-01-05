@@ -9,22 +9,15 @@ use App\Models\Enrollment;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
-        $this->app->singleton(CertificateService::class, function ($app) {
+         $this->app->singleton(CertificateService::class, function ($app) {
             return new CertificateService();
         });
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
-        // PASTIKAN INI ADA:
         Enrollment::observe(EnrollmentObserver::class);
     }
 }

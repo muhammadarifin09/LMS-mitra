@@ -185,38 +185,38 @@
                         @enderror
                     </div>
 
-                    <!-- Penerbit -->
+                    <!-- Pelaksana -->
                     <div class="form-group">
-                        <label for="penerbit" class="form-label required">Penerbit</label>
-                        <input type="text" class="form-control" id="penerbit" name="penerbit" 
-                               value="{{ old('penerbit', $kursus->penerbit) }}" required 
-                               placeholder="Masukkan nama penerbit">
-                        @error('penerbit')
+                        <label for="pelaksana" class="form-label required">Pelaksana</label>
+                        <input type="text" class="form-control" id="pelaksana" name="pelaksana" 
+                               value="{{ old('pelaksana', $kursus->pelaksana) }}" required 
+                               placeholder="Masukkan nama pelaksana">
+                        @error('pelaksana')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
                     </div>
 
-                    <!-- Tingkat Kesulitan -->
+                    <!-- Kategori -->
                     <div class="form-group">
-                        <label for="tingkat_kesulitan" class="form-label required">Tingkat Kesulitan</label>
-                        <select class="form-select" id="tingkat_kesulitan" name="tingkat_kesulitan" required>
-                            <option value="">Pilih Tingkat Kesulitan</option>
-                            <option value="pemula" {{ old('tingkat_kesulitan', $kursus->tingkat_kesulitan) == 'pemula' ? 'selected' : '' }}>Pemula</option>
-                            <option value="menengah" {{ old('tingkat_kesulitan', $kursus->tingkat_kesulitan) == 'menengah' ? 'selected' : '' }}>Menengah</option>
-                            <option value="lanjutan" {{ old('tingkat_kesulitan', $kursus->tingkat_kesulitan) == 'lanjutan' ? 'selected' : '' }}>Lanjutan</option>
+                        <label for="kategori" class="form-label required">Kategori</label>
+                        <select class="form-select" id="kategori" name="kategori" required>
+                            <option value="">Pilih Kategori</option>
+                            <option value="pemula" {{ old('kategori', $kursus->kategori) == 'pemula' ? 'selected' : '' }}>Pemula</option>
+                            <option value="menengah" {{ old('kategori', $kursus->kategori) == 'menengah' ? 'selected' : '' }}>Menengah</option>
+                            <option value="lanjutan" {{ old('kategori', $kursus->kategori) == 'lanjutan' ? 'selected' : '' }}>Lanjutan</option>
                         </select>
-                        @error('tingkat_kesulitan')
+                        @error('kategori')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
                     </div>
 
                     <!-- Durasi -->
                     <div class="form-group">
-                        <label for="durasi_jam" class="form-label required">Durasi (Jam)</label>
+                        <label for="durasi_jam" class="form-label required">Jam Pelajaran (JP)</label>
                         <input type="number" class="form-control" id="durasi_jam" name="durasi_jam" 
                                value="{{ old('durasi_jam', $kursus->durasi_jam) }}" min="0" required 
                                placeholder="Masukkan durasi dalam jam">
-                        <div class="form-text">Durasi total kursus dalam jam</div>
+                        <div class="form-text">1 JP adalah 45 menit</div>
                         @error('durasi_jam')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
@@ -233,6 +233,28 @@
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
                     </div>
+
+                        <!-- Kode Enroll Kursus -->
+                    <div class="form-group">
+                        <label for="enroll_code" class="form-label">
+                            Kode Enroll Kursus
+                            <span class="text-muted">(opsional)</span>
+                        </label>
+                        <input type="text"
+                            class="form-control"
+                            id="enroll_code"
+                            name="enroll_code"
+                            value="{{ old('enroll_code') }}"
+                            placeholder="Contoh: BPS-TALA-2025">
+                        <div class="form-text">
+                            Isi jika kursus hanya boleh diikuti mitra tertentu.
+                            Kosongkan jika kursus terbuka untuk semua.
+                        </div>
+                        @error('enroll_code')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+
 
                     <!-- Tanggal Mulai & Selesai -->
                     <div class="row">
@@ -377,11 +399,11 @@
     // Form Validation
     document.getElementById('kursusForm').addEventListener('submit', function(e) {
         const judul = document.getElementById('judul_kursus').value.trim();
-        const penerbit = document.getElementById('penerbit').value.trim();
-        const tingkat = document.getElementById('tingkat_kesulitan').value;
+        const pelaksana = document.getElementById('pelaksana').value.trim();
+        const kategori = document.getElementById('kategori').value;
         const status = document.getElementById('status').value;
         
-        if (!judul || !penerbit || !tingkat || !status) {
+        if (!judul || !pelaksana || !kategori || !status) {
             e.preventDefault();
             Swal.fire({
                 title: 'Data Belum Lengkap!',

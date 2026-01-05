@@ -12,7 +12,11 @@ use Illuminate\Support\Str; // TAMBAHKAN INI
 // use Maatwebsite\Excel\Facades\Excel;
 use App\Models\LaporanKursus;
 use Carbon\Carbon;
-
+use App\Models\Biodata;
+use App\Models\Enrollment;
+use App\Models\M_User;
+use App\Models\LaporanMitra;
+use Illuminate\Http\Request;
 
 
 class LaporanController extends Controller
@@ -65,7 +69,6 @@ class LaporanController extends Controller
 
     return response()->stream($callback, 200, $headers);
 }
-
 
 public function exportKursusDetailCsv(Kursus $kursus)
 {
@@ -358,7 +361,7 @@ public function exportKursusPdfRingkas(Kursus $kursus)
     $pdf->setOption('margin-right', 10);
     $pdf->setOption('margin-bottom', 10);
     $pdf->setOption('margin-left', 10);
-    $pdf->setOption('default-font', 'dejavu sans');
+    $pdf->setOption('default-font', 'arial');
     
     $fileName = 'ringkasan-kursus-' . Str::slug($kursus->judul_kursus) . '-' . date('Y-m-d') . '.pdf';
     
@@ -412,7 +415,7 @@ public function exportKursusPdfRingkas(Kursus $kursus)
         $pdf->setOption('margin-right', 15);
         $pdf->setOption('margin-bottom', 15);
         $pdf->setOption('margin-left', 15);
-        $pdf->setOption('default-font', 'dejavu sans');
+        $pdf->setOption('default-font', 'arial');
         
         $fileName = 'detail-kursus-' . Str::slug($kursus->judul_kursus) . '-' . date('Y-m-d') . '.pdf';
         
@@ -471,5 +474,325 @@ public function exportKursusPdfRingkas(Kursus $kursus)
         ->with('success', 'Laporan kursus berhasil disimpan ke arsip.');
 }
 
+    // ======================
+    // LAPORAN MITRA
+    // ======================
+
+    public function mitraIndex(Request $request)
+    {
+        $perPage = $request->get('per_page', 10);
+        $search  = $request->get('search');
+
+        $mitra = M_User::whereHas('biodata') // pastikan memang mitra
+            ->where(function ($query) use ($search) {
+                if ($search) {
+                    $query->where('nama', 'like', "%$search%")
+                        ->orWhereHas('biodata', function ($q) use ($search) {
+                            $q->where('id_sobat', 'like', "%$search%")
+                                ->orWhere('kecamatan', 'like', "%$search%");
+                        });
+                }
+            })
+            ->with('biodata')
+            ->withCount('enrollments')
+            ->orderBy('nama')
+            ->paginate($perPage)
+            ->appends($request->query());
+
+        return view('laporan.admin.mitra.index', compact('mitra'));
+    }
+
+    public function mitraDetail($id)
+    {
+        $mitra = M_User::with(['biodata', 'enrollments.kursus.materials'])
+            ->findOrFail($id);
+
+        $kursusData = [];
+        
+        foreach ($mitra->enrollments as $enrollment) {
+            $kursus = $enrollment->kursus;
+            
+            // Hitung progress
+            $totalMaterials = $kursus->materials->where('is_active', true)->count();
+            $completedMaterials = $this->hitungMateriSelesai($mitra->id, $kursus);
+            $progress = $totalMaterials > 0 
+                ? round(($completedMaterials / $totalMaterials) * 100) 
+                : 0;
+            
+            // Hitung nilai hanya jika progress 100%
+            $nilai = $progress == 100 
+                ? $this->hitungNilai($mitra->id, $kursus)
+                : null;
+
+            $kursusData[] = [
+                'kursus' => $kursus,
+                'progress' => $progress,
+                'nilai' => $nilai,
+                'completed_materials' => $completedMaterials,
+                'total_materials' => $totalMaterials,
+                'tanggal_daftar' => $enrollment->created_at->format('d/m/Y'),
+                'tanggal_selesai' => $enrollment->completed_at
+                    ? $enrollment->completed_at->format('d/m/Y')
+                    : '-'
+            ];
+        }
+
+        return view('laporan.admin.mitra.detail', compact('mitra', 'kursusData'));
+    }
+
+    // ======================
+    // EXPORT LAPORAN MITRA
+    // ======================
+
+    public function exportMitraCsv()
+    {
+        $filename = 'laporan-mitra-' . date('Y-m-d') . '.csv';
+
+        $headers = [
+            "Content-Type" => "text/csv; charset=UTF-8",
+            "Content-Disposition" => "attachment; filename=\"$filename\"",
+        ];
+
+        $callback = function () {
+            $file = fopen('php://output', 'w');
+            
+            // BOM untuk Excel
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            
+            // Header
+            fputcsv($file, [
+                'No',
+                'ID Sobat',
+                'Nama Mitra',
+                'Kecamatan',
+                'Desa',
+                'Total Kursus Diikuti'
+            ], ';');
+            
+            // Ambil data mitra
+            $mitra = M_User::whereHas('biodata')
+                ->with(['biodata'])
+                ->withCount('enrollments')
+                ->orderBy('nama')
+                ->get();
+            
+            $no = 1;
+            foreach ($mitra as $user) {
+                fputcsv($file, [
+                    $no++,
+                    $user->biodata->id_sobat ?? '-',
+                    $user->nama,
+                    $user->biodata->kecamatan ?? '-',
+                    $user->biodata->desa ?? '-',
+                    $user->enrollments_count
+                ], ';');
+            }
+            
+            fclose($file);
+        };
+        
+        return response()->stream($callback, 200, $headers);
+    }
+
+    public function exportMitraDetailCsv(M_User $mitra)
+    {
+        $filename = 'laporan-kursus-mitra-' . Str::slug($mitra->nama) . '.csv';
+
+        $headers = [
+            "Content-Type" => "text/csv; charset=UTF-8",
+            "Content-Disposition" => "attachment; filename=\"$filename\"",
+        ];
+
+        $callback = function () use ($mitra) {
+            $file = fopen('php://output', 'w');
+            
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            
+            // Header untuk detail kursus mitra
+            fputcsv($file, [
+                'No',
+                'Judul Kursus',
+                'Tanggal Daftar',
+                'Progress (%)',
+                'Materi Selesai',
+                'Total Materi',
+                'Tanggal Selesai',
+                'Nilai Akhir'
+            ], ';');
+            
+            $mitra->load(['enrollments.kursus.materials']);
+            
+            $no = 1;
+            foreach ($mitra->enrollments as $enrollment) {
+                $kursus = $enrollment->kursus;
+                
+                $totalMaterials = $kursus->materials->where('is_active', true)->count();
+                $completedMaterials = $this->hitungMateriSelesai($mitra->id, $kursus);
+                $progressPercentage = $totalMaterials > 0 
+                    ? round(($completedMaterials / $totalMaterials) * 100) 
+                    : 0;
+                
+                $nilai = $progressPercentage == 100 
+                    ? $this->hitungNilai($mitra->id, $kursus)
+                    : '-';
+                
+                fputcsv($file, [
+                    $no++,
+                    $kursus->judul_kursus,
+                    $enrollment->created_at->format('d-m-Y'),
+                    $progressPercentage,
+                    $completedMaterials,
+                    $totalMaterials,
+                    $enrollment->completed_at
+                        ? $enrollment->completed_at->format('d-m-Y')
+                        : '-',
+                    $nilai
+                ], ';');
+            }
+            
+            fclose($file);
+        };
+        
+        return response()->stream($callback, 200, $headers);
+    }
+
+    public function exportMitraPdfDetail(M_User $mitra)
+    {
+        $mitra->load(['biodata', 'enrollments.kursus.materials']);
+        
+        // Data detail per kursus
+        $kursusData = [];
+        foreach ($mitra->enrollments as $enrollment) {
+            $kursus = $enrollment->kursus;
+            
+            $totalMaterials = $kursus->materials->where('is_active', true)->count();
+            $completedMaterials = $this->hitungMateriSelesai($mitra->id, $kursus);
+            $progressPercentage = $totalMaterials > 0 
+                ? round(($completedMaterials / $totalMaterials) * 100) 
+                : 0;
+            
+            $nilai = $progressPercentage == 100 
+                ? $this->hitungNilai($mitra->id, $kursus)
+                : null;
+
+            $kursusData[] = [
+                'kursus' => $kursus,
+                'progress_percentage' => $progressPercentage,
+                'completed_materials' => $completedMaterials,
+                'total_materials' => $totalMaterials,
+                'nilai' => $nilai,
+                'tanggal_daftar' => $enrollment->created_at->format('d-m-Y'),
+                'tanggal_selesai' => $enrollment->completed_at
+                    ? $enrollment->completed_at->format('d-m-Y')
+                    : '-'
+            ];
+        }
+
+        // Statistik keseluruhan
+        $totalKursus = count($kursusData);
+        $kursusSelesai = collect($kursusData)->where('progress_percentage', 100)->count();
+        $rataProgress = collect($kursusData)->avg('progress_percentage');
+        $nilaiData = collect($kursusData)->where('nilai', '!=', null)->pluck('nilai');
+        $rataNilai = $nilaiData->count() > 0 ? $nilaiData->avg() : null;
+
+        $pdf = Pdf::loadView(
+            'laporan.admin.mitra.pdf-detail',
+            compact(
+                'mitra',
+                'kursusData',
+                'totalKursus',
+                'kursusSelesai',
+                'rataProgress',
+                'rataNilai'
+            )
+        );
+        
+        $pdf->setPaper('A4', 'portrait');
+        $pdf->setOption('margin-top', 15);
+        $pdf->setOption('margin-right', 15);
+        $pdf->setOption('margin-bottom', 15);
+        $pdf->setOption('margin-left', 15);
+        $pdf->setOption('default-font', 'arial');
+        
+        $fileName = 'laporan-mitra-' . Str::slug($mitra->nama) . '-' . date('Y-m-d') . '.pdf';
+        
+        return $pdf->download($fileName);
+    }
+
+        public function generateLaporanMitra(M_User $mitra)
+    {
+        $mitra->load(['biodata', 'enrollments.kursus.materials']);
+        
+        // Hitung statistik dari kursusData (sama seperti di method mitraDetail)
+        $totalKursus = 0;
+        $kursusSelesai = 0;
+        $totalProgress = 0;
+        $totalNilai = 0;
+        $jumlahNilai = 0;
+        
+        foreach ($mitra->enrollments as $enrollment) {
+            $totalKursus++;
+            
+            $kursus = $enrollment->kursus;
+            
+            $totalMaterials = $kursus->materials->where('is_active', true)->count();
+            $completedMaterials = $this->hitungMateriSelesai($mitra->id, $kursus);
+            $progress = $totalMaterials > 0 
+                ? round(($completedMaterials / $totalMaterials) * 100) 
+                : 0;
+            
+            $totalProgress += $progress;
+            
+            if ($progress == 100) {
+                $kursusSelesai++;
+                
+                $nilai = $this->hitungNilai($mitra->id, $kursus);
+                if ($nilai !== null) {
+                    $totalNilai += $nilai;
+                    $jumlahNilai++;
+                }
+            }
+        }
+        
+        // Hitung rata-rata
+        $rataProgress = $totalKursus > 0 ? round($totalProgress / $totalKursus, 2) : 0;
+        $rataNilai = $jumlahNilai > 0 ? round($totalNilai / $jumlahNilai, 2) : null;
+        
+        // Cek apakah sudah ada laporan untuk periode ini
+        $periode = now()->format('Y-m');
+        $existingLaporan = LaporanMitra::where('user_id', $mitra->id)
+            ->where('periode', $periode)
+            ->first();
+        
+        if ($existingLaporan) {
+            // Update laporan yang sudah ada
+            $existingLaporan->update([
+                'id_sobat' => $mitra->biodata->id_sobat ?? null,
+                'total_kursus_diikuti' => $totalKursus,
+                'kursus_selesai' => $kursusSelesai,
+                'rata_rata_progress' => $rataProgress,
+                'rata_rata_nilai' => $rataNilai,
+            ]);
+            
+            $message = 'Laporan mitra berhasil diperbarui.';
+        } else {
+            // Buat laporan baru
+            LaporanMitra::create([
+                'user_id' => $mitra->id,
+                'id_sobat' => $mitra->biodata->id_sobat ?? null,
+                'periode' => $periode,
+                'total_kursus_diikuti' => $totalKursus,
+                'kursus_selesai' => $kursusSelesai,
+                'rata_rata_progress' => $rataProgress,
+                'rata_rata_nilai' => $rataNilai,
+            ]);
+            
+            $message = 'Laporan mitra berhasil disimpan ke arsip.';
+        }
+        
+        return redirect()
+            ->route('admin.laporan.mitra.detail', $mitra->id)
+            ->with('success', $message);
+    }
 
 }

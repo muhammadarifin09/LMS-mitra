@@ -68,6 +68,65 @@
             font-size: 15px;
             line-height: 1.6;
         }
+
+        /* ===== ID KREDENSIAL ===== */
+        .kredensial {
+            position: absolute;
+            bottom: 30mm;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+        }
+
+        .kredensial-label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        /* ===== VERIFICATION SECTION ===== */
+        .verification-section {
+            position: absolute;
+            top: 148mm;              /* 🔥 sejajar di bawah tanggal */
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+
+        .verification-container {
+            display: inline-block;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .qr-code-container {
+            margin-bottom: 8px;
+        }
+
+        /* QR */
+        .qr-code {
+            width: 80px;
+            height: 80px;
+            display: block;
+        }
+
+        .scan-text {
+            font-size: 9px;
+            color: #666;
+            margin-top: 3px;
+            font-style: italic;
+        }
+
+        .kredensial-info {
+            position: absolute;
+            right: 18mm;
+            bottom: 18mm;
+            font-size: 16px;
+            color: #333;
+            text-align: right;
+            line-height: 1.4;
+        }
     </style>
 </head>
 
@@ -125,6 +184,16 @@
             Tanah Laut, {{ $certificate->issued_at->translatedFormat('j F Y') }}
         </div>
     </div>
+    
+    @if($certificate->id_kredensial && isset($qrPath))
+    <div class="verification-section">
+        <img src="{{ $qrPath }}" class="qr-code">
+    </div>
+
+    <div class="kredensial-info">
+    {{ $certificate->id_kredensial }}
+    </div>
+    @endif
 
 </div>
 </body>

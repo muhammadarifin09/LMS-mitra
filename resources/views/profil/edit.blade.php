@@ -1,18 +1,252 @@
-@extends('layouts.dashboard')
+@extends('mitra.layouts.app')
 
 @section('title', 'Edit Profil - MOOC BPS')
 
+<style>
+    /* Header Edit Profil - FIXED: RATA KIRI seperti halaman lain */
+    .edit-profil-header {
+        margin-bottom: 30px;
+        text-align: left !important; /* PERUBAHAN: dari center ke left */
+    }
+
+    .edit-profil-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #1e3c72;
+        margin-bottom: 10px;
+        text-align: left !important; /* PERUBAHAN: dari default ke left */
+    }
+
+    .edit-profil-subtitle {
+        font-size: 1.1rem;
+        color: #5a6c7d;
+        text-align: left !important; /* PERUBAHAN: dari default ke left */
+    }
+
+    /* PERUBAHAN: Container form lebih lebar */
+    .row.justify-content-center {
+        margin-left: -10px !important;
+        margin-right: -10px !important;
+    }
+    
+    .col-lg-8, .col-md-10 {
+        padding-left: 5px !important;
+        padding-right: 5px !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    .card {
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        border: 1px solid #e9ecef;
+        width: 100% !important; /* PERUBAHAN: Full width */
+        margin: 0 !important; /* PERUBAHAN: Hilangkan margin */
+    }
+
+    /* PERUBAHAN: Card body padding lebih kecil untuk lebih lebar */
+    .card-body.p-4 {
+        padding: 30px 25px !important; /* Kurangi horizontal padding */
+    }
+
+    .form-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #5a6c7d;
+        margin-bottom: 5px;
+    }
+
+    /* PERUBAHAN: Form control lebih lebar */
+    .form-control {
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        padding: 10px 12px;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        color: #1e3c72;
+        width: 100% !important; /* Pastikan full width */
+    }
+
+    .form-control:focus {
+        border-color: #1e3c72;
+        box-shadow: 0 0 0 0.2rem rgba(30, 60, 114, 0.15);
+    }
+
+    .btn {
+        border-radius: 8px;
+        font-weight: 600;
+        padding: 10px 20px;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
+        border: none;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 3px 10px rgba(30, 60, 114, 0.3);
+    }
+
+    .btn-outline-secondary {
+        border: 1px solid #6c757d;
+        color: #6c757d;
+    }
+
+    .btn-outline-secondary:hover {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: white;
+    }
+
+    /* Foto Profil Preview */
+    #profile-preview {
+        transition: all 0.3s ease;
+        border: 3
+        px solid #1e3c72;
+    }
+
+    .text-muted {
+        font-size: 0.8rem;
+        color: #5a6c7d !important;
+    }
+
+    .text-danger {
+        font-size: 0.8rem;
+    }
+
+    /* Required star */
+    .text-danger[title="required"] {
+        color: #e74c3c;
+        margin-left: 2px;
+    }
+
+    /* ===== RESPONSIVE DESIGN UNTUK MOBILE (≤500px) ===== */
+    @media (max-width: 500px) {                      
+        /* Container utama - SAMA DENGAN HALAMAN PROFIL */
+        .main-content {
+            padding: 15px 12px !important;
+            margin: 10px 10px !important;
+            border-radius: 15px !important;
+        }
+        
+        /* Pastikan styling dalam .main-content TIDAK keluar */
+        .main-content .row {
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
+        
+        /* Header Edit Profil - konsisten dengan halaman profil */
+        .edit-profil-header {
+            margin-bottom: 20px !important;
+            padding: 0 !important;
+            text-align: center !important;
+        }
+        
+        .edit-profil-title {
+            font-size: 1.5rem !important;
+            margin-bottom: 5px !important;
+            color: #1e3c72 !important;
+            font-weight: 700 !important;
+            text-align: center !important;
+        }
+        
+        .edit-profil-subtitle {
+            font-size: 0.9rem !important;
+            line-height: 1.4 !important;
+            color: #5a6c7d !important;
+            text-align: center !important;
+        }
+        
+        .col-lg-8, .col-md-10 {
+            padding: 0px !important; /* Sedikit padding */
+            width: 100% !important;
+        }
+        
+        /* Cards - FIX: Hilangkan margin-left yang membuat tidak center */
+        .card {
+            border-radius: 12px !important;
+            box-shadow: 0 4px 4px rgba(0,0,0,0.08) !important;
+            border: 1px solid #e9ecef !important;
+            max-width: 100% !important;
+            overflow: hidden !important;
+            margin: 0 auto 15px auto !important; /* Center dengan auto */
+            width: calc(100% - 4px) !important; /* Sedikit kurangi untuk padding */
+        }
+        
+        /* Card body */
+        .card-body.p-4 {
+            padding: 20px 5px !important;
+        }
+        
+        /* Foto Profil Section */
+        #profile-preview {
+            width: 120px !important;
+            height: 120px !important;
+            border-width: 3px !important;
+            border-color: #1e3c72 !important;
+        }
+        
+        /* Tombol kamera kecil */
+        .btn-primary.btn-sm.rounded-circle {
+            width: 30px !important;
+            height: 30px !important;
+            bottom: 5px !important;
+            right: 5px !important;
+            font-size: 12px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border-radius: 50% !important;
+            border: 2px solid white !important;
+        }
+        
+        /* Form controls */
+        .form-control {
+            padding: 10px 12px !important;
+            font-size: 0.85rem !important;
+            border-radius: 8px !important;
+            width: 100% !important;
+        }
+        
+        /* Form labels */
+        .form-label {
+            font-size: 0.85rem !important;
+            margin-bottom: 5px !important;
+            color: #5a6c7d !important;
+            font-weight: 500 !important;
+            display: block !important;
+        }
+        
+        .d-flex.justify-content-between {
+            gap: 15px !important;
+            align-items: stretch !important;
+            width: 100% !important;
+            padding: 0 5px !important;
+        }
+        
+        .d-flex.justify-content-between .btn {
+            width: 100% !important;
+            padding: 12px 15px !important;
+            font-size: 0.9rem !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+        }
+    }
+</style>
+
 @section('content')
-<div class="main-content">
     <!-- Header -->
-    <div class="kursus-header text-center mb-4">
-        <h1 class="kursus-title">Edit Profil</h1>
-        <p class="kursus-subtitle">Perbarui informasi profil Anda</p>
+    <div class="edit-profil-header">
+        <h1 class="edit-profil-title">Edit Profil</h1>
+        <p class="edit-profil-subtitle">Perbarui informasi profil Anda</p>
     </div>
 
-        <div class="row justify-content-center">
+    <div class="row justify-content-center">
     <div class="col-lg-8 col-md-10">
-        <div class="card shadow-sm border-0">
+        <div class="card shadow-sm">
             <div class="card-body p-4">
                 <form action="{{ route('profil.update') }}" method="POST" enctype="multipart/form-data">
                     @csrf
@@ -116,7 +350,7 @@
                     </div>
 
                     <!-- Action Buttons -->
-                    <div class="row mt-4">
+                    <div class="row mt-2">
                         <div class="col-12">
                             <div class="d-flex justify-content-between align-items-center">
                                 <a href="{{ route('profil.index') }}" class="btn btn-outline-secondary">
@@ -133,144 +367,6 @@
         </div>
     </div>
 </div>
-</div>
-
-<style>
-.main-content {
-    padding: 20px;
-}
-
-.card {
-    border-radius: 10px;
-    border: none;
-}
-
-.card-body {
-    padding: 1.5rem;
-}
-
-.form-control {
-    border-radius: 6px;
-    border: 1px solid #ddd;
-    padding: 8px 12px;
-    font-size: 0.85rem;
-    transition: all 0.3s ease;
-}
-
-.form-control:focus {
-    border-color: #1e3c72;
-    box-shadow: 0 0 0 0.1rem rgba(30, 60, 114, 0.15);
-}
-
-.form-label {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 5px;
-}
-
-.btn {
-    border-radius: 6px;
-    font-weight: 500;
-    padding: 8px 16px;
-    font-size: 0.85rem;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, #1e3c72, #2a5298);
-    border: none;
-}
-
-.btn-primary:hover {
-    background: linear-gradient(135deg, #2a5298, #1e3c72);
-    transform: translateY(-1px);
-}
-
-.btn-outline-secondary {
-    border: 1px solid #6c757d;
-    color: #6c757d;
-}
-
-.btn-outline-secondary:hover {
-    background-color: #6c757d;
-    border-color: #6c757d;
-    color: white;
-}
-
-.btn-sm {
-    padding: 4px 8px;
-    font-size: 0.7rem;
-}
-
-.kursus-title {
-    color: white;
-    font-weight: 600;
-    font-size: 1.5rem;
-    margin-bottom: 0.3rem;
-}
-
-.kursus-subtitle {
-    color: white;
-    font-size: 0.9rem;
-    opacity: 0.9;
-}
-
-#profile-preview {
-    transition: all 0.3s ease;
-}
-
-.text-muted {
-    font-size: 0.75rem;
-}
-
-.text-danger {
-    font-size: 0.75rem;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .card-body {
-        padding: 1rem;
-    }
-    
-    .kursus-title {
-        font-size: 1.3rem;
-    }
-    
-    .kursus-subtitle {
-        font-size: 0.8rem;
-    }
-    
-    .btn {
-        padding: 6px 12px;
-        font-size: 0.8rem;
-    }
-}
-
-@media (max-width: 576px) {
-    .main-content {
-        padding: 10px;
-    }
-    
-    .card-body {
-        padding: 0.8rem;
-    }
-    
-    .d-flex.justify-content-between {
-        flex-direction: column;
-        gap: 8px;
-    }
-    
-    .btn {
-        width: 100%;
-    }
-    
-    .row > .col-md-6 {
-        margin-bottom: 0.8rem;
-    }
-}
-</style>
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const fileInput = document.getElementById('foto_profil');

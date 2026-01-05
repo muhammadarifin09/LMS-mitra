@@ -27,16 +27,24 @@ class CertificateController extends Controller
         $this->certificateService = $certificateService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $user = Auth::user();
-        
-        // Ambil semua sertifikat milik user
+        $user   = Auth::user();
+        $search = $request->get('search');
+        $perPage = $request->get('per_page', 10);
+
         $certificates = Certificate::with('kursus')
             ->where('user_id', $user->id)
+            ->when($search, function ($q) use ($search) {
+                $q->whereHas('kursus', function ($k) use ($search) {
+                    $k->where('judul_kursus', 'like', "%{$search}%")
+                    ->orWhere('pelaksana', 'like', "%{$search}%");
+                });
+            })
             ->orderBy('issued_at', 'desc')
-            ->get();
-        
+            ->paginate($perPage)
+            ->appends($request->query()); // penting agar search & per_page ikut ke pagination
+
         return view('mitra.sertifikat.index', compact('certificates'));
     }
 
@@ -152,4 +160,43 @@ class CertificateController extends Controller
             'message' => 'Sertifikat belum tersedia.'
         ]);
     }
+
+    public function validateCertificate($id_kredensial)
+    {
+        $certificate = Certificate::with(['user', 'kursus'])
+            ->where('id_kredensial', $id_kredensial)
+            ->first();
+
+        if (!$certificate) {
+            return view('mitra.sertifikat.invalid');
+        }
+
+        // Jika file PDF belum ada → generate
+        if (!$certificate->file_path || !Storage::exists($certificate->file_path)) {
+            $this->certificateService->generateCertificatePDF($certificate);
+        }
+
+        return view('mitra.sertifikat.validate', [
+            'certificate' => $certificate
+        ]);
+    }
+
+    public function publicPdf($id_kredensial)
+    {
+        $certificate = Certificate::where('id_kredensial', $id_kredensial)->firstOrFail();
+
+        if (!$certificate->file_path || !Storage::disk('private')->exists($certificate->file_path)) {
+            $this->certificateService->generateCertificatePDF($certificate);
+        }
+
+        return response()->file(
+            storage_path('app/private/' . $certificate->file_path),
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="certificate.pdf"',
+            ]
+        );
+    }
+
+
 }

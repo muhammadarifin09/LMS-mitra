@@ -314,7 +314,7 @@
 
 <!-- SEARCH AND FILTER -->
 <div class="search-box">
-    <input type="text" placeholder="Cari kursus berdasarkan judul, penerbit, atau deskripsi...">
+    <input type="text" placeholder="Cari kursus berdasarkan judul, pelaksana, atau deskripsi...">
     <button type="button">
         <i class="fas fa-search"></i>
         Cari
@@ -337,9 +337,9 @@
                 <tr>
                     <th>No</th>
                     <th>Judul Kursus</th>
-                    <th>Penerbit</th>
-                    <th>Tingkat</th>
-                    <th>Durasi</th>
+                    <th>Pelaksana</th>
+                    <th>Kategori</th>
+                    <th>Jam Pelajaran (JP) </th>
                     <th>Status</th>
                     <th>Peserta</th>
                     <th>Aksi</th>
@@ -353,17 +353,17 @@
                         <td>
                             <strong>{{ $item->judul_kursus }}</strong>
                         </td>
-                        <td>{{ $item->penerbit }}</td>
+                        <td>{{ $item->pelaksana }}</td>
                         <td>
-                            @if($item->tingkat_kesulitan == 'pemula')
+                            @if($item->kategori == 'pemula')
                                 <span class="badge bg-primary">Pemula</span>
-                            @elseif($item->tingkat_kesulitan == 'menengah')
+                            @elseif($item->kategori == 'menengah')
                                 <span class="badge bg-warning">Menengah</span>
                             @else
                                 <span class="badge bg-danger">Lanjutan</span>
                             @endif
                         </td>
-                        <td>{{ $item->durasi_jam }} jam</td>
+                        <td>{{ $item->durasi_jam }} JP</td>
                         <td>
                             @if($item->status == 'aktif')
                                 <span class="status-badge status-aktif">Aktif</span>
@@ -439,19 +439,23 @@
                                     @endif
                                     
                                     <!-- Informasi Utama -->
+                                   <!-- Informasi Utama -->
                                     <div class="row mb-4">
                                         <div class="col-md-6">
                                             <div class="info-item">
-                                                <strong><i class="fas fa-user-tie me-2"></i>Penerbit:</strong>
-                                                <span>{{ $item->penerbit }}</span>
+                                                <strong><i class="fas fa-user-tie me-2"></i>Pelaksana:</strong>
+                                                <span>{{ $item->pelaksana }}</span>
                                             </div>
+
                                             <div class="info-item">
-                                                <strong><i class="fas fa-clock me-2"></i>Durasi:</strong>
-                                                <span>{{ $item->durasi_jam }} jam</span>
+                                                <strong><i class="fas fa-clock me-2"></i>JP:</strong>
+                                                <span>{{ $item->durasi_jam }} JP</span>
                                             </div>
+
                                             <div class="info-item">
                                                 <strong><i class="fas fa-users me-2"></i>Peserta:</strong>
-                                                <span>{{ $item->peserta_terdaftar }} / 
+                                                <span>
+                                                    {{ $item->peserta_terdaftar }} /
                                                     @if($item->kuota_peserta)
                                                         {{ $item->kuota_peserta }}
                                                     @else
@@ -460,19 +464,21 @@
                                                 </span>
                                             </div>
                                         </div>
+
                                         <div class="col-md-6">
                                             <div class="info-item">
-                                                <strong><i class="fas fa-chart-line me-2"></i>Tingkat Kesulitan:</strong>
+                                                <strong><i class="fas fa-chart-line me-2"></i>Kategori:</strong>
                                                 <span>
-                                                    @if($item->tingkat_kesulitan == 'pemula')
+                                                    @if($item->kategori == 'pemula')
                                                         <span class="badge bg-primary">Pemula</span>
-                                                    @elseif($item->tingkat_kesulitan == 'menengah')
+                                                    @elseif($item->kategori == 'menengah')
                                                         <span class="badge bg-warning">Menengah</span>
                                                     @else
-                                                        <span class="badge bg-danger">Lanjutan</span>
+                                                        <span class="badge bg-blue">Lanjutan</span>
                                                     @endif
                                                 </span>
                                             </div>
+
                                             <div class="info-item">
                                                 <strong><i class="fas fa-toggle-on me-2"></i>Status:</strong>
                                                 <span>
@@ -485,14 +491,43 @@
                                                     @endif
                                                 </span>
                                             </div>
+
                                             @if($item->tanggal_mulai && $item->tanggal_selesai)
                                             <div class="info-item">
                                                 <strong><i class="fas fa-calendar me-2"></i>Periode:</strong>
-                                                <span>{{ $item->tanggal_mulai->format('d M Y') }} - {{ $item->tanggal_selesai->format('d M Y') }}</span>
+                                                <span>
+                                                    {{ $item->tanggal_mulai->format('d M Y') }} -
+                                                    {{ $item->tanggal_selesai->format('d M Y') }}
+                                                </span>
                                             </div>
+                                            @endif
+
+                                            {{-- ✅ INFORMASI ENROLL CODE --}}
+                                            @if(!empty($item->enroll_code))
+                                                <div class="info-item mt-2">
+                                                    <strong>
+                                                        <i class="fas fa-key me-2 text-blue"></i>
+                                                        Kode Enroll:
+                                                    </strong>
+                                                    <span class="badge bg-black text-white">
+                                                        {{ $item->enroll_code }}
+                                                    </span>
+                                                  
+                                                </div>
+                                            @else
+                                                <div class="info-item mt-2">
+                                                    <strong>
+                                                        <i class="fas fa-unlock me-2 text-success"></i>
+                                                        Akses Kursus:
+                                                    </strong>
+                                                    <span class="badge bg-success">
+                                                        Terbuka (Tanpa Kode)
+                                                    </span>
+                                                </div>
                                             @endif
                                         </div>
                                     </div>
+
 
                                     <!-- Deskripsi Kursus -->
                                     <div class="course-info mb-4">
@@ -560,6 +595,7 @@
                                                             <li>{{ trim($fasilitas) }}</li>
                                                         @endif
                                                     @endforeach
+
                                                 </ul>
                                             </div>
                                         </div>

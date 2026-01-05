@@ -214,30 +214,40 @@ Route::prefix('admin')
             // ======================
             Route::get('/kursus', [LaporanController::class, 'kursusIndex'])
                 ->name('kursus');
+            Route::get('/mitra', [LaporanController::class, 'mitraIndex'])
+                ->name('mitra');
 
             // ======================
             // DETAIL KURSUS
             // ======================
             Route::get('/kursus/{kursus}', [LaporanController::class, 'kursusDetail'])
                 ->name('kursus.detail');
+            Route::get('/mitra/{mitra}', [LaporanController::class, 'mitraDetail'])
+                ->name('mitra.detail');
 
             // ======================
             // EXPORT PDF RINGKAS (dari halaman index)
             // ======================
             Route::get('/kursus/{kursus}/pdf-ringkas', [LaporanController::class, 'exportKursusPdfRingkas'])
                 ->name('kursus.pdf.ringkas');
+            Route::get('/mitra/{mitra}/pdf-ringkas', [LaporanController::class, 'exportMitraPdfRingkas'])
+                ->name('mitra.pdf.ringkas');
 
             // ======================
             // EXPORT PDF DETAIL (dari halaman detail)
             // ======================
             Route::get('/kursus/{kursus}/pdf-detail', [LaporanController::class, 'exportKursusPdfDetail'])
                 ->name('kursus.pdf.detail');
+            Route::get('/mitra/{mitra}/pdf-detail', [LaporanController::class, 'exportMitraPdfDetail'])
+                ->name('mitra.pdf.detail');
 
             // ======================
             // EXPORT PDF (LEGACY - bisa dihapus jika tidak diperlukan)
             // ======================
             Route::get('/kursus/{kursus}/pdf', [LaporanController::class, 'exportKursusPdf'])
                 ->name('kursus.pdf');
+            Route::get('/mitra/{mitra}/pdf', [LaporanController::class, 'exportMitraPdf'])
+                ->name('mitra.pdf');
 
             // ======================
             // TEST PDF (SEMENTARA)
@@ -266,18 +276,26 @@ Route::prefix('admin/laporan')->name('admin.laporan.')->group(function () {
     // =====================
     Route::get('/kursus/export-csv', [LaporanController::class, 'exportKursusCsv'])
         ->name('kursus.csv');
+    Route::get('/mitra/export-csv', [LaporanController::class, 'exportMitraCsv'])
+        ->name('mitra.csv');
 
     Route::get('/kursus/{kursus}/export-csv', [LaporanController::class, 'exportKursusDetailCsv'])
         ->name('kursus.detail.csv');
+    Route::get('/mitra/{mitra}/export-csv', [LaporanController::class, 'exportMitraDetailCsv'])
+        ->name('mitra.detail.csv');
 
     // =====================
     // VIEW (DI BAWAH)
     // =====================
     Route::get('/kursus', [LaporanController::class, 'kursusIndex'])
         ->name('kursus');
+    Route::get('/mitra', [LaporanController::class, 'mitraIndex'])
+        ->name('mitra');
 
     Route::get('/kursus/{kursus}', [LaporanController::class, 'kursusDetail'])
         ->name('kursus.detail');
+    Route::get('/mitra/{mitra}', [LaporanController::class, 'mitraDetail'])
+        ->name('mitra.detail');
 });
 
 Route::get('/test-csv', [\App\Http\Controllers\Admin\LaporanController::class, 'exportKursusCsv']);
@@ -287,10 +305,57 @@ Route::post(
     '/admin/laporan/kursus/{kursus}/generate',
     [LaporanController::class, 'generateLaporanKursus']
 )->name('admin.laporan.kursus.generate');
+Route::post(
+    '/admin/laporan/mitra/{mitra}/generate',
+    [LaporanController::class, 'generateLaporanMitra']
+)->name('admin.laporan.mitra.generate');
 
 // Sertifikat Routes
+<<<<<<< HEAD
 Route::middleware(['auth'])->prefix('sertifikat')->name('sertifikat.')->group(function () {
     Route::get('/', [CertificateController::class, 'index'])->name('index');
     Route::get('/{certificate}', [CertificateController::class, 'show'])->name('show');
     Route::get('/{certificate}/unduh', [CertificateController::class, 'download'])->name('download');
 });
+=======
+// Route::middleware(['auth'])->prefix('certificates')->group(function () {
+//     Route::get('/', [CertificateController::class, 'index'])->name('index');
+//     Route::get('/{certificate}', [CertificateController::class, 'show'])->name('show');
+//     Route::get('/{certificate}/unduh', [CertificateController::class, 'download'])->name('download');
+//     Route::get('/{certificate}/preview', [CertificateController::class, 'preview'])->name('preview');
+//     Route::get('/kursus/{kursus}/cek', [CertificateController::class, 'checkCertificate'])->name('check');
+// });
+
+Route::middleware(['auth'])->prefix('dashboard/sertifikat')->name('sertifikat.')->group(function () {
+    Route::get('/', [CertificateController::class, 'index'])->name('index');
+    Route::get('/{certificate}', [CertificateController::class, 'show'])->name('show');
+    Route::get('/{certificate}/unduh', [CertificateController::class, 'download'])->name('download');
+});
+
+
+// routes/web.php (tambahkan di bawah)
+Route::get('/test-certificate-qr', function () {
+    $certificate = \App\Models\Certificate::with(['user', 'kursus', 'enrollment'])
+        ->whereNotNull('id_kredensial')
+        ->first();
+    
+    if (!$certificate) {
+        return 'No certificate with id_kredensial found';
+    }
+    
+    return view('mitra.sertifikat.template', [
+        'certificate' => $certificate,
+        'user' => $certificate->user,
+        'kursus' => $certificate->kursus,
+        'enrollment' => $certificate->enrollment,
+    ]);
+});
+
+// Validasi sertifikat via QR code
+Route::get('/sertifikat/{id_kredensial}', [App\Http\Controllers\Mitra\CertificateController::class, 'validateCertificate'])
+    ->name('certificates.validate');
+    
+Route::get('/sertifikat/{id_kredensial}/pdf', 
+    [App\Http\Controllers\Mitra\CertificateController::class, 'publicPdf']
+)->name('certificates.publicPdf');
+>>>>>>> aeb232a879ee3019e46bd83769f8370d998319e9

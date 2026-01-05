@@ -162,14 +162,20 @@
     
     <!-- Dashboard Content -->
     <div class="dashboard-container">
-        <!-- Sidebar -->
-        @include('mitra.layouts.sidebar')
+
+        @if(!isset($noSidebar) || $noSidebar === false)
+            <!-- Sidebar -->
+            @include('mitra.layouts.sidebar')
+        @endif
         
         <!-- Main Content -->
-        <main class="main-content">
+        <main class="main-content" 
+            style="{{ (isset($noSidebar) && $noSidebar) ? 'margin:20px auto; width:100%; max-width:1200px;' : '' }}">
             @yield('content')
         </main>
+
     </div>
+
     
     <!-- Footer -->
     @include('mitra.layouts.footer')

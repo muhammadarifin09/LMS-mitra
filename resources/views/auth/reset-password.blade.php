@@ -18,7 +18,20 @@
             z-index: 2;
         }
 
-        @media (max-width: 767.98px) {
+        @media (max-width: 500px) {
+            /* Layout utama */
+            body {
+                padding: 0;
+                margin: 0;
+                display: block;
+                overflow-x: hidden;
+            }
+            
+            .d-flex.flex-column.flex-md-row {
+                height: auto !important;
+                justify-content: flex-start !important;
+            }
+            
             .left-panel {
                 box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
                 border-radius: 0 0 20px 20px;

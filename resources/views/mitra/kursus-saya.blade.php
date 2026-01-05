@@ -240,8 +240,8 @@
         }
     }
 
-    /* ===== RESPONSIVE DESIGN UNTUK MOBILE KECIL (≤400px) ===== */
-    @media (max-width: 400px) {
+    /* ===== RESPONSIVE DESIGN UNTUK MOBILE KECIL (≤500px) ===== */
+    @media (max-width: 500px) {
         /* Container utama */
         .main-content {
             padding: 15px 12px !important; /* Tambah kiri-kanan 12px */
@@ -426,7 +426,7 @@
     }
 
     /* ===== OPTIMASI GLOBAL UNTUK MOBILE ===== */
-    @media (max-width: 400px) {
+    @media (max-width: 500px) {
         /* Pastikan tidak ada overflow */
         * {
             max-width: 100%;
@@ -461,7 +461,7 @@
     }
 
     /* ===== PERBAIKAN MARGIN DAN PADDING ===== */
-    @media (max-width: 400px) {
+    @media (max-width: 500px) {
         /* Tambah padding untuk container utama */
         body .main-content {
             padding: 15px 12px !important; /* Tambah kiri-kanan 12px */
