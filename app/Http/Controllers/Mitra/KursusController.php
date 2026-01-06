@@ -533,8 +533,7 @@ class KursusController extends Controller
         }
     }
 
-<<<<<<< HEAD
-=======
+
     try {
         // Hitung total materi aktif
         $totalMaterials = Materials::where('course_id', $id)
@@ -578,7 +577,7 @@ class KursusController extends Controller
         return view('mitra.kursus-saya', compact('enrolledCourses'));
     }
 
->>>>>>> aeb232a879ee3019e46bd83769f8370d998319e9
+
     // MARK: - Progress Tracking Methods
     public function markAttendance(Request $request, $kursus, $material)
     {
@@ -2573,7 +2572,7 @@ private function generateVideoToken($materialId, $userId)
 
         return $this->isMaterialCompleted($previousProgress, $previousMaterial);
     }
-<<<<<<< HEAD
+
     
     /**
      * DEBUGGING METHOD: Get video data for specific material
@@ -2622,7 +2621,7 @@ private function generateVideoToken($materialId, $userId)
             ], 500);
         }
     }
-=======
+
 
             public function daftar($id)
     {
@@ -2656,5 +2655,5 @@ private function generateVideoToken($materialId, $userId)
     }
 
 
->>>>>>> aeb232a879ee3019e46bd83769f8370d998319e9
+
 }

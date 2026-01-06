@@ -703,7 +703,7 @@
                                         @endif
 
                                         <!-- Statistik Pretest -->
-                                        @if($material->soal_pretest && count($material->soal_pretest) > 0)
+                                        @if(is_array($material->soal_pretest) && count($material->soal_pretest) > 0)
                                         <div class="stats-item pretest">
                                             <div class="stats-number text-purple">
                                                 {{ $jumlahPretest }}/{{ $totalPeserta }}
@@ -832,7 +832,7 @@
                                         </div>
 
                                         <!-- Informasi Soal Test -->
-                                        @if($material->soal_pretest && count($material->soal_pretest) > 0)
+                                        @if(is_array($material->soal_pretest) && count($material->soal_pretest) > 0)
                                         <div class="mt-2">
                                             <small class="text-muted">
                                                 <i class="mdi mdi-clipboard-text me-1"></i>

@@ -92,15 +92,15 @@
     }
 
     .btn-materi {
-    background: rgba(46, 204, 113, 0.1);
-    color: #27ae60;
-}
+        background: rgba(46, 204, 113, 0.1);
+        color: #27ae60;
+    }
 
-.btn-materi:hover {
-    background: #27ae60;
-    color: white;
-    transform: translateY(-2px);
-}
+    .btn-materi:hover {
+        background: #27ae60;
+        color: white;
+        transform: translateY(-2px);
+    }
 
     .btn-view:hover {
         background: #9b59b6;
@@ -168,6 +168,105 @@
 
     .search-box button:hover {
         background: linear-gradient(135deg, #2a5298, #1e3c72);
+    }
+
+    /* Pagination Styles */
+    .pagination-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 25px;
+        border-top: 1px solid #e9ecef;
+        background: #f8f9fa;
+    }
+
+    .pagination {
+        margin: 0;
+    }
+
+    .page-link {
+        color: #1e3c72;
+        background-color: white;
+        border: 1px solid #dee2e6;
+        padding: 8px 16px;
+        margin: 0 4px;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .page-link:hover {
+        background-color: #1e3c72;
+        color: white;
+        border-color: #1e3c72;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(30, 60, 114, 0.2);
+    }
+
+    .page-item.active .page-link {
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
+        color: white;
+        border-color: #1e3c72;
+        font-weight: 600;
+    }
+
+    .page-item.disabled .page-link {
+        color: #6c757d;
+        background-color: #f8f9fa;
+        border-color: #dee2e6;
+        cursor: not-allowed;
+    }
+
+    .pagination-info {
+        color: #6c757d;
+        font-size: 0.9rem;
+        text-align: center;
+    }
+
+    .pagination-controls {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .perpage-select {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .perpage-select select {
+        padding: 8px 12px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        background: white;
+        color: #1e3c72;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .perpage-select select:hover {
+        border-color: #1e3c72;
+    }
+
+    .perpage-select select:focus {
+        outline: none;
+        border-color: #1e3c72;
+        box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+    }
+
+    .footer-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 25px;
+        border-top: 1px solid #e9ecef;
+        background: #f8f9fa;
+        color: #6c757d;
+        font-size: 0.85rem;
     }
 
     /* Modal Styles */
@@ -272,6 +371,18 @@
     }
 
     /* Responsif */
+    @media (max-width: 992px) {
+        .pagination-container {
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .pagination-controls {
+            width: 100%;
+            justify-content: space-between;
+        }
+    }
+
     @media (max-width: 768px) {
         .table-header {
             flex-direction: column;
@@ -292,12 +403,44 @@
             min-height: 200px;
             max-height: 300px;
         }
+
+        .pagination {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .page-link {
+            padding: 6px 12px;
+            margin: 2px;
+            font-size: 0.9rem;
+        }
+
+        .footer-info {
+            flex-direction: column;
+            gap: 10px;
+            text-align: center;
+        }
     }
 
     @media (max-width: 576px) {
         .modal-image-container {
             min-height: 150px;
             max-height: 250px;
+        }
+
+        .pagination {
+            font-size: 0.8rem;
+        }
+
+        .page-link {
+            padding: 4px 8px;
+            margin: 1px;
+        }
+
+        .perpage-select {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 5px;
         }
     }
 </style>
@@ -314,8 +457,10 @@
 
 <!-- SEARCH AND FILTER -->
 <div class="search-box">
-    <input type="text" placeholder="Cari kursus berdasarkan judul, pelaksana, atau deskripsi...">
-    <button type="button">
+    <input type="text" placeholder="Cari kursus berdasarkan judul, pelaksana, atau deskripsi..." 
+           value="{{ request('search') }}" 
+           onkeypress="if(event.key === 'Enter') searchCourses()">
+    <button type="button" onclick="searchCourses()">
         <i class="fas fa-search"></i>
         Cari
     </button>
@@ -349,7 +494,7 @@
                 @if(isset($kursus) && $kursus->count() > 0)
                     @foreach($kursus as $index => $item)
                     <tr>
-                        <td>{{ $index + 1 }}</td>
+                        <td>{{ ($kursus->currentPage() - 1) * $kursus->perPage() + $index + 1 }}</td>
                         <td>
                             <strong>{{ $item->judul_kursus }}</strong>
                         </td>
@@ -383,34 +528,34 @@
                             </small>
                         </td>
                         <td>
-    <div class="action-buttons">
-        <!-- Tombol Detail - Selalu Tampil -->
-        <button type="button" class="btn-action btn-detail" title="Detail Kursus" 
-                data-bs-toggle="modal" data-bs-target="#detailModal{{ $item->id }}">
-            <i class="fas fa-eye"></i>
-        </button>
-        
-        <!-- TAMBAH TOMBOL INI: Tombol Materi -->
-        <a href="{{ route('admin.kursus.materials.index', $item) }}" class="btn-action btn-view" title="Kelola Materi">
-            <i class="fas fa-book-open"></i>
-        </a>
+                            <div class="action-buttons">
+                                <!-- Tombol Detail - Selalu Tampil -->
+                                <button type="button" class="btn-action btn-detail" title="Detail Kursus" 
+                                        data-bs-toggle="modal" data-bs-target="#detailModal{{ $item->id }}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                
+                                <!-- Tombol Materi -->
+                                <a href="{{ route('admin.kursus.materials.index', $item) }}" class="btn-action btn-materi" title="Kelola Materi">
+                                    <i class="fas fa-book-open"></i>
+                                </a>
 
-        <!-- Tombol Edit -->
-        <a href="{{ route('admin.kursus.edit', $item->id) }}" class="btn-action btn-edit" title="Edit">
-            <i class="fas fa-edit"></i>
-        </a>
-        
-        <!-- Tombol Hapus -->
-        <form action="{{ route('admin.kursus.destroy', $item->id) }}" method="POST" class="d-inline">
-            @csrf
-            @method('DELETE')
-            <button type="submit" class="btn-action btn-delete" title="Hapus" 
-                    onclick="confirmDelete(event, this.closest('form'))">
-                <i class="fas fa-trash"></i>
-            </button>
-        </form>
-    </div>
-</td>
+                                <!-- Tombol Edit -->
+                                <a href="{{ route('admin.kursus.edit', $item->id) }}" class="btn-action btn-edit" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                
+                                <!-- Tombol Hapus -->
+                                <form action="{{ route('admin.kursus.destroy', $item->id) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn-action btn-delete" title="Hapus" 
+                                            onclick="confirmDelete(event, this.closest('form'))">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
                     </tr>
 
                     <!-- Modal untuk Detail Kursus -->
@@ -439,7 +584,6 @@
                                     @endif
                                     
                                     <!-- Informasi Utama -->
-                                   <!-- Informasi Utama -->
                                     <div class="row mb-4">
                                         <div class="col-md-6">
                                             <div class="info-item">
@@ -502,7 +646,6 @@
                                             </div>
                                             @endif
 
-                                            {{-- ✅ INFORMASI ENROLL CODE --}}
                                             @if(!empty($item->enroll_code))
                                                 <div class="info-item mt-2">
                                                     <strong>
@@ -512,7 +655,6 @@
                                                     <span class="badge bg-black text-white">
                                                         {{ $item->enroll_code }}
                                                     </span>
-                                                  
                                                 </div>
                                             @else
                                                 <div class="info-item mt-2">
@@ -527,7 +669,6 @@
                                             @endif
                                         </div>
                                     </div>
-
 
                                     <!-- Deskripsi Kursus -->
                                     <div class="course-info mb-4">
@@ -595,7 +736,6 @@
                                                             <li>{{ trim($fasilitas) }}</li>
                                                         @endif
                                                     @endforeach
-
                                                 </ul>
                                             </div>
                                         </div>
@@ -629,6 +769,150 @@
             </tbody>
         </table>
     </div>
+
+    <!-- PAGINATION SECTION -->
+    @if(isset($kursus) && $kursus->hasPages())
+    <div class="pagination-container">
+        <!-- Kontrol Per Page -->
+        <div class="pagination-controls">
+            <div class="perpage-select">
+                <span>Tampilkan:</span>
+                <select onchange="changePerPage(this.value)">
+                    <option value="5" {{ request('per_page', 10) == 5 ? 'selected' : '' }}>5</option>
+                    <option value="10" {{ request('per_page', 10) == 10 ? 'selected' : '' }}>10</option>
+                    <option value="25" {{ request('per_page', 10) == 25 ? 'selected' : '' }}>25</option>
+                    <option value="50" {{ request('per_page', 10) == 50 ? 'selected' : '' }}>50</option>
+                    <option value="100" {{ request('per_page', 10) == 100 ? 'selected' : '' }}>100</option>
+                </select>
+                <span>data per halaman</span>
+            </div>
+
+            <!-- Pagination Navigation -->
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    {{-- Previous Page Link --}}
+                    @if($kursus->onFirstPage())
+                        <li class="page-item disabled">
+                            <span class="page-link" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </span>
+                        </li>
+                    @else
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $kursus->previousPageUrl() }}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    @endif
+
+                    {{-- Pagination Elements --}}
+                    @php
+                        $current = $kursus->currentPage();
+                        $last = $kursus->lastPage();
+                        $start = max(1, $current - 2);
+                        $end = min($last, $current + 2);
+                    @endphp
+
+                    {{-- First Page Link --}}
+                    @if($start > 1)
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $kursus->url(1) }}">1</a>
+                        </li>
+                        @if($start > 2)
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        @endif
+                    @endif
+
+                    {{-- Array Of Links --}}
+                    @for($page = $start; $page <= $end; $page++)
+                        @if($page == $current)
+                            <li class="page-item active" aria-current="page">
+                                <span class="page-link">{{ $page }}</span>
+                            </li>
+                        @else
+                            <li class="page-item">
+                                <a class="page-link" href="{{ $kursus->url($page) }}">{{ $page }}</a>
+                            </li>
+                        @endif
+                    @endfor
+
+                    {{-- Last Page Link --}}
+                    @if($end < $last)
+                        @if($end < $last - 1)
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        @endif
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $kursus->url($last) }}">{{ $last }}</a>
+                        </li>
+                    @endif
+
+                    {{-- Next Page Link --}}
+                    @if($kursus->hasMorePages())
+                        <li class="page-item">
+                            <a class="page-link" href="{{ $kursus->nextPageUrl() }}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    @else
+                        <li class="page-item disabled">
+                            <span class="page-link" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </span>
+                        </li>
+                    @endif
+                </ul>
+            </nav>
+        </div>
+
+        <!-- Pagination Info -->
+        <div class="pagination-info">
+            Menampilkan {{ ($kursus->currentPage() - 1) * $kursus->perPage() + 1 }} 
+            sampai {{ min($kursus->currentPage() * $kursus->perPage(), $kursus->total()) }} 
+            dari {{ $kursus->total() }} data
+            @if(request()->has('search'))
+                untuk pencarian "{{ request('search') }}"
+            @endif
+        </div>
+    </div>
+    @else
+        <!-- Hanya tampilkan perpage selector jika ada data -->
+        @if(isset($kursus) && $kursus->count() > 0)
+        <div class="pagination-container">
+            <div class="pagination-controls">
+                <div class="perpage-select">
+                    <span>Tampilkan:</span>
+                    <select onchange="changePerPage(this.value)">
+                        <option value="5" {{ request('per_page', 10) == 5 ? 'selected' : '' }}>5</option>
+                        <option value="10" {{ request('per_page', 10) == 10 ? 'selected' : '' }}>10</option>
+                        <option value="25" {{ request('per_page', 10) == 25 ? 'selected' : '' }}>25</option>
+                        <option value="50" {{ request('per_page', 10) == 50 ? 'selected' : '' }}>50</option>
+                        <option value="100" {{ request('per_page', 10) == 100 ? 'selected' : '' }}>100</option>
+                    </select>
+                    <span>data per halaman</span>
+                </div>
+            </div>
+            
+            <div class="pagination-info">
+                Menampilkan 1 sampai {{ $kursus->count() }} dari {{ $kursus->total() }} data
+                @if(request()->has('search'))
+                    untuk pencarian "{{ request('search') }}"
+                @endif
+            </div>
+        </div>
+        @endif
+    @endif
+</div>
+
+<!-- FOOTER INFO -->
+<div class="footer-info">
+
+    <div>
+        Total Data: {{ $kursus->total() ?? 0 }} Kursus
+    </div>
 </div>
 @endsection
 
@@ -655,16 +939,49 @@
     }
 
     // Search functionality
-    document.querySelector('.search-box button').addEventListener('click', function() {
+    function searchCourses() {
         const searchTerm = document.querySelector('.search-box input').value;
-        // Implement search logic here
-        alert('Fitur pencarian untuk: ' + searchTerm);
-    });
+        const url = new URL(window.location.href);
+        
+        if (searchTerm) {
+            url.searchParams.set('search', searchTerm);
+        } else {
+            url.searchParams.delete('search');
+        }
+        
+        // Reset to page 1 when searching
+        url.searchParams.set('page', '1');
+        
+        // Keep per_page parameter
+        const perPage = '{{ request('per_page', 10) }}';
+        if (perPage && perPage !== '10') {
+            url.searchParams.set('per_page', perPage);
+        }
+        
+        window.location.href = url.toString();
+    }
+
+    // Change items per page
+    function changePerPage(value) {
+        const url = new URL(window.location.href);
+        
+        // Reset to page 1 when changing per page
+        url.searchParams.set('page', '1');
+        url.searchParams.set('per_page', value);
+        
+        // Keep search parameter if exists
+        const searchTerm = document.querySelector('.search-box input').value;
+        if (searchTerm) {
+            url.searchParams.set('search', searchTerm);
+        }
+        
+        window.location.href = url.toString();
+    }
 
     // Enter key untuk search
     document.querySelector('.search-box input').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
-            document.querySelector('.search-box button').click();
+            searchCourses();
         }
     });
 

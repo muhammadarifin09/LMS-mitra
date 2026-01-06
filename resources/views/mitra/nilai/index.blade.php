@@ -32,9 +32,42 @@
     @php
         $user = auth()->user();
         $namaMitra = $user->name ?? ($user->nama ?? 'Mitra');
+        
+        // Hitung statistik dari SEMUA DATA yang di-enroll user
+        $allEnrollments = \App\Models\Enrollment::with('kursus.materials')
+            ->where('user_id', $user->id)
+            ->get();
+        
+        // Inisialisasi variabel statistik
+        $totalKursus = $allEnrollments->count();
+        $lulusCount = 0;
+        $tidakLulusCount = 0;
+        $belumDinilaiCount = 0;
+        
+        // Loop melalui semua enrollment untuk menghitung statistik
+        foreach ($allEnrollments as $enroll) {
+            $kursus = $enroll->kursus;
+            $nilaiAkhir = app(\App\Services\NilaiService::class)->hitungNilai($user->id, $kursus);
+            $status = app(\App\Services\NilaiService::class)->statusNilai($nilaiAkhir);
+            
+            if ($status === 'lulus') {
+                $lulusCount++;
+            } elseif ($status === 'tidak_lulus') {
+                $tidakLulusCount++;
+            } else {
+                $belumDinilaiCount++;
+            }
+        }
+        
+        // Hitung statistik dari data yang ditampilkan di halaman ini (untuk info)
+        $currentPageCount = $nilai->count();
     @endphp
     <div id="mitraData" 
          data-nama="{{ $namaMitra }}"
+         data-total="{{ $totalKursus }}"
+         data-lulus="{{ $lulusCount }}"
+         data-tidak-lulus="{{ $tidakLulusCount }}"
+         data-belum="{{ $belumDinilaiCount }}"
          style="display: none;">
     </div>
 
@@ -48,7 +81,7 @@
                             <div class="text-xs fw-bold text-primary text-uppercase mb-1">
                                 Total Kursus
                             </div>
-                            <div class="h5 mb-0 fw-bold text-gray-800">{{ count($nilai) }}</div>
+                            <div class="h5 mb-0 fw-bold text-gray-800">{{ $totalKursus }}</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-book fa-2x text-primary opacity-25"></i>
@@ -67,9 +100,7 @@
                                 Lulus
                             </div>
                             <div class="h5 mb-0 fw-bold text-gray-800">
-                                {{ count(array_filter($nilai, function($item) { 
-                                    return isset($item['status']) && $item['status'] === 'lulus'; 
-                                })) }}
+                                {{ $lulusCount }}
                             </div>
                         </div>
                         <div class="col-auto">
@@ -89,9 +120,7 @@
                                 Tidak Lulus
                             </div>
                             <div class="h5 mb-0 fw-bold text-gray-800">
-                                {{ count(array_filter($nilai, function($item) { 
-                                    return isset($item['status']) && $item['status'] === 'tidak_lulus'; 
-                                })) }}
+                                {{ $tidakLulusCount }}
                             </div>
                         </div>
                         <div class="col-auto">
@@ -111,9 +140,7 @@
                                 Belum Dinilai
                             </div>
                             <div class="h5 mb-0 fw-bold text-gray-800">
-                                {{ count(array_filter($nilai, function($item) { 
-                                    return !isset($item['nilai']) || $item['nilai'] === null; 
-                                })) }}
+                                {{ $belumDinilaiCount }}
                             </div>
                         </div>
                         <div class="col-auto">
@@ -128,9 +155,17 @@
     <!-- Main Card -->
     <div class="card shadow-lg border-0">
         <div class="card-header bg-white py-3 border-bottom">
-            <h5 class="mb-0 fw-bold">
-                <i class="fas fa-list-check me-2 text-primary"></i> Daftar Nilai Kursus
-            </h5>
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold">
+                    <i class="fas fa-list-check me-2 text-primary"></i> Daftar Nilai Kursus
+                </h5>
+                @if($totalKursus > 0)
+                <div class="text-muted small">
+                    <i class="fas fa-filter me-1"></i>
+                    Ditampilkan: {{ $currentPageCount }} dari {{ $totalKursus }}
+                </div>
+                @endif
+            </div>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -144,7 +179,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($nilai as $n)
+                        @forelse($nilai as $index => $n)
                             <tr class="align-middle">
                                 <td class="ps-4">
                                     <div class="d-flex align-items-center">
@@ -233,14 +268,25 @@
                 </table>
             </div>
         </div>
-        @if(count($nilai) > 0)
-            <div class="card-footer bg-white py-3">
-                <div class="row align-items-center">
-                    <div class="col text-muted">
-                        Menampilkan {{ count($nilai) }} dari {{ count($nilai) }} kursus
-                    </div>
+        
+        @if($nilai->count())
+        <div class="card-footer bg-white py-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="text-muted small">
+                    Menampilkan
+                    <strong>{{ $nilai->firstItem() }}</strong>
+                    –
+                    <strong>{{ $nilai->lastItem() }}</strong>
+                    dari
+                    <strong>{{ $nilai->total() }}</strong>
+                    kursus
+                </div>
+
+                <div>
+                    {{ $nilai->links('pagination::bootstrap-4') }}
                 </div>
             </div>
+        </div>
         @endif
     </div>
 </div>
@@ -303,6 +349,7 @@
                                     <li>Nama mitra</li>
                                     <li>Tanggal cetak</li>
                                     <li>Daftar nilai kursus lengkap</li>
+                                    <li>Statistik lengkap ({{ $lulusCount }} lulus, {{ $tidakLulusCount }} tidak lulus, {{ $belumDinilaiCount }} belum dinilai)</li>
                                 </ul>
                             </small>
                         </div>
@@ -359,6 +406,11 @@
     /* Tombol action group */
     .gap-2 {
         gap: 0.5rem;
+    }
+    
+    /* Progress bar untuk statistik ringkasan */
+    .progress-bar {
+        transition: width 0.6s ease;
     }
 </style>
 
@@ -451,173 +503,205 @@ document.addEventListener('DOMContentLoaded', function() {
         showAlert('danger', '{{ session('error') }}');
     @endif
     
-    async function exportToPDF() {
-        // Pastikan jsPDF sudah terload
-        if (typeof window.jspdf === 'undefined') {
-            throw new Error('jsPDF belum terload. Silakan refresh halaman.');
-        }
-        
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('p', 'mm', 'a4');
-        
-        // Get mitra data from hidden element
-        const mitraData = document.getElementById('mitraData');
-        const namaMitra = mitraData ? mitraData.getAttribute('data-nama') : 'Mitra';
-        
-        // Page dimensions
-        const pageWidth = doc.internal.pageSize.width;
-        const pageHeight = doc.internal.pageSize.height;
-        const margin = 15;
-        
-        // ==================== HEADER ====================
-        // Logo/Title
-        doc.setFontSize(16);
-        doc.setTextColor(41, 128, 185);
-        doc.setFont(undefined, 'bold');
-        doc.text('LAPORAN NILAI KURSUS', margin, 20);
-        
-        doc.setFontSize(12);
-        doc.setTextColor(100, 100, 100);
-        doc.setFont(undefined, 'normal');
-        doc.text('SISTEM PEMBELAJARAN ONLINE', margin, 27);
-        
-        // Line separator
-        doc.setDrawColor(200, 200, 200);
-        doc.line(margin, 32, pageWidth - margin, 32);
-        
-        // ==================== MITRA INFO ====================
-        const infoY = 40;
-        
-        doc.setFontSize(14);
-        doc.setTextColor(60, 60, 60);
-        doc.setFont(undefined, 'bold');
-        doc.text('MITRA', margin, infoY);
-        
-        // Nama mitra
-        doc.setFontSize(12);
-        doc.setFont(undefined, 'normal');
-        doc.text('Nama: ' + namaMitra, margin + 5, infoY + 10);
-        
-        // Tanggal cetak
-        const currentDate = new Date().toLocaleDateString('id-ID', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric'
-        });
-        doc.text('Tanggal Cetak: ' + currentDate, margin + 5, infoY + 18);
-        
-        // ==================== TABLE ====================
-        const tableStartY = infoY + 30;
-        
-        // Table title
-        doc.setFontSize(14);
-        doc.setTextColor(60, 60, 60);
-        doc.setFont(undefined, 'bold');
-        doc.text('DAFTAR NILAI KURSUS', margin, tableStartY);
-        
-        // Prepare table data
-        const headers = [['NO', 'NAMA KURSUS', 'NILAI', 'STATUS']];
-        const rows = [];
-        
-        // Convert PHP data for PDF
-        @foreach($nilai as $index => $n)
-            rows.push([
-                '{{ $index + 1 }}',
-                '{{ $n['kursus']->judul_kursus }}',
-                @if(isset($n['nilai']) && $n['nilai'] !== null)
-                    '{{ $n['nilai'] }}'
-                @else
-                    '-'
-                @endif,
-                @if($n['status'] === 'lulus')
-                    'LULUS'
-                @elseif($n['status'] === 'tidak_lulus')
-                    'TIDAK LULUS'
-                @else
-                    'BELUM DINILAI'
-                @endif
-            ]);
-        @endforeach
-        
-        // Create table
-        doc.autoTable({
-            head: headers,
-            body: rows,
-            startY: tableStartY + 8,
-            margin: { 
-                left: margin, 
-                right: margin
+   async function exportToPDF() {
+    // Pastikan jsPDF sudah terload
+    if (typeof window.jspdf === 'undefined') {
+        throw new Error('jsPDF belum terload. Silakan refresh halaman.');
+    }
+    
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
+    
+    // Get mitra data from hidden element
+    const mitraData = document.getElementById('mitraData');
+    const namaMitra = mitraData ? mitraData.getAttribute('data-nama') : 'Mitra';
+    
+    // Page dimensions
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+    const margin = 15;
+    
+    // ==================== HEADER ====================
+    // Logo/Title - TAMPIL DI TENGAH
+    doc.setFontSize(20);
+    doc.setTextColor(41, 128, 185);
+    doc.setFont(undefined, 'bold');
+    
+    // Hitung posisi tengah untuk judul
+    const title1 = 'LAPORAN NILAI KURSUS';
+    const title1Width = doc.getTextWidth(title1);
+    const title1X = (pageWidth - title1Width) / 2;
+    doc.text(title1, title1X, 25);
+    
+    doc.setFontSize(14);
+    doc.setTextColor(100, 100, 100);
+    doc.setFont(undefined, 'normal');
+    
+    const title2 = 'SISTEM PEMBELAJARAN ONLINE';
+    const title2Width = doc.getTextWidth(title2);
+    const title2X = (pageWidth - title2Width) / 2;
+    doc.text(title2, title2X, 35);
+    
+    // Line separator
+    doc.setDrawColor(200, 200, 200);
+    doc.line(margin, 42, pageWidth - margin, 42);
+    
+    // ==================== MITRA INFO ====================
+    const infoY = 50;
+    
+    doc.setFontSize(14);
+    doc.setTextColor(60, 60, 60);
+    doc.setFont(undefined, 'bold');
+    doc.text('INFORMASI MITRA', margin, infoY);
+    
+    // Nama mitra
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'normal');
+    doc.text('Nama: ' + namaMitra, margin + 5, infoY + 10);
+    
+    // Tanggal cetak
+    const currentDate = new Date().toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    });
+    doc.text('Tanggal Cetak: ' + currentDate, margin + 5, infoY + 18);
+    
+    // ==================== TABLE DETAIL NILAI ====================
+    const tableStartY = infoY + 35;
+    
+    doc.setFontSize(16);
+    doc.setTextColor(60, 60, 60);
+    doc.setFont(undefined, 'bold');
+    
+    // Judul tabel di tengah
+    const tableTitle = 'DAFTAR NILAI KURSUS';
+    const tableTitleWidth = doc.getTextWidth(tableTitle);
+    const tableTitleX = (pageWidth - tableTitleWidth) / 2;
+    doc.text(tableTitle, tableTitleX, tableStartY);
+    
+    // Prepare table data
+    const headers = [['NO', 'NAMA KURSUS', 'NILAI', 'STATUS']];
+    const rows = [];
+    
+    // Convert PHP data for PDF
+    @foreach($nilai as $index => $n)
+        rows.push([
+            '{{ $index + 1 }}',
+            '{{ $n['kursus']->judul_kursus }}',
+            @if(isset($n['nilai']) && $n['nilai'] !== null)
+                '{{ $n['nilai'] }}'
+            @else
+                '-'
+            @endif,
+            @if($n['status'] === 'lulus')
+                'LULUS'
+            @elseif($n['status'] === 'tidak_lulus')
+                'TIDAK LULUS'
+            @else
+                'BELUM DINILAI'
+            @endif
+        ]);
+    @endforeach
+    
+    // Create table
+    doc.autoTable({
+        head: headers,
+        body: rows,
+        startY: tableStartY + 10,
+        margin: { 
+            left: margin, 
+            right: margin
+        },
+        theme: 'grid',
+        headStyles: { 
+            fillColor: [41, 128, 185], 
+            textColor: 255,
+            fontSize: 10,
+            fontStyle: 'bold',
+            halign: 'center'
+        },
+        bodyStyles: { 
+            fontSize: 11,
+            textColor: [60, 60, 60],
+            cellPadding: 5
+        },
+        alternateRowStyles: {
+            fillColor: [248, 248, 248]
+        },
+        columnStyles: {
+            0: { 
+                cellWidth: 15, 
+                halign: 'center',
+                fontStyle: 'bold'
             },
-            theme: 'grid',
-            headStyles: { 
-                fillColor: [41, 128, 185], 
-                textColor: 255,
-                fontSize: 11,
-                fontStyle: 'bold',
+            1: { 
+                cellWidth: 'auto',
+                halign: 'left'
+            },
+            2: { 
+                cellWidth: 25, 
                 halign: 'center'
             },
-            bodyStyles: { 
-                fontSize: 10,
-                textColor: [60, 60, 60],
-                cellPadding: 4
-            },
-            alternateRowStyles: {
-                fillColor: [248, 248, 248]
-            },
-            columnStyles: {
-                0: { 
-                    cellWidth: 15, 
-                    halign: 'center'
-                },
-                1: { 
-                    cellWidth: 100,
-                    halign: 'left'
-                },
-                2: { 
-                    cellWidth: 25, 
-                    halign: 'center'
-                },
-                3: { 
-                    cellWidth: 35, 
-                    halign: 'center'
-                }
-            },
-            styles: {
-                overflow: 'linebreak',
-                cellPadding: 4
-            },
-            didDrawPage: function(data) {
-                // Footer
-                const pageCount = doc.internal.getNumberOfPages();
-                
-                doc.setFontSize(9);
-                doc.setTextColor(120, 120, 120);
-                
-                // Page number
+            3: { 
+                cellWidth: 35, 
+                halign: 'center',
+                fontStyle: 'bold'
+            }
+        },
+        styles: {
+            overflow: 'linebreak',
+            cellPadding: 5,
+            lineColor: [200, 200, 200],
+            lineWidth: 0.1
+        },
+        didDrawPage: function(data) {
+            // Footer
+            const pageCount = doc.internal.getNumberOfPages();
+            
+            doc.setFontSize(9);
+            doc.setTextColor(120, 120, 120);
+            
+            // Page number - di tengah
+            doc.text(
+                `Halaman ${data.pageNumber} dari ${pageCount}`,
+                pageWidth / 2,
+                pageHeight - 10,
+                { align: 'center' }
+            );
+            
+            // Tambahkan informasi mitra di footer setiap halaman (kecuali halaman pertama)
+            if (data.pageNumber > 1) {
+                doc.setFontSize(8);
+                doc.setTextColor(150, 150, 150);
                 doc.text(
-                    `Halaman ${data.pageNumber} dari ${pageCount}`,
+                    `Mitra: ${namaMitra} | ${currentDate}`,
                     pageWidth / 2,
-                    pageHeight - 10,
+                    pageHeight - 20,
                     { align: 'center' }
                 );
             }
-        });
-        
-        // ==================== SAVE PDF ====================
-        // Generate filename
-        const cleanName = namaMitra
-            .replace(/[^\w\s-]/gi, '')
-            .replace(/\s+/g, '_')
-            .toLowerCase();
-        
-        const fileName = `laporan_nilai_${cleanName}.pdf`;
-        
-        // Save PDF
-        doc.save(fileName);
-        
-        // Show success notification
-        showAlert('success', 'Laporan PDF berhasil diunduh!');
-    }
+        },
+        // Menambahkan border untuk tabel yang lebih rapi
+        tableLineColor: [200, 200, 200],
+        tableLineWidth: 0.1
+    });
+    
+    // ==================== SAVE PDF ====================
+    // Generate filename
+    const cleanName = namaMitra
+        .replace(/[^\w\s-]/gi, '')
+        .replace(/\s+/g, '_')
+        .toLowerCase();
+    
+    const fileName = `laporan_nilai_${cleanName}.pdf`;
+    
+    // Save PDF
+    doc.save(fileName);
+    
+    // Show success notification
+    showAlert('success', 'Laporan PDF berhasil diunduh!');
+}
     
     function showAlert(type, message) {
         // Remove existing alerts

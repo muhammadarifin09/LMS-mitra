@@ -40,7 +40,7 @@
                             <tbody>
                                 @foreach($kursus as $item)
                                 <tr>
-                                    <td style="text-align: center; vertical-align: middle;">{{ $loop->iteration }}</td>
+                                    <td style="text-align: center; vertical-align: middle;">{{ ($kursus->currentPage() - 1) * $kursus->perPage() + $loop->iteration }}</td>
                                     <td style="vertical-align: middle;">
                                         <div style="font-weight: 600; color: #2d3748; margin-bottom: 3px;">
                                             {{ $item->judul_kursus }}
@@ -113,7 +113,7 @@
                                 <div style="display: flex; align-items: center;">
                                     <div style="flex: 1;">
                                         <div style="font-size: 0.9rem; opacity: 0.9;">Total Kursus</div>
-                                        <div style="font-size: 1.8rem; font-weight: 700;">{{ $kursus->count() }}</div>
+                                        <div style="font-size: 1.8rem; font-weight: 700;">{{ $kursus->total() }}</div>
                                     </div>
                                     <div style="font-size: 2.5rem; opacity: 0.7;">
                                         <i class="fas fa-book"></i>
@@ -127,7 +127,7 @@
                                 <div style="display: flex; align-items: center;">
                                     <div style="flex: 1;">
                                         <div style="font-size: 0.9rem; opacity: 0.9;">Total Peserta</div>
-                                        <div style="font-size: 1.8rem; font-weight: 700;">{{ $kursus->sum('enrollments_count') }}</div>
+                                        <div style="font-size: 1.8rem; font-weight: 700;">{{ $kursus->getCollection()->sum('enrollments_count') }}</div>
                                     </div>
                                     <div style="font-size: 2.5rem; opacity: 0.7;">
                                         <i class="fas fa-users"></i>
@@ -152,28 +152,22 @@
                     </div>
                     @endif
                 </div>
+               <div class="card-footer d-flex justify-content-between align-items-center">
+                <div class="text-muted small">
+                    Menampilkan
+                    {{ $kursus->firstItem() }} – {{ $kursus->lastItem() }}
+                    dari {{ $kursus->total() }} kursus
+                </div>
+
+                <div>
+                    {{ $kursus->links('pagination::bootstrap-4') }}
+                </div>
+            </div>
                 @if(!$kursus->isEmpty())
                 <div class="card-footer" style="background-color: #f8fafc; border-top: 1px solid #e2e8f0;">
                     <div class="row">
-                        <div class="col-md-6">
-                            <small class="text-muted" style="display: flex; align-items: center;">
-                                <i class="fas fa-info-circle mr-2" style="color: #4f46e5;"></i>
-                                <span>
-                                    Data diperbarui: 
-                                    <span id="realtimeTimestamp" style="font-weight: 600; color: #2d3748;">
-                                        {{ now()->format('d M Y H:i:s') }}
-                                    </span>
-                                    <span id="realtimeIndicator" class="badge badge-success ml-2" 
-                                          style="font-size: 8px; padding: 2px 6px; animation: pulse 2s infinite;">Live</span>
-                                </span>
-                            </small>
-                        </div>
-                        <div class="col-md-6 text-right">
-                            <small class="text-muted" style="font-weight: 500;">
-                                <i class="fas fa-database mr-1"></i>
-                                Total Data: {{ $kursus->count() }} kursus
-                            </small>
-                        </div>
+                 
+                    
                     </div>
                 </div>
                 @endif

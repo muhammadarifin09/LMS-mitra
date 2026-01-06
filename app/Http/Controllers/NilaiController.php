@@ -16,31 +16,32 @@ class NilaiController extends Controller
     }
 
     public function index()
-    {
-        $user = Auth::user();
+{
+    $user = Auth::user();
 
-        // Ambil kursus yang diikuti mitra
-        $enrollments = Enrollment::with('kursus.materials')
-            ->where('user_id', $user->id)
-            ->get();
+    // paginator (JANGAN DIHANCURKAN)
+    $enrollments = Enrollment::with('kursus.materials')
+        ->where('user_id', $user->id)
+        ->paginate(5);
 
-        $nilai = [];
+    // tambahkan nilai ke setiap item paginator
+    $enrollments->getCollection()->transform(function ($enroll) use ($user) {
+        $kursus = $enroll->kursus;
 
-        foreach ($enrollments as $enroll) {
-            $kursus = $enroll->kursus;
+        $nilaiAkhir = $this->nilaiService->hitungNilai($user->id, $kursus);
+        $status     = $this->nilaiService->statusNilai($nilaiAkhir);
 
-            $nilaiAkhir = $this->nilaiService->hitungNilai($user->id, $kursus);
-            $status     = $this->nilaiService->statusNilai($nilaiAkhir);
+        $enroll->nilai  = $nilaiAkhir;
+        $enroll->status = $status;
 
-            $nilai[] = [
-                'kursus' => $kursus,
-                'nilai'  => $nilaiAkhir,
-                'status' => $status,
-            ];
-        }
+        return $enroll;
+    });
 
-        return view('mitra.nilai.index', compact('nilai'));
-    }
+    return view('mitra.nilai.index', [
+        'nilai' => $enrollments, // ⬅️ INI PAGINATOR
+    ]);
+}
+
 
     public function simpan(NilaiService $nilaiService)
 {
