@@ -690,6 +690,83 @@
 
 </style>
 
+<style>
+/* ===============================
+   MODAL DETAIL KURSUS - MOBILE
+   =============================== */
+@media (max-width: 576px) {
+
+    /* Modal container */
+    .modal-dialog.modal-lg {
+        margin: 8px;
+        max-width: calc(100% - 16px);
+    }
+
+    .modal-content {
+        border-radius: 12px;
+        max-height: 90vh;
+        overflow: hidden;
+    }
+
+    /* Header lebih ringkas */
+    .modal-header {
+        padding: 10px 12px !important;
+    }
+
+    .modal-title {
+        font-size: 0.9rem;
+        line-height: 1.3;
+    }
+
+    /* Body bisa discroll */
+    .modal-body {
+        padding: 12px !important;
+        overflow-y: auto;
+        max-height: 60vh;
+        font-size: 0.85rem;
+    }
+
+    /* Gambar diperkecil */
+    .modal-course-image {
+        max-height: 160px;
+        border-radius: 8px;
+    }
+
+    /* Info item diringkas */
+    .info-item {
+        padding: 6px 0;
+        font-size: 0.8rem;
+    }
+
+    .info-item strong {
+        min-width: 110px;
+        font-size: 0.75rem;
+    }
+
+    /* Card di modal */
+    .modal-body .card-body {
+        padding: 10px;
+        font-size: 0.8rem;
+    }
+
+    /* List (output, syarat, fasilitas) */
+    .modal-body ul li {
+        font-size: 0.78rem;
+        margin-bottom: 4px;
+    }
+
+    /* Footer tetap kecil */
+    .modal-footer {
+        padding: 8px 12px;
+    }
+
+    .modal-footer .btn {
+        font-size: 0.8rem;
+        padding: 6px 10px;
+    }
+}
+</style>
+
 <!-- ===== NOTIFIKASI ERROR ENROLL CODE (DI ATAS HALAMAN) ===== -->
 @if(session('error_type') == 'enroll_code' && session('enroll_course_id'))
     @php

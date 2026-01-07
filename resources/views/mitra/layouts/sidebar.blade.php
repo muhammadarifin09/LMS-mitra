@@ -247,7 +247,7 @@
             <div class="mobile-nav-icon">
                 <i class="fas fa-chart-line"></i>
             </div>
-            <div class="mobile-nav-label">Nilaiiiiiiiiiiii</div>
+            <div class="mobile-nav-label">Nilai</div>
         </a>
 
         

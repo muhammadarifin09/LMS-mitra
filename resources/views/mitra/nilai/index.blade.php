@@ -7,25 +7,33 @@
     <!-- Header Section -->
     <div class="d-flex justify-content-between align-items-center mb-5">
         <div>
-            <h1 class="h3 fw-bold text-primary mb-1">📊 Nilai Kursus</h1>
+            <h1 class="h3 fw-bold text-primary mb-1 nilai-title">
+                <span class="emoji">📊</span>
+                <span class="text">Nilai Kursus</span>
+            </h1>
             <p class="text-muted">Lihat perkembangan dan hasil evaluasi kursus Anda</p>
         </div>
         
         <!-- Tombol Action Group -->
-        <div class="d-flex align-items-center gap-2">
+
+        <div class="d-flex align-items-center gap-2 action-buttons">
             <!-- Tombol Ekspor PDF -->
-            <button id="exportPdfBtn" class="btn btn-danger">
-                <i class="fas fa-file-pdf me-2"></i> Ekspor PDF
+           <button id="exportPdfBtn" class="btn btn-danger btn-action btn-icon-text">
+                <i class="fas fa-file-pdf"></i>
+                <span class="icon-label">PDF</span>
             </button>
-            
+
+
             <!-- Tombol Simpan ke Arsip -->
             <form action="{{ route('mitra.nilai.simpan') }}" method="POST" class="m-0">
                 @csrf
-                <button type="submit" class="btn btn-success" id="simpanArsipBtn">
-                    <i class="fas fa-save me-2"></i> Simpan ke Arsip
+                <button type="submit" class="btn btn-success btn-action btn-icon-text">
+                    <i class="fas fa-save"></i>
+                    <span class="icon-label">Arsip</span>
                 </button>
             </form>
         </div>
+
     </div>
 
     <!-- Data mitra untuk PDF (hidden) -->
@@ -160,16 +168,13 @@
                     <i class="fas fa-list-check me-2 text-primary"></i> Daftar Nilai Kursus
                 </h5>
                 @if($totalKursus > 0)
-                <div class="text-muted small">
-                    <i class="fas fa-filter me-1"></i>
-                    Ditampilkan: {{ $currentPageCount }} dari {{ $totalKursus }}
-                </div>
+             
                 @endif
             </div>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover mb-0" id="nilaiTable">
+                <table class="table table-hover mb-0 nilai-table" id="nilaiTable">
                     <thead class="table-light">
                         <tr>
                             <th class="ps-4">Kursus</th>
@@ -190,39 +195,24 @@
                                         </div>
                                         <div class="flex-grow-1 ms-3">
                                             <h6 class="mb-1 fw-bold">{{ $n['kursus']->judul_kursus }}</h6>
-                                            <small class="text-muted">
-                                                <i class="far fa-calendar me-1"></i> 
-                                                {{ $n['kursus']->created_at->format('d M Y') }}
-                                            </small>
                                         </div>
                                     </div>
                                 </td>
                                 
                                 <td class="text-center">
                                     @if(isset($n['nilai']) && $n['nilai'] !== null)
-                                        <div class="d-inline-block">
-                                            <span class="display-6 fw-bold 
-                                                @if($n['nilai'] >= 80) text-success
-                                                @elseif($n['nilai'] >= 60) text-warning
-                                                @else text-danger
-                                                @endif">
-                                                {{ $n['nilai'] }}
-                                            </span>
-                                            <div class="progress mt-1" style="height: 6px; width: 80px; margin: 0 auto;">
-                                                <div class="progress-bar 
-                                                    @if($n['nilai'] >= 80) bg-success
-                                                    @elseif($n['nilai'] >= 60) bg-warning
-                                                    @else bg-danger
-                                                    @endif" 
-                                                    role="progressbar" 
-                                                    style="width: {{ min($n['nilai'], 100) }}%">
-                                                </div>
-                                            </div>
-                                        </div>
+                                        <span class="display-6 fw-bold 
+                                            @if($n['nilai'] >= 80) text-success
+                                            @elseif($n['nilai'] >= 60) text-warning
+                                            @else text-danger
+                                            @endif">
+                                            {{ $n['nilai'] }}
+                                        </span>
                                     @else
                                         <span class="text-muted fst-italic">Belum ada nilai</span>
                                     @endif
                                 </td>
+
                                 
                                 <td class="text-center">
                                     @if(isset($n['status']) && $n['status'] === 'lulus')
@@ -412,6 +402,191 @@
     .progress-bar {
         transition: width 0.6s ease;
     }
+
+        /* ===== ACTION BUTTON RESPONSIVE ===== */
+    .btn-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 14px;
+        font-size: 0.9rem;
+        border-radius: 8px;
+        white-space: nowrap;
+    }
+
+    /* ===== MOBILE MODE ===== */
+    @media (max-width: 576px) {
+        .action-buttons {
+            width: 100%;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .btn-action {
+            padding: 8px 10px;
+            font-size: 0.75rem;
+        }
+
+        /* SEMBUNYIKAN TEKS, SISAKAN IKON */
+        .btn-action .btn-text {
+            display: none;
+        }
+
+        /* Perkecil ikon */
+        .btn-action i {
+            font-size: 1rem;
+            margin: 0;
+        }
+    }
+
+        /* ===== JUDUL NILAI KURSUS RESPONSIVE ===== */
+    .nilai-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: nowrap;       /* ⬅️ INI KUNCI: anti turun baris */
+        white-space: nowrap;     /* ⬅️ pastikan 1 baris */
+    }
+
+    /* Mobile optimization */
+    @media (max-width: 576px) {
+        .nilai-title {
+            font-size: 1.2rem;   /* lebih kecil agar muat */
+        }
+
+        .nilai-title .emoji {
+            font-size: 1.3rem;
+        }
+    }
+    
+
+    /* ============================= */
+/* MOBILE RESPONSIVE NILAI TABLE */
+/* ============================= */
+/* ============================= */
+/* MOBILE TABLE – TETAP TABEL */
+/* ============================= */
+@media (max-width: 576px) {
+
+    .nilai-table {
+        width: 100%;
+        table-layout: fixed;
+    }
+
+    /* Kolom Kursus (ikon + judul) */
+    .nilai-table th:nth-child(1),
+    .nilai-table td:nth-child(1) {
+        width: 60%;
+    }
+
+    /* Kolom Nilai */
+    .nilai-table th:nth-child(2),
+    .nilai-table td:nth-child(2) {
+        width: 18%;
+        text-align: center;
+    }
+
+    /* Kolom Status */
+    .nilai-table th:nth-child(3),
+    .nilai-table td:nth-child(3) {
+        width: 22%;
+        text-align: right;
+    }
+
+    /* Padding super rapat */
+    .nilai-table td {
+        padding: 8px 4px;
+        vertical-align: middle;
+    }
+
+    /* Judul kursus */
+    .nilai-table h6 {
+        font-size: 0.8rem;
+        line-height: 1.2;
+        margin-bottom: 2px;
+        word-break: break-word;
+    }
+
+    .nilai-table small {
+        font-size: 0.65rem;
+    }
+
+    /* Nilai */
+    .nilai-table .display-6 {
+        font-size: 1rem;
+        line-height: 1;
+    }
+
+    .nilai-table .progress {
+        width: 45px;
+        height: 4px;
+        margin: 3px auto 0;
+    }
+
+    /* BADGE STATUS – INI YANG PALING PENTING */
+    .nilai-table .badge {
+        font-size: 0.6rem;
+        padding: 4px 6px;
+        white-space: normal;      /* ⬅️ IZINKAN WRAP */
+        text-align: center;
+        line-height: 1.1;
+        max-width: 100%;
+    }
+
+    /* Icon kiri */
+    .nilai-table .rounded-circle {
+        padding: 7px !important;
+    }
+}
+
+/* ============================= */
+/* ICON + TEXT RESPONSIVE ACTION */
+/* ============================= */
+
+.btn-icon-text {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+/* Label teks default */
+.btn-icon-text .icon-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    line-height: 1;
+}
+
+/* ===== MOBILE ===== */
+@media (max-width: 576px) {
+    .btn-icon-text {
+        flex-direction: column;   /* icon atas, teks bawah */
+        padding: 8px 10px;
+        min-width: 48px;
+    }
+
+    .btn-icon-text i {
+        font-size: 1.2rem;
+    }
+
+    .btn-icon-text .icon-label {
+        display: block;
+        margin-top: 2px;
+    }
+}
+
+/* ===== DESKTOP ===== */
+@media (min-width: 577px) {
+    .btn-icon-text {
+        flex-direction: row;
+    }
+
+    .btn-icon-text .icon-label {
+        display: none; /* desktop: icon only */
+    }
+}
+
+
 </style>
 
 <!-- SELALU LOAD JSPDF, tidak perlu kondisi -->
