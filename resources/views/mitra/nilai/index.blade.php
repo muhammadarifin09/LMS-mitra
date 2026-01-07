@@ -581,9 +581,67 @@
         flex-direction: row;
     }
 
-    .btn-icon-text .icon-label {
-        display: none; /* desktop: icon only */
+    /* .btn-icon-text .icon-label {
+        display: non; /* desktop: icon only */
+    /* } */ 
+/* ============================= */
+/* ICON + TEXT RESPONSIVE ACTION */
+/* ============================= */
+
+.btn-icon-text {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 8px;
+}
+
+/* ICON LEBIH BESAR */
+.btn-icon-text i {
+    font-size: 1.4rem;
+}
+
+/* TEKS */
+.btn-icon-text .icon-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1;
+}
+
+/* ===== MOBILE ===== */
+@media (max-width: 576px) {
+    .btn-icon-text {
+        flex-direction: column;   /* icon atas, teks bawah */
+        min-width: 56px;
+        padding: 8px 10px;
     }
+
+    .btn-icon-text i {
+        font-size: 1.5rem;
+    }
+
+    .btn-icon-text .icon-label {
+        margin-top: 4px;
+        font-size: 0.65rem;
+    }
+}
+
+/* ===== DESKTOP ===== */
+@media (min-width: 577px) {
+    .btn-icon-text {
+        flex-direction: row;   /* icon + teks sejajar */
+    }
+
+    .btn-icon-text i {
+        font-size: 1.4rem;
+    }
+
+    .btn-icon-text .icon-label {
+        display: inline;       /* ✅ PASTI MUNCUL */
+    }
+}
+
+  
 }
 
 
