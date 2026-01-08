@@ -571,6 +571,32 @@
                             // Rata-rata nilai
                             $rataRataPretest = $progressData->whereNotNull('pretest_score')->avg('pretest_score');
                             $rataRataPosttest = $progressData->whereNotNull('posttest_score')->avg('posttest_score');
+                            
+                            // Decode JSON fields untuk material ini (fallback jika belum ada di controller)
+                            $soalPretestArray = [];
+                            $soalPosttestArray = [];
+                            $filePathArray = [];
+                            
+                            if (!empty($material->soal_pretest)) {
+                                $decoded = json_decode($material->soal_pretest, true);
+                                if (is_array($decoded)) {
+                                    $soalPretestArray = $decoded;
+                                }
+                            }
+                            
+                            if (!empty($material->soal_posttest)) {
+                                $decoded = json_decode($material->soal_posttest, true);
+                                if (is_array($decoded)) {
+                                    $soalPosttestArray = $decoded;
+                                }
+                            }
+                            
+                            if (!empty($material->file_path)) {
+                                $decoded = json_decode($material->file_path, true);
+                                if (is_array($decoded)) {
+                                    $filePathArray = $decoded;
+                                }
+                            }
                         @endphp
                         
                         <div class="accordion-item sortable-item" data-id="{{ $material->id }}" data-order="{{ $material->order }}">
@@ -650,7 +676,7 @@
                                         @endif
 
                                         <!-- Statistik Download Materi -->
-                                        @if($material->file_path)
+                                        @if(!empty($filePathArray) && count($filePathArray) > 0)
                                         <div class="stats-item material">
                                             <div class="stats-number text-info">
                                                 {{ $jumlahDownload }}/{{ $totalPeserta }}
@@ -670,9 +696,9 @@
                                                 </div>
                                                 <small class="text-muted">{{ $persentaseDownload }}%</small>
                                             </div>
-                                            @if($material->file_path)
+                                            @if(!empty($filePathArray) && count($filePathArray) > 0)
                                             <small class="text-muted d-block mt-1">
-                                                File: {{ basename($material->file_path) }}
+                                                File: {{ implode(', ', array_map('basename', $filePathArray)) }}
                                             </small>
                                             @endif
                                         </div>
@@ -703,7 +729,7 @@
                                         @endif
 
                                         <!-- Statistik Pretest -->
-                                        @if($material->soal_pretest && count($material->soal_pretest) > 0)
+                                        @if(!empty($soalPretestArray) && count($soalPretestArray) > 0)
                                         <div class="stats-item pretest">
                                             <div class="stats-number text-purple">
                                                 {{ $jumlahPretest }}/{{ $totalPeserta }}
@@ -732,7 +758,7 @@
                                         @endif
 
                                         <!-- Statistik Posttest -->
-                                        @if($material->soal_posttest && count($material->soal_posttest) > 0)
+                                        @if(!empty($soalPosttestArray) && count($soalPosttestArray) > 0)
                                         <div class="stats-item posttest">
                                             <div class="stats-number text-pink">
                                                 {{ $jumlahPosttest }}/{{ $totalPeserta }}
@@ -757,11 +783,11 @@
                                     </div>
 
                                     <!-- Detail Hasil Test -->
-                                    @if(($material->soal_pretest && $jumlahPretest > 0) || ($material->soal_posttest && $jumlahPosttest > 0))
+                                    @if((!empty($soalPretestArray) && $jumlahPretest > 0) || (!empty($soalPosttestArray) && $jumlahPosttest > 0))
                                     <div class="test-results">
                                         <h6 class="mb-3"><i class="mdi mdi-chart-bar me-2"></i>Detail Hasil Test</h6>
                                         
-                                        @if($material->soal_pretest && $jumlahPretest > 0)
+                                        @if(!empty($soalPretestArray) && $jumlahPretest > 0)
                                         <div class="result-item">
                                             <div>
                                                 <strong>Pretest</strong>
@@ -780,7 +806,7 @@
                                         </div>
                                         @endif
 
-                                        @if($material->soal_posttest && $jumlahPosttest > 0)
+                                        @if(!empty($soalPosttestArray) && $jumlahPosttest > 0)
                                         <div class="result-item">
                                             <div>
                                                 <strong>Posttest</strong>
@@ -832,20 +858,20 @@
                                         </div>
 
                                         <!-- Informasi Soal Test -->
-                                        @if($material->soal_pretest && count($material->soal_pretest) > 0)
+                                        @if(!empty($soalPretestArray) && count($soalPretestArray) > 0)
                                         <div class="mt-2">
                                             <small class="text-muted">
                                                 <i class="mdi mdi-clipboard-text me-1"></i>
-                                                Jumlah Soal Pretest: {{ count($material->soal_pretest) }}
+                                                Jumlah Soal Pretest: {{ count($soalPretestArray) }}
                                             </small>
                                         </div>
                                         @endif
 
-                                        @if($material->soal_posttest && count($material->soal_posttest) > 0)
+                                        @if(!empty($soalPosttestArray) && count($soalPosttestArray) > 0)
                                         <div class="mt-1">
                                             <small class="text-muted">
                                                 <i class="mdi mdi-clipboard-check me-1"></i>
-                                                Jumlah Soal Posttest: {{ count($material->soal_posttest) }}
+                                                Jumlah Soal Posttest: {{ count($soalPosttestArray) }}
                                             </small>
                                         </div>
                                         @endif

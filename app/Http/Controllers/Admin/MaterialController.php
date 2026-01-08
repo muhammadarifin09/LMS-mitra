@@ -29,10 +29,62 @@ use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 class MaterialController extends Controller
 {
     public function index(Kursus $kursus)
-    {
-        $materials = $kursus->materials()->orderBy('order')->get();
-        return view('admin.kursus.materials.index', compact('kursus', 'materials'));
-    }
+{
+    $materials = $kursus->materials()->orderBy('order')->get();
+    
+    // Decode JSON fields untuk setiap material
+    $materials->each(function ($material) {
+        // Decode soal_pretest jika ada
+        if (!empty($material->soal_pretest)) {
+            try {
+                $decoded = json_decode($material->soal_pretest, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                    $material->soal_pretest_array = $decoded;
+                } else {
+                    $material->soal_pretest_array = [];
+                }
+            } catch (\Exception $e) {
+                $material->soal_pretest_array = [];
+            }
+        } else {
+            $material->soal_pretest_array = [];
+        }
+        
+        // Decode soal_posttest jika ada
+        if (!empty($material->soal_posttest)) {
+            try {
+                $decoded = json_decode($material->soal_posttest, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                    $material->soal_posttest_array = $decoded;
+                } else {
+                    $material->soal_posttest_array = [];
+                }
+            } catch (\Exception $e) {
+                $material->soal_posttest_array = [];
+            }
+        } else {
+            $material->soal_posttest_array = [];
+        }
+        
+        // Decode file_path jika ada
+        if (!empty($material->file_path)) {
+            try {
+                $decoded = json_decode($material->file_path, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                    $material->file_path_array = $decoded;
+                } else {
+                    $material->file_path_array = [];
+                }
+            } catch (\Exception $e) {
+                $material->file_path_array = [];
+            }
+        } else {
+            $material->file_path_array = [];
+        }
+    });
+    
+    return view('admin.kursus.materials.index', compact('kursus', 'materials'));
+}
 
     // TAMBAHKAN METHOD UPDATE ORDER INI
     public function updateOrder(Request $request, Kursus $kursus)
@@ -488,11 +540,11 @@ class MaterialController extends Controller
         
         $playerConfig = [
             'allow_skip' => $request->boolean('allow_skip'),
-            'disable_forward_seek' => $request->boolean('disable_forward_seek', true),
+            'disable_forward_seek' => $request->boolean('disable_forward_seek', false), // Ubah dari true jadi false
             'disable_backward_seek' => $request->boolean('disable_backward_seek', false),
-            'disable_right_click' => $request->boolean('disable_right_click', true),
-            'require_completion' => $request->boolean('require_completion', true),
-            'auto_pause_on_question' => $request->boolean('auto_pause_on_question', true),
+            'disable_right_click' => $request->boolean('disable_right_click', false), // Ubah dari true jadi false
+            'require_completion' => $request->boolean('require_completion', false), // Ubah dari true jadi false
+            'auto_pause_on_question' => $request->boolean('auto_pause_on_question', false), // Ubah dari true jadi false
             'require_question_completion' => $request->boolean('require_question_completion', false),
             'auto_detect_duration' => true,
             'player_type' => 'videojs',
@@ -770,16 +822,182 @@ class MaterialController extends Controller
     }
 }
 
-    public function edit(Kursus $kursus, Materials $material)
-    {
-        $material->load('videoQuestions');
-        // Decode content types untuk form edit
-        $material->content_types_array = json_decode($material->learning_objectives ?? '[]', true);
-        return view('admin.kursus.materials.edit', compact('kursus', 'material'));
+public function edit(Kursus $kursus, Materials $material)
+{
+    $material->load('videoQuestions');
+    
+    // Decode content types untuk form edit
+    $material->content_types_array = json_decode($material->learning_objectives ?? '[]', true);
+    
+    // ============================================
+    // STANDARDISASI DATA DARI DATABASE - DIPINDAHKAN DARI BLADE
+    // ============================================
+    
+    // 1. Content Types (Jenis Konten)
+    $contentTypes = [];
+    if ($material->learning_objectives) {
+        $contentTypes = json_decode($material->learning_objectives, true);
     }
+    
+    // Jika kosong, tentukan dari data yang ada di material
+    if (empty($contentTypes)) {
+        if ($material->file_path) $contentTypes[] = 'file';
+        if ($material->video_url || $material->video_file) $contentTypes[] = 'video';
+        if ($material->soal_pretest) $contentTypes[] = 'pretest';
+        if ($material->soal_posttest) $contentTypes[] = 'posttest';
+    }
+    $contentTypes = is_array($contentTypes) ? $contentTypes : [];
+    
+    // 2. File Materi (PDF/PPT/DOC)
+    $existingFiles = [];
+    $existingFilesWithUrls = [];
+    if ($material->file_path) {
+        $fileData = is_string($material->file_path) ? json_decode($material->file_path, true) : $material->file_path;
+        if (is_array($fileData)) {
+            $existingFiles = $fileData;
+            foreach ($fileData as $index => $filePath) {
+                $existingFilesWithUrls[] = [
+                    'path' => $filePath,
+                    'name' => basename($filePath),
+                    'url' => Storage::url($filePath)
+                ];
+            }
+        } elseif (is_string($material->file_path)) {
+            $existingFiles = [$material->file_path];
+            $existingFilesWithUrls[] = [
+                'path' => $material->file_path,
+                'name' => basename($material->file_path),
+                'url' => Storage::url($material->file_path)
+            ];
+        }
+    }
+    
+    // 3. Video Data
+    $videoData = [];
+    $videoType = $material->video_type ?? 'youtube';
+    if ($material->video_file) {
+        $videoData = is_string($material->video_file) ? json_decode($material->video_file, true) : $material->video_file;
+    }
+    
+    // 4. Player Configuration
+    $playerConfig = [];
+    if ($material->player_config) {
+        $playerConfig = is_string($material->player_config) ? json_decode($material->player_config, true) : $material->player_config;
+    }
+    $playerConfig = is_array($playerConfig) ? $playerConfig : [];
+    
+    // 5. Soal Pretest
+    $existingPretest = [];
+    if ($material->soal_pretest) {
+        $pretestData = is_string($material->soal_pretest) ? json_decode($material->soal_pretest, true) : $material->soal_pretest;
+        if (is_array($pretestData)) {
+            $existingPretest = $pretestData;
+        }
+    }
+    
+    // 6. Soal Posttest
+    $existingPosttest = [];
+    if ($material->soal_posttest) {
+        $posttestData = is_string($material->soal_posttest) ? json_decode($material->soal_posttest, true) : $material->soal_posttest;
+        if (is_array($posttestData)) {
+            $existingPosttest = $posttestData;
+        }
+    }
+    
+    // 7. Video Questions
+    $existingVideoQuestions = [];
+if (method_exists($material, 'videoQuestions') && $material->videoQuestions()->exists()) {
+    $existingVideoQuestions = $material->videoQuestions()
+        ->orderBy('time_in_seconds', 'asc')
+        ->get()
+        ->map(function($question) use ($material) { // <-- TAMBAHKAN use ($material)
+            // Format options dari database - PASTIKAN INI DIPERBAIKI
+            $options = [];
+            
+            // OPTION 1: Jika options sudah di-cast sebagai array
+            if (is_array($question->options)) {
+                $options = $question->options;
+            } 
+            // OPTION 2: Jika masih string JSON
+            elseif (is_string($question->options) && !empty($question->options)) {
+                $decoded = json_decode($question->options, true);
+                if (is_array($decoded)) {
+                    $options = $decoded;
+                }
+            }
+            
+            // Jika options masih kosong atau invalid, berikan default
+            if (empty($options) || !is_array($options)) {
+                $options = ['', '', '', ''];
+            }
+            
+            // Pastikan array memiliki 4 elemen
+            while (count($options) < 4) {
+                $options[] = '';
+            }
+            
+            // Pastikan tidak ada null values
+            $options = array_map(function($option) {
+                return $option !== null ? (string)$option : '';
+            }, $options);
+            
+            // Debug log untuk melihat data
+            Log::info('Video Question Data for Edit:', [
+                'question_id' => $question->id,
+                'material_id' => $material->id, // <-- SEKARANG $material TERSEDIA
+                'time' => $question->time_in_seconds,
+                'question_text' => substr($question->question, 0, 50),
+                'options_count' => count($options),
+                'options' => $options,
+                'correct_option' => $question->correct_option
+            ]);
+            
+            return [
+                'id' => $question->id,
+                'time_in_seconds' => (int)$question->time_in_seconds,
+                'question' => $question->question ?? '',
+                'options' => $options,
+                'correct_option' => (int)$question->correct_option,
+                'points' => (int)$question->points,
+                'explanation' => $question->explanation ?? '',
+                'required_to_continue' => (bool)$question->required_to_continue
+            ];
+        })
+        ->toArray();
+}
+    
+    // 8. Total materials untuk urutan
+    $totalMaterials = $kursus->materials()->count();
+    
+    return view('admin.kursus.materials.edit', compact(
+        'kursus', 
+        'material',
+        'contentTypes',
+        'existingFiles',
+        'existingFilesWithUrls',
+        'existingVideoQuestions',
+        'videoData',
+        'videoType',
+        'playerConfig',
+        'existingPretest',
+        'existingPosttest',
+        'existingVideoQuestions',
+        'totalMaterials'
+    ));
+}
 
-    public function update(Request $request, Kursus $kursus, Materials $material)
-    {
+public function update(Request $request, Kursus $kursus, Materials $material)
+{
+    // Deteksi apakah request AJAX
+    $isAjax = $request->ajax() || $request->wantsJson() || $request->header('X-Requested-With') == 'XMLHttpRequest';
+    
+    Log::info('Update Request Debug', [
+        'isAjax' => $isAjax,
+        'content_types' => $request->content_types ?? [],
+        'has_video' => in_array('video', $request->content_types ?? [])
+    ]);
+
+    try {
         // Validasi dasar
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -787,33 +1005,8 @@ class MaterialController extends Controller
             'order' => 'required|integer|min:0',
             'content_types' => 'required|array|min:1',
             'content_types.*' => 'in:file,video,pretest,posttest',
-            'attendance_required' => 'boolean',
-            'is_active' => 'boolean',
-            
-            // Video specific validations - PERBAIKAN: HANYA youtube, hosted, local
-            'video_type' => 'nullable|required_if:content_types,video|in:youtube,hosted,local',
-            'video_url' => 'nullable|required_if:video_type,youtube|url',
-            'video_file' => 'nullable|file|mimes:mp4,webm,avi,mov,wmv,mkv|max:102400',
-            'allow_skip' => 'boolean',
-            
-            // Player config validations
-            'disable_forward_seek' => 'boolean',
-            'disable_backward_seek' => 'boolean',
-            'disable_right_click' => 'boolean',
-            'require_completion' => 'boolean',
-            'auto_pause_on_question' => 'boolean',
-            'require_question_completion' => 'boolean',
-            
-            // Video questions
-            'video_questions' => 'nullable|array',
-            'video_questions.*.time_in_seconds' => 'nullable|integer|min:0',
-            'video_questions.*.question' => 'nullable|string|max:500',
-            'video_questions.*.options' => 'nullable|array|min:2|max:4',
-            'video_questions.*.options.*' => 'nullable|string|max:255',
-            'video_questions.*.correct_option' => 'nullable|integer|min:0|max:3',
-            'video_questions.*.points' => 'nullable|integer|min:1|max:10',
-            'video_questions.*.explanation' => 'nullable|string',
-            'video_questions.*.required_to_continue' => 'boolean',
+            'attendance_required' => 'nullable|boolean',
+            'is_active' => 'nullable|boolean',
         ]);
 
         // **LOGIKA VALIDASI KOMBINASI CONTENT TYPES**
@@ -821,20 +1014,100 @@ class MaterialController extends Controller
         $errorMessage = $this->validateContentTypeCombination($contentTypes);
         
         if ($errorMessage) {
+            if ($isAjax) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage
+                ], 422);
+            }
             return redirect()->back()
                 ->withInput()
                 ->with('error', $errorMessage);
         }
 
-        // Validasi conditional berdasarkan jenis konten yang dipilih
-        $validationErrors = $this->validateConditionalFields($request, $contentTypes);
+        // ============================================
+        // PERBAIKAN: VALIDASI VIDEO HANYA JIKA VIDEO DIPILIH
+        // ============================================
+        
+        if (in_array('video', $contentTypes)) {
+            $request->validate([
+                // Video specific validations - HANYA jika video dipilih
+                'video_type' => 'required|in:youtube,hosted,local',
+                'allow_skip' => 'nullable|boolean',
+                
+                // Player config validations
+                'disable_forward_seek' => 'nullable|boolean',
+                'disable_backward_seek' => 'nullable|boolean',
+                'disable_right_click' => 'nullable|boolean',
+                'require_completion' => 'nullable|boolean',
+                'auto_pause_on_question' => 'nullable|boolean',
+                'require_question_completion' => 'nullable|boolean',
+            ]);
+            
+            // Conditional validation untuk YouTube
+            if ($request->video_type === 'youtube') {
+                $request->validate([
+                    'video_url' => 'nullable|url'
+                ]);
+            }
+            
+            // Conditional validation untuk hosted/local
+            if (in_array($request->video_type, ['hosted', 'local'])) {
+                $request->validate([
+                    'video_file' => 'nullable|file|mimes:mp4,webm,avi,mov,wmv,mkv|max:102400'
+                ]);
+            }
+            
+            // Validasi video questions jika ada
+            if ($request->has('video_questions') && is_array($request->video_questions)) {
+                foreach ($request->video_questions as $index => $question) {
+                    if (isset($question['question']) || isset($question['options'])) {
+                        $request->validate([
+                            "video_questions.{$index}.question" => 'nullable|string|max:500',
+                            "video_questions.{$index}.time_in_seconds" => 'nullable|integer|min:0',
+                            "video_questions.{$index}.correct_option" => 'nullable|integer|min:0|max:3',
+                            "video_questions.{$index}.points" => 'nullable|integer|min:1|max:10',
+                            "video_questions.{$index}.required_to_continue" => 'nullable|boolean',
+                        ]);
+                    }
+                }
+            }
+        }
+        
+        // ============================================
+        // VALIDASI CONDITIONAL FIELDS BERDASARKAN CONTENT TYPES
+        // ============================================
+        
+        $validationErrors = $this->validateConditionalFields($request, $contentTypes, $isAjax);
         if ($validationErrors) {
+            if ($isAjax && is_array($validationErrors)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validasi gagal',
+                    'errors' => $validationErrors
+                ], 422);
+            }
             return $validationErrors;
         }
 
         // Handle multiple file uploads
         $existingFiles = $material->file_path ? json_decode($material->file_path, true) : [];
         $newFilePaths = $existingFiles;
+
+        // Handle deleted files
+        $deletedFiles = $request->deleted_files ? json_decode($request->deleted_files, true) : [];
+        if (!empty($deletedFiles) && is_array($deletedFiles)) {
+            foreach ($deletedFiles as $filePath) {
+                // Hapus dari storage
+                Storage::disk('public')->delete($filePath);
+                // Hapus dari array newFilePaths
+                $key = array_search($filePath, $newFilePaths);
+                if ($key !== false) {
+                    unset($newFilePaths[$key]);
+                }
+            }
+            $newFilePaths = array_values($newFilePaths); // Reindex array
+        }
 
         if (in_array('file', $contentTypes) && $request->hasFile('file_path')) {
             foreach ($request->file('file_path') as $file) {
@@ -848,23 +1121,65 @@ class MaterialController extends Controller
             $newFilePaths = [];
         }
 
-        // Handle video upload
+        // ============================================
+        // HANDLE VIDEO UPLOAD
+        // ============================================
+
         $videoInfo = $material->video_file;
         $videoDuration = $material->duration;
-        
+
         if (in_array('video', $contentTypes)) {
+            $videoType = $request->video_type;
+            
+            // PERBAIKAN: Jika video_type tidak diisi, gunakan existing
+            if (empty($videoType) && $this->hasExistingVideoData($material)) {
+                $videoType = $material->video_type;
+            }
+            
+            // Jika video_type = youtube
+            if ($videoType === 'youtube') {
+                // PERBAIKAN: Gunakan existing URL jika tidak ada input baru
+                $videoUrl = $request->video_url ?: $material->video_url;
+                
+                // Validasi hanya jika ada URL baru atau URL sudah ada
+                if ($videoUrl && !$this->isValidYouTubeUrl($videoUrl)) {
+                    if ($isAjax) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'URL YouTube tidak valid.'
+                        ], 422);
+                    }
+                    return redirect()->back()
+                        ->withInput()
+                        ->with('error', 'URL YouTube tidak valid.');
+                }
+                
+                // Reset video file untuk YouTube
+                $videoInfo = null;
+                $videoDuration = 0;
+                
+                Log::info('YouTube video updated/kept', [
+                    'material_id' => $material->id,
+                    'video_url' => $videoUrl,
+                    'has_new_url' => $request->filled('video_url')
+                ]);
+            }
+            
             // Jika video_type = hosted dan ada file baru
-            if ($request->video_type === 'hosted' && $request->hasFile('video_file')) {
+            elseif ($videoType === 'hosted' && $request->hasFile('video_file')) {
                 try {
                     // Delete old video file jika ada
                     if ($material->video_file) {
-                        $oldVideoData = json_decode($material->video_file, true);
+                        $oldVideoData = is_string($material->video_file) ? json_decode($material->video_file, true) : $material->video_file;
                         if ($oldVideoData && isset($oldVideoData['type']) && $oldVideoData['type'] === 'hosted') {
                             if (isset($oldVideoData['file_id'])) {
                                 $this->deleteFromGoogleDrive($oldVideoData['file_id']);
+                                Log::info('Deleted old Google Drive video', [
+                                    'file_id' => $oldVideoData['file_id']
+                                ]);
                             }
                         } elseif ($oldVideoData && isset($oldVideoData['type']) && $oldVideoData['type'] === 'local') {
-                            // Hapus file lokal
+                            // Hapus file lokal jika ada
                             if (isset($oldVideoData['path'])) {
                                 Storage::disk('public')->delete($oldVideoData['path']);
                             }
@@ -875,13 +1190,26 @@ class MaterialController extends Controller
                     $newVideoInfo = $this->uploadToGoogleDrive($videoFile);
                     
                     if ($newVideoInfo) {
-                        $videoInfo = json_encode($newVideoInfo);
+                        $videoInfo = $newVideoInfo; // Simpan sebagai array
+                        $videoDuration = 0; // Google Drive video duration perlu dihitung terpisah
+                        
+                        Log::info('Google Drive video uploaded successfully', [
+                            'material_id' => $material->id,
+                            'file_id' => $newVideoInfo['file_id'] ?? 'unknown'
+                        ]);
                     } else {
                         throw new \Exception('Gagal upload video ke Google Drive');
                     }
                     
                 } catch (\Exception $e) {
                     Log::error('Error uploading video to Google Drive: ' . $e->getMessage());
+                    
+                    if ($isAjax) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Gagal mengupload video ke Google Drive: ' . $e->getMessage()
+                        ], 500);
+                    }
                     return redirect()->back()
                         ->withInput()
                         ->with('error', 'Gagal mengupload video ke Google Drive: ' . $e->getMessage());
@@ -889,15 +1217,18 @@ class MaterialController extends Controller
             }
             
             // Jika video_type = local dan ada file baru
-            elseif ($request->video_type === 'local' && $request->hasFile('video_file')) {
+            elseif ($videoType === 'local' && $request->hasFile('video_file')) {
                 try {
                     // Delete old video file jika ada
                     if ($material->video_file) {
-                        $oldVideoData = json_decode($material->video_file, true);
+                        $oldVideoData = is_string($material->video_file) ? json_decode($material->video_file, true) : $material->video_file;
                         if ($oldVideoData && isset($oldVideoData['type']) && $oldVideoData['type'] === 'local') {
                             // Hapus file lokal
                             if (isset($oldVideoData['path'])) {
                                 Storage::disk('public')->delete($oldVideoData['path']);
+                                Log::info('Deleted old local video', [
+                                    'path' => $oldVideoData['path']
+                                ]);
                             }
                         }
                     }
@@ -906,37 +1237,64 @@ class MaterialController extends Controller
                     $videoPath = $videoFile->store('videos', 'public');
                     $videoDuration = $this->getVideoDuration($videoFile);
                     
-                    $videoInfo = json_encode([
+                    $videoInfo = [
                         'type' => 'local',
                         'path' => $videoPath,
                         'url' => Storage::url($videoPath),
                         'size' => Storage::disk('public')->size($videoPath),
                         'duration' => $videoDuration,
+                        'original_name' => $videoFile->getClientOriginalName(),
                         'uploaded_at' => now()->toDateTimeString(),
                         'direct_play' => true,
+                    ];
+                    
+                    Log::info('Local video uploaded successfully', [
+                        'material_id' => $material->id,
+                        'path' => $videoPath,
+                        'duration' => $videoDuration
                     ]);
                     
                 } catch (\Exception $e) {
                     Log::error('Error uploading video to local storage: ' . $e->getMessage());
+                    
+                    if ($isAjax) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Gagal mengupload video: ' . $e->getMessage()
+                        ], 500);
+                    }
                     return redirect()->back()
                         ->withInput()
                         ->with('error', 'Gagal mengupload video: ' . $e->getMessage());
                 }
             }
             
-            // Jika video_type = youtube
-            elseif ($request->video_type === 'youtube') {
-                if (!$this->isValidYouTubeUrl($request->video_url)) {
-                    return redirect()->back()
-                        ->withInput()
-                        ->with('error', 'URL YouTube tidak valid.');
-                }
+            // Jika tidak ada file baru, tetap pakai existing data
+            elseif ($this->hasExistingVideoData($material)) {
+                // Tetap pakai data video yang ada
+                $videoDuration = $material->duration;
                 
-                // Reset video_info untuk YouTube
-                $videoInfo = null;
-                $videoDuration = 0;
+                Log::info('Using existing video data', [
+                    'material_id' => $material->id,
+                    'video_type' => $material->video_type,
+                    'has_video_file' => !empty($material->video_file)
+                ]);
             }
-        } // PERBAIKAN: Tutup if statement ini dengan benar
+            
+            // Jika video dipilih tapi tidak ada data sama sekali
+            else {
+                Log::warning('Video selected but no video data provided or exists', [
+                    'material_id' => $material->id,
+                    'video_type' => $videoType,
+                    'has_file' => $request->hasFile('video_file'),
+                    'has_existing' => $this->hasExistingVideoData($material)
+                ]);
+            }
+        }
+
+        // ============================================
+        // FORMAT DATA UNTUK DISIMPAN
+        // ============================================
 
         // Hitung total durasi
         $duration = $videoDuration;
@@ -949,6 +1307,12 @@ class MaterialController extends Controller
         if (in_array('pretest', $contentTypes) && !empty($request->pretest_soal)) {
             $soalFormatted = $this->formatSoal($request->pretest_soal, 'pretest');
             if (is_string($soalFormatted)) {
+                if ($isAjax) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $soalFormatted
+                    ], 422);
+                }
                 return redirect()->back()
                     ->withInput()
                     ->with('error', $soalFormatted);
@@ -961,6 +1325,12 @@ class MaterialController extends Controller
         if (in_array('posttest', $contentTypes) && !empty($request->posttest_soal)) {
             $soalFormatted = $this->formatSoal($request->posttest_soal, 'posttest');
             if (is_string($soalFormatted)) {
+                if ($isAjax) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $soalFormatted
+                    ], 422);
+                }
                 return redirect()->back()
                     ->withInput()
                     ->with('error', $soalFormatted);
@@ -1013,22 +1383,81 @@ class MaterialController extends Controller
             'material_type' => $materialType,
             'duration' => $duration,
             'file_path' => !empty($newFilePaths) ? json_encode($newFilePaths) : null,
-            'video_url' => $request->video_url ?? '',
-            'video_type' => $request->video_type ?? $material->video_type,
-            'video_file' => $videoInfo,
             'allow_skip' => $request->boolean('allow_skip'),
-            'player_config' => json_encode($playerConfig),
             'has_video_questions' => $hasVideoQuestions,
             'require_video_completion' => $request->boolean('require_completion', true),
             'question_count' => $questionCount,
             'total_video_points' => $totalVideoPoints,
             'is_active' => $request->boolean('is_active'),
             'attendance_required' => $request->boolean('attendance_required'),
-            'soal_pretest' => $soalPretest,
-            'soal_posttest' => $soalPosttest,
+            'soal_pretest' => $soalPretest ? json_encode($soalPretest, JSON_UNESCAPED_UNICODE) : null,
+            'soal_posttest' => $soalPosttest ? json_encode($soalPosttest, JSON_UNESCAPED_UNICODE) : null,
             'learning_objectives' => json_encode($contentTypes),
             'auto_duration' => true,
         ];
+
+        // PERBAIKAN: Update video data hanya jika video dipilih
+        // PERBAIKAN: Update video data hanya jika video dipilih
+// PERBAIKAN: Update video data hanya jika video dipilih
+if (in_array('video', $contentTypes)) {
+    // Jika video dipilih, gunakan data dari request atau existing
+    $materialData['video_url'] = $request->video_url ?? $material->video_url;
+    $materialData['video_type'] = $request->video_type ?? $material->video_type;
+    $materialData['video_file'] = $videoInfo ? (is_array($videoInfo) ? $videoInfo : json_encode($videoInfo)) : null;
+    $materialData['player_config'] = $playerConfig;
+    
+    Log::info('Video data included in update', [
+        'material_id' => $material->id,
+        'video_type' => $materialData['video_type'],
+        'has_video_file' => !empty($materialData['video_file'])
+    ]);
+} else {
+    // Jika video TIDAK dipilih, clear data video TANPA mengubah video_type
+    $fieldsToClear = [
+        'video_url' => null,
+        'video_file' => null,
+        'player_config' => null,
+        'has_video_questions' => false,
+        'question_count' => 0,
+        'total_video_points' => 0,
+    ];
+    
+    foreach ($fieldsToClear as $field => $value) {
+        $materialData[$field] = $value;
+    }
+    
+    // Hapus video questions
+    VideoQuestion::where('material_id', $material->id)->delete();
+    
+    // Hapus file video jika ada
+    if ($material->video_file) {
+        try {
+            $oldVideoData = is_string($material->video_file) ? json_decode($material->video_file, true) : $material->video_file;
+            if ($oldVideoData && isset($oldVideoData['type'])) {
+                if ($oldVideoData['type'] === 'hosted' && isset($oldVideoData['file_id'])) {
+                    $this->deleteFromGoogleDrive($oldVideoData['file_id']);
+                    Log::info('Deleted Google Drive video since video not selected', [
+                        'file_id' => $oldVideoData['file_id']
+                    ]);
+                } elseif ($oldVideoData['type'] === 'local' && isset($oldVideoData['path'])) {
+                    Storage::disk('public')->delete($oldVideoData['path']);
+                    Log::info('Deleted local video since video not selected', [
+                        'path' => $oldVideoData['path']
+                    ]);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Error deleting video file: ' . $e->getMessage());
+        }
+    }
+    
+    Log::info('Video data cleared as video not selected', [
+        'material_id' => $material->id
+    ]);
+    
+    // PERBAIKAN PENTING: JANGAN update video_type!
+    // Database akan tetap menggunakan default value 'youtube'
+}
 
         // Update field durasi khusus
         if (in_array('pretest', $contentTypes)) {
@@ -1045,34 +1474,12 @@ class MaterialController extends Controller
             $materialData['soal_posttest'] = null;
         }
 
-        // Jika bukan video, bersihkan data video
-        if (!in_array('video', $contentTypes)) {
-            $materialData['video_url'] = null;
-            $materialData['video_type'] = 'youtube'; // PERBAIKAN: ganti dari 'external' ke 'youtube'
-            $materialData['video_file'] = null;
-            $materialData['player_config'] = null;
-            $materialData['has_video_questions'] = false;
-            $materialData['question_count'] = 0;
-            $materialData['total_video_points'] = 0;
-            
-            // Hapus file video jika ada
-            if ($material->video_file) {
-                try {
-                    $oldVideoData = json_decode($material->video_file, true);
-                    if ($oldVideoData && isset($oldVideoData['type'])) {
-                        if ($oldVideoData['type'] === 'hosted' && isset($oldVideoData['file_id'])) {
-                            $this->deleteFromGoogleDrive($oldVideoData['file_id']);
-                        } elseif ($oldVideoData['type'] === 'local' && isset($oldVideoData['path'])) {
-                            Storage::disk('public')->delete($oldVideoData['path']);
-                        }
-                    }
-                } catch (\Exception $e) {
-                    Log::error('Error deleting video file: ' . $e->getMessage());
-                }
-            }
-        }
+        // ============================================
+        // SIMPAN DATA
+        // ============================================
 
         try {
+            // Update material
             $material->update($materialData);
             
             // Update video questions
@@ -1096,12 +1503,28 @@ class MaterialController extends Controller
                         'required_to_continue' => $questionData['required_to_continue'] ?? true,
                     ]);
                 }
-            } else {
+            } elseif (!in_array('video', $contentTypes)) {
+                // Hapus video questions jika video tidak dipilih
                 VideoQuestion::where('material_id', $material->id)->delete();
             }
 
+            // ============================================
+            // PERBAIKAN: RETURN JSON UNTUK AJAX REQUEST
+            // ============================================
+            
+            if ($isAjax) {
+                Log::info('Update successful - returning JSON response for AJAX');
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Material berhasil diperbarui!',
+                    'redirect' => route('admin.kursus.materials.index', $kursus)
+                ]);
+            }
+            
+            // Untuk non-AJAX request
             return redirect()->route('admin.kursus.materials.index', $kursus)
                             ->with('success', 'Material berhasil diperbarui!');
+                            
         } catch (\Exception $e) {
             Log::error('Error updating material: ' . $e->getMessage());
             
@@ -1114,18 +1537,16 @@ class MaterialController extends Controller
             }
             
             // Hapus video file baru dari Google Drive jika ada error
-            if ($request->hasFile('video_file') && isset($newVideoInfo)) {
+            if (isset($newVideoInfo) && isset($newVideoInfo['file_id'])) {
                 try {
-                    if (isset($newVideoInfo['file_id'])) {
-                        $this->deleteFromGoogleDrive($newVideoInfo['file_id']);
-                    }
+                    $this->deleteFromGoogleDrive($newVideoInfo['file_id']);
                 } catch (\Exception $deleteError) {
                     Log::error('Error deleting new video from Google Drive: ' . $deleteError->getMessage());
                 }
             }
             
             // Hapus video file baru dari local storage jika ada error
-            if ($request->hasFile('video_file') && isset($videoPath)) {
+            if (isset($videoPath)) {
                 try {
                     Storage::disk('public')->delete($videoPath);
                 } catch (\Exception $deleteError) {
@@ -1133,11 +1554,65 @@ class MaterialController extends Controller
                 }
             }
             
+            // ============================================
+            // PERBAIKAN: RETURN JSON UNTUK AJAX REQUEST JIKA ERROR
+            // ============================================
+            
+            if ($isAjax) {
+                Log::error('Update failed - returning JSON error for AJAX');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal memperbarui material: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            // Untuk non-AJAX request
             return redirect()->back()
                             ->withInput()
                             ->with('error', 'Gagal memperbarui material: ' . $e->getMessage());
         }
+        
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        Log::error('Validation Exception in update:', $e->errors());
+        
+        // ============================================
+        // PERBAIKAN: RETURN JSON UNTUK VALIDATION ERROR
+        // ============================================
+        
+        if ($isAjax) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $e->errors()
+            ], 422);
+        }
+        
+        // Untuk non-AJAX request
+        return redirect()->back()
+            ->withErrors($e->validator)
+            ->withInput();
+            
+    } catch (\Exception $e) {
+        Log::error('Error in update method: ' . $e->getMessage());
+        Log::error('Trace: ' . $e->getTraceAsString());
+        
+        // ============================================
+        // PERBAIKAN: RETURN JSON UNTUK GENERAL ERROR
+        // ============================================
+        
+        if ($isAjax) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui material: ' . $e->getMessage()
+            ], 500);
+        }
+        
+        // Untuk non-AJAX request
+        return redirect()->back()
+            ->withInput()
+            ->with('error', 'Gagal memperbarui material: ' . $e->getMessage());
     }
+}
 
     public function destroy(Kursus $kursus, Materials $material)
 {
@@ -1393,49 +1868,257 @@ private function reorderMaterials($courseId)
 
         return null;
     }
+    private function validateConditionalFields($request, $contentTypes, $isAjax = false)
+{
+    // Conditional validasi untuk file
+    if (in_array('file', $contentTypes)) {
+        // PERBAIKAN: File tidak wajib di edit mode (bisa kosong untuk tetap pakai existing files)
+        if ($request->hasFile('file_path')) {
+            try {
+                // Validasi hanya jika ada file baru
+                if ($request->file_path && is_array($request->file_path)) {
+                    $fileRules = [];
+                    foreach ($request->file_path as $index => $file) {
+                        if ($file instanceof \Illuminate\Http\UploadedFile) {
+                            $request->validate([
+                                "file_path.{$index}" => 'file|mimes:pdf,doc,docx,ppt,pptx,jpg,jpeg,png|max:10240'
+                            ]);
+                        }
+                    }
+                }
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                if ($isAjax) {
+                    // Re-throw exception agar bisa ditangkap di method update
+                    throw $e;
+                } else {
+                    return redirect()->back()
+                        ->withInput()
+                        ->with('error', 'File tidak valid: ' . implode(', ', array_flatten($e->errors())));
+                }
+            }
+        }
+    }
 
-    private function validateConditionalFields($request, $contentTypes)
-    {
-        // Conditional validasi untuk file
-        if (in_array('file', $contentTypes)) {
-            if (!$request->hasFile('file_path') && empty($request->input('existing_files', []))) {
+    // Conditional validasi untuk pretest
+    if (in_array('pretest', $contentTypes)) {
+        try {
+            // Validasi durasi
+            $request->validate([
+                'durasi_pretest' => 'required|integer|min:1|max:300',
+            ]);
+            
+            // Validasi soal pretest jika ada
+            if ($request->has('pretest_soal') && is_array($request->pretest_soal)) {
+                $pretestSoal = array_filter($request->pretest_soal, function($soal) {
+                    return !empty($soal['pertanyaan']) || !empty(array_filter($soal['pilihan'] ?? []));
+                });
+                
+                if (count($pretestSoal) === 0) {
+                    $errorMessage = 'Pretest harus memiliki minimal 1 soal';
+                    if ($isAjax) {
+                        return [
+                            'pretest_soal' => [$errorMessage]
+                        ];
+                    }
+                    return redirect()->back()
+                        ->withInput()
+                        ->with('error', $errorMessage);
+                }
+                
+                foreach ($pretestSoal as $index => $soal) {
+                    // Validasi pertanyaan dan jawaban
+                    $request->validate([
+                        "pretest_soal.{$index}.pertanyaan" => 'required|string|min:5|max:1000',
+                        "pretest_soal.{$index}.jawaban_benar" => 'required|integer|min:0|max:3',
+                    ]);
+                    
+                    // Validasi pilihan jika ada
+                    if (isset($soal['pilihan']) && is_array($soal['pilihan'])) {
+                        $validPilihanCount = 0;
+                        foreach ($soal['pilihan'] as $pilihanIndex => $pilihan) {
+                            if (!empty(trim($pilihan))) {
+                                $validPilihanCount++;
+                                $request->validate([
+                                    "pretest_soal.{$index}.pilihan.{$pilihanIndex}" => 'required|string|min:1|max:500'
+                                ]);
+                            }
+                        }
+                        
+                        // Minimal harus ada 2 pilihan valid
+                        if ($validPilihanCount < 2) {
+                            $errorMessage = "Soal pretest #" . ($index + 1) . " harus memiliki minimal 2 pilihan jawaban";
+                            if ($isAjax) {
+                                return [
+                                    "pretest_soal.{$index}.pilihan" => [$errorMessage]
+                                ];
+                            }
+                            return redirect()->back()
+                                ->withInput()
+                                ->with('error', $errorMessage);
+                        }
+                    } else {
+                        $errorMessage = "Soal pretest #" . ($index + 1) . " harus memiliki pilihan jawaban";
+                        if ($isAjax) {
+                            return [
+                                "pretest_soal.{$index}.pilihan" => [$errorMessage]
+                            ];
+                        }
+                        return redirect()->back()
+                            ->withInput()
+                            ->with('error', $errorMessage);
+                    }
+                }
+            } else {
+                $errorMessage = 'Pretest harus memiliki minimal 1 soal';
+                if ($isAjax) {
+                    return [
+                        'pretest_soal' => [$errorMessage]
+                    ];
+                }
                 return redirect()->back()
                     ->withInput()
-                    ->with('error', 'Harap upload file untuk konten tipe file.');
+                    ->with('error', $errorMessage);
             }
-            
-            $request->validate([
-                'file_path' => 'nullable|array',
-                'file_path.*' => 'file|mimes:pdf,doc,docx,ppt,pptx,jpg,jpeg,png|max:10240',
-            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($isAjax) {
+                throw $e;
+            } else {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Validasi pretest gagal: ' . implode(', ', array_flatten($e->errors())));
+            }
         }
-
-        // Conditional validasi untuk pretest
-        if (in_array('pretest', $contentTypes)) {
-            $request->validate([
-                'durasi_pretest' => 'required|integer|min:1',
-                'pretest_soal' => 'required|array|min:1',
-                'pretest_soal.*.pertanyaan' => 'required|string',
-                'pretest_soal.*.pilihan' => 'required|array|min:4|max:4',
-                'pretest_soal.*.pilihan.*' => 'required|string',
-                'pretest_soal.*.jawaban_benar' => 'required|integer|min:0|max:3',
-            ]);
-        }
-
-        // Conditional validasi untuk posttest
-        if (in_array('posttest', $contentTypes)) {
-            $request->validate([
-                'durasi_posttest' => 'required|integer|min:1',
-                'posttest_soal' => 'required|array|min:1',
-                'posttest_soal.*.pertanyaan' => 'required|string',
-                'posttest_soal.*.pilihan' => 'required|array|min:4|max:4',
-                'posttest_soal.*.pilihan.*' => 'required|string',
-                'posttest_soal.*.jawaban_benar' => 'required|integer|min:0|max:3',
-            ]);
-        }
-
-        return null;
     }
+
+    // Conditional validasi untuk posttest
+    if (in_array('posttest', $contentTypes)) {
+        try {
+            // Validasi durasi
+            $request->validate([
+                'durasi_posttest' => 'required|integer|min:1|max:300',
+            ]);
+            
+            // Validasi soal posttest jika ada
+            if ($request->has('posttest_soal') && is_array($request->posttest_soal)) {
+                $posttestSoal = array_filter($request->posttest_soal, function($soal) {
+                    return !empty($soal['pertanyaan']) || !empty(array_filter($soal['pilihan'] ?? []));
+                });
+                
+                if (count($posttestSoal) === 0) {
+                    $errorMessage = 'Posttest harus memiliki minimal 1 soal';
+                    if ($isAjax) {
+                        return [
+                            'posttest_soal' => [$errorMessage]
+                        ];
+                    }
+                    return redirect()->back()
+                        ->withInput()
+                        ->with('error', $errorMessage);
+                }
+                
+                foreach ($posttestSoal as $index => $soal) {
+                    // Validasi pertanyaan dan jawaban
+                    $request->validate([
+                        "posttest_soal.{$index}.pertanyaan" => 'required|string|min:5|max:1000',
+                        "posttest_soal.{$index}.jawaban_benar" => 'required|integer|min:0|max:3',
+                    ]);
+                    
+                    // Validasi pilihan jika ada
+                    if (isset($soal['pilihan']) && is_array($soal['pilihan'])) {
+                        $validPilihanCount = 0;
+                        foreach ($soal['pilihan'] as $pilihanIndex => $pilihan) {
+                            if (!empty(trim($pilihan))) {
+                                $validPilihanCount++;
+                                $request->validate([
+                                    "posttest_soal.{$index}.pilihan.{$pilihanIndex}" => 'required|string|min:1|max:500'
+                                ]);
+                            }
+                        }
+                        
+                        // Minimal harus ada 2 pilihan valid
+                        if ($validPilihanCount < 2) {
+                            $errorMessage = "Soal posttest #" . ($index + 1) . " harus memiliki minimal 2 pilihan jawaban";
+                            if ($isAjax) {
+                                return [
+                                    "posttest_soal.{$index}.pilihan" => [$errorMessage]
+                                ];
+                            }
+                            return redirect()->back()
+                                ->withInput()
+                                ->with('error', $errorMessage);
+                        }
+                    } else {
+                        $errorMessage = "Soal posttest #" . ($index + 1) . " harus memiliki pilihan jawaban";
+                        if ($isAjax) {
+                            return [
+                                "posttest_soal.{$index}.pilihan" => [$errorMessage]
+                            ];
+                        }
+                        return redirect()->back()
+                            ->withInput()
+                            ->with('error', $errorMessage);
+                    }
+                }
+            } else {
+                $errorMessage = 'Posttest harus memiliki minimal 1 soal';
+                if ($isAjax) {
+                    return [
+                        'posttest_soal' => [$errorMessage]
+                    ];
+                }
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', $errorMessage);
+            }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($isAjax) {
+                throw $e;
+            } else {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Validasi posttest gagal: ' . implode(', ', array_flatten($e->errors())));
+            }
+        }
+    }
+
+    return null;
+}
+
+    /**
+ * Check if material has existing video data
+ */
+private function hasExistingVideoData($material)
+{
+    // Cek apakah material sudah punya video data
+    if (empty($material)) {
+        return false;
+    }
+    
+    // Untuk YouTube
+    if ($material->video_type === 'youtube' && !empty($material->video_url)) {
+        return true;
+    }
+    
+    // Untuk hosted/local
+    if (in_array($material->video_type, ['hosted', 'local']) && !empty($material->video_file)) {
+        try {
+            // Cek apakah video_file valid JSON
+            if (is_string($material->video_file)) {
+                $decoded = json_decode($material->video_file, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                    return !empty($decoded);
+                }
+            } elseif (is_array($material->video_file)) {
+                return !empty($material->video_file);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error checking existing video data: ' . $e->getMessage());
+            return false;
+        }
+    }
+    
+    return false;
+}
 
     private function determineMaterialTypes($contentTypes)
     {
@@ -1652,6 +2335,8 @@ private function reorderMaterials($courseId)
             'description' => 'Video materi pembelajaran - ' . $originalName,
             'mimeType' => $file->getMimeType(),
         ]);
+
+        $videoDuration = $this->getVideoDuration($file);
         
         $content = file_get_contents($file->getRealPath());
         
@@ -1695,6 +2380,7 @@ private function reorderMaterials($courseId)
             'thumbnail_link' => $uploadedFile->thumbnailLink ?? null,
             'size' => $uploadedFile->size ?? null,
             'mime_type' => $uploadedFile->mimeType ?? null,
+            'duration' => $videoDuration, // <<< TAMBAHKAN INI
             'uploaded_at' => now()->toDateTimeString(),
             'direct_play' => true,
         ];
@@ -1727,6 +2413,49 @@ private function reorderMaterials($courseId)
         Log::error('Stack trace: ' . $e->getTraceAsString());
         throw new \Exception('Google Drive upload failed: ' . $e->getMessage());
     }
+}
+
+/**
+ * Get YouTube video duration via API
+ */
+private function getYouTubeDuration($url)
+{
+    try {
+        $videoId = $this->extractYouTubeId($url);
+        if (!$videoId) return 0;
+        
+        $apiKey = env('YOUTUBE_API_KEY');
+        if (!$apiKey) return 0;
+        
+        $apiUrl = "https://www.googleapis.com/youtube/v3/videos?id={$videoId}&key={$apiKey}&part=contentDetails";
+        
+        $response = file_get_contents($apiUrl);
+        $data = json_decode($response, true);
+        
+        if (isset($data['items'][0]['contentDetails']['duration'])) {
+            $duration = $data['items'][0]['contentDetails']['duration'];
+            return $this->parseISODuration($duration);
+        }
+    } catch (\Exception $e) {
+        Log::warning('Error getting YouTube duration: ' . $e->getMessage());
+    }
+    
+    return 0;
+}
+
+/**
+ * Parse ISO 8601 duration format
+ */
+private function parseISODuration($duration)
+{
+    $pattern = '/PT(\d+H)?(\d+M)?(\d+S)?/';
+    preg_match($pattern, $duration, $matches);
+    
+    $hours = isset($matches[1]) ? (int)str_replace('H', '', $matches[1]) : 0;
+    $minutes = isset($matches[2]) ? (int)str_replace('M', '', $matches[2]) : 0;
+    $seconds = isset($matches[3]) ? (int)str_replace('S', '', $matches[3]) : 0;
+    
+    return ($hours * 3600) + ($minutes * 60) + $seconds;
 }
 
     /**

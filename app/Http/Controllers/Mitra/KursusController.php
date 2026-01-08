@@ -533,8 +533,6 @@ class KursusController extends Controller
         }
     }
 
-<<<<<<< HEAD
-=======
     try {
         // Hitung total materi aktif
         $totalMaterials = Materials::where('course_id', $id)
@@ -578,7 +576,6 @@ class KursusController extends Controller
         return view('mitra.kursus-saya', compact('enrolledCourses'));
     }
 
->>>>>>> aeb232a879ee3019e46bd83769f8370d998319e9
     // MARK: - Progress Tracking Methods
     public function markAttendance(Request $request, $kursus, $material)
     {
@@ -1117,14 +1114,31 @@ class KursusController extends Controller
     // **PERBAIKAN: Siapkan data video dengan benar**
     $videoData = $this->prepareVideoData($materialRecord);
     
+    // **PERBAIKAN UTAMA: Ambil pertanyaan video dengan format yang benar**
+    $videoQuestions = VideoQuestion::where('material_id', $materialRecord->id)
+        ->orderBy('time_in_seconds')
+        ->get()
+        ->map(function($question) {
+            return [
+                'question_id' => $question->id,
+                'time_in_seconds' => $question->time_in_seconds,
+                'question' => $question->question,
+                'options' => is_array($question->options) 
+                    ? $question->options 
+                    : json_decode($question->options, true) ?? [],
+                'correct_option' => $question->correct_option,
+                'points' => $question->points,
+                'explanation' => $question->explanation,
+                'required_to_continue' => $question->required_to_continue ?? true
+            ];
+        })->toArray();
+    
     // Debug
-    Log::info('Video Data for View:', [
+    Log::info('Video Questions Data:', [
         'material_id' => $materialRecord->id,
-        'video_type' => $videoData['type'] ?? 'unknown',
-        'is_available' => $videoData['is_available'] ?? false,
-        'direct_link' => $videoData['direct_link'] ?? null,
-        'embed_url' => $videoData['embed_url'] ?? null,
-        'has_video_data' => !empty($materialRecord->video_file)
+        'question_count' => count($videoQuestions),
+        'question_times' => array_column($videoQuestions, 'time_in_seconds'),
+        'has_video_questions' => count($videoQuestions) > 0
     ]);
     
     // Jika video tidak available, redirect dengan error
@@ -1156,11 +1170,68 @@ class KursusController extends Controller
         'kursus' => $enrollment->kursus,
         'material' => $materialRecord,
         'videoData' => $videoData,
-        'videoQuestions' => [], // Optional: tambahkan jika ada
-        'progress' => $progress
+        'videoQuestions' => $videoQuestions,
+        'progress' => $progress,
+        'playerConfig' => $this->safeJsonDecode($materialRecord->player_config, [])
     ]);
 }
 
+public function saveVideoQuestionAnswer(Request $request, $kursus, $material)
+{
+    try {
+        $user = Auth::user();
+        
+        $request->validate([
+            'question_id' => 'required|exists:video_questions,id',
+            'answer' => 'required|integer',
+            'is_correct' => 'required|boolean',
+            'points' => 'required|integer|min:0'
+        ]);
+
+        // Simpan jawaban ke UserVideoProgress
+        $progress = UserVideoProgress::updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'material_id' => $material,
+                'question_id' => $request->question_id
+            ],
+            [
+                'answer' => $request->answer,
+                'is_correct' => $request->is_correct,
+                'points_earned' => $request->points,
+                'answered_at' => now()
+            ]
+        );
+
+        // Update total points di MaterialProgress
+        $materialProgress = MaterialProgress::where('user_id', $user->id)
+            ->where('material_id', $material)
+            ->first();
+            
+        if ($materialProgress) {
+            $currentPoints = $materialProgress->video_question_points ?? 0;
+            $materialProgress->update([
+                'video_question_points' => $currentPoints + $request->points
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Jawaban tersimpan'
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('Error saving video question answer:', [
+            'error' => $e->getMessage(),
+            'question_id' => $request->question_id
+        ]);
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Gagal menyimpan jawaban'
+        ], 500);
+    }
+}
     /**
      * PERBAIKAN BESAR: Method prepareVideoData sesuai dengan admin controller
      */
@@ -1171,7 +1242,6 @@ private function prepareVideoData($material)
 {
     $videoType = $material->video_type ?? 'unknown';
     
-    // Default result
     $result = [
         'type' => $videoType,
         'is_available' => false,
@@ -1181,28 +1251,18 @@ private function prepareVideoData($material)
         'player_type' => 'html5',
         'is_local' => false,
         'is_hosted' => false,
+        'duration' => 0,
+        'duration_formatted' => '0:00',
+        'duration_minutes' => 0,
+        'duration_from_database' => $material->duration ?? 0, // Simpan durasi dari DB untuk referensi
     ];
     
-    // Cek ketersediaan berdasarkan tipe
     if ($videoType === 'local') {
         $videoFile = $this->safeJsonDecode($material->video_file);
         
-        Log::info('Local Video Data Debug:', [
-            'material_id' => $material->id,
-            'video_file_decoded' => $videoFile,
-            'is_array' => is_array($videoFile),
-            'has_path' => is_array($videoFile) && isset($videoFile['path'])
-        ]);
-        
         if (is_array($videoFile) && isset($videoFile['path'])) {
             $path = $videoFile['path'];
-            
             $fileExists = Storage::disk('public')->exists($path);
-            Log::info('Video File Check:', [
-                'path' => $path,
-                'exists' => $fileExists,
-                'full_path' => $fileExists ? Storage::disk('public')->path($path) : 'not found'
-            ]);
             
             if ($fileExists) {
                 $result['is_available'] = true;
@@ -1213,25 +1273,48 @@ private function prepareVideoData($material)
                 $result['is_local'] = true;
                 $result['mime_type'] = mime_content_type(Storage::disk('public')->path($path)) ?: 'video/mp4';
                 
-                // **SIMPLE VIDEO TAG - HAPUS ROUTE KOMPLIKASI**
-                $result['video_tag'] = '<video id="custom-video-player" controls preload="auto" style="width:100%;height:100%;">
-                    <source src="' . $result['direct_link'] . '" type="' . $result['mime_type'] . '">
-                    Browser Anda tidak mendukung pemutaran video.
-                </video>';
+                // **PERBAIKAN UTAMA: Selalu baca durasi dari file video, bukan dari database**
+                $actualDuration = $this->getLocalVideoDuration($path);
+                
+                // Prioritaskan durasi dari file
+                if ($actualDuration > 0) {
+                    $result['duration'] = (int)$actualDuration;
+                    $result['duration_accurate'] = true;
+                    $result['duration_source'] = 'video_file';
+                } elseif (isset($videoFile['duration']) && $videoFile['duration'] > 0) {
+                    // Fallback ke data di database
+                    $result['duration'] = (int)$videoFile['duration'];
+                    $result['duration_accurate'] = false;
+                    $result['duration_source'] = 'database';
+                } else {
+                    // Fallback ke material duration
+                    $result['duration'] = (int)($material->duration ?? 0);
+                    $result['duration_accurate'] = false;
+                    $result['duration_source'] = 'material_record';
+                }
+                
+                // Format durasi
+                $result['duration_formatted'] = $this->formatDuration($result['duration']);
+                $result['duration_minutes'] = ceil($result['duration'] / 60);
             }
         }
         
     } elseif ($videoType === 'youtube') {
-        // YouTube
         if (!empty($material->video_url)) {
             $result['is_available'] = true;
             $result['url'] = $material->video_url;
             $result['embed_url'] = $this->getYouTubeEmbedUrl($material->video_url);
             $result['player_type'] = 'youtube';
+            
+            // Untuk YouTube, gunakan durasi dari database
+            $result['duration'] = $material->duration ?? 0;
+            $result['duration_formatted'] = $this->formatDuration($result['duration']);
+            $result['duration_minutes'] = ceil($result['duration'] / 60);
+            $result['duration_accurate'] = true; // YouTube API biasanya akurat
+            $result['duration_source'] = 'database';
         }
         
     } elseif ($videoType === 'hosted') {
-        // Google Drive
         $videoFile = $this->safeJsonDecode($material->video_file);
         if ($videoFile && isset($videoFile['embed_link'])) {
             $result['is_available'] = true;
@@ -1240,23 +1323,104 @@ private function prepareVideoData($material)
             $result['url'] = $result['direct_link'];
             $result['player_type'] = 'drive';
             $result['is_hosted'] = true;
+            
+            // Untuk Google Drive, prioritaskan dari videoFile, lalu database
+            if (isset($videoFile['duration']) && $videoFile['duration'] > 0) {
+                $result['duration'] = (int)$videoFile['duration'];
+                $result['duration_source'] = 'video_file_data';
+            } else {
+                $result['duration'] = (int)($material->duration ?? 0);
+                $result['duration_source'] = 'database';
+            }
+            
+            $result['duration_formatted'] = $this->formatDuration($result['duration']);
+            $result['duration_minutes'] = ceil($result['duration'] / 60);
         }
     }
     
-    // Tambahkan player config
-    $playerConfig = $this->safeJsonDecode($material->player_config, []);
-    $result['player_config'] = $playerConfig;
-    
-    Log::info('Final Video Data:', [
+    Log::info('Video Data with Duration Accuracy:', [
         'material_id' => $material->id,
         'type' => $result['type'],
-        'is_available' => $result['is_available'],
-        'player_type' => $result['player_type'],
-        'has_direct_link' => !empty($result['direct_link']),
-        'has_embed_url' => !empty($result['embed_url'])
+        'duration' => $result['duration'],
+        'duration_source' => $result['duration_source'] ?? 'unknown',
+        'duration_accurate' => $result['duration_accurate'] ?? false,
+        'database_duration' => $material->duration ?? 0,
+        'duration_formatted' => $result['duration_formatted']
     ]);
     
     return $result;
+}
+
+/**
+ * Helper untuk membaca durasi video lokal
+ */
+private function getLocalVideoDuration($path)
+{
+    try {
+        $fullPath = Storage::disk('public')->path($path);
+        
+        // OPTION 1: Coba dengan getID3
+        if (class_exists('\getID3')) {
+            $getID3 = new \getID3();
+            $fileInfo = $getID3->analyze($fullPath);
+            
+            if (isset($fileInfo['playtime_seconds'])) {
+                return (int)$fileInfo['playtime_seconds'];
+            }
+        }
+        
+        // OPTION 2: Coba dengan shell command (ffprobe)
+        if (function_exists('shell_exec')) {
+            // Coba ffprobe
+            $ffprobePath = null;
+            $possiblePaths = [
+                'ffprobe',
+                '/usr/bin/ffprobe',
+                '/usr/local/bin/ffprobe',
+                'C:\ffmpeg\bin\ffprobe.exe',
+                'C:\laragon\bin\ffmpeg\bin\ffprobe.exe'
+            ];
+            
+            foreach ($possiblePaths as $path) {
+                if (@shell_exec("$path -version")) {
+                    $ffprobePath = $path;
+                    break;
+                }
+            }
+            
+            if ($ffprobePath) {
+                $command = "$ffprobePath -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 " . escapeshellarg($fullPath);
+                $output = shell_exec($command);
+                
+                if ($output && is_numeric(trim($output))) {
+                    return (int)trim($output);
+                }
+            }
+        }
+        
+    } catch (\Exception $e) {
+        Log::warning('Error reading local video duration: ' . $e->getMessage());
+    }
+    
+    return 0;
+}
+
+/**
+ * Format durasi dalam format jam:menit:detik
+ */
+private function formatDuration($seconds)
+{
+    if ($seconds <= 0) return '0:00';
+    
+    $hours = floor($seconds / 3600);
+    $minutes = floor(($seconds % 3600) / 60);
+    $seconds = $seconds % 60;
+    
+    if ($hours > 0) {
+        return sprintf('%d:%02d:%02d', $hours, $minutes, $seconds);
+    } else {
+        return sprintf('%d:%02d', $minutes, $seconds);
+    }
 }
 
 public function quickFixVideo($materialId)
@@ -1430,7 +1594,7 @@ private function getMaterialsWithStatus($materials, $user, $kursusId)
         }
         
         // Parse player_config
-        $playerConfig = $this->safeJsonDecode($material->player_config, []);
+        $playerConfig = $material->player_config ?? [];
         
         // Parse soal test jika ada
         $soalTest = null;
@@ -1455,23 +1619,12 @@ private function getMaterialsWithStatus($materials, $user, $kursusId)
         if ($videoAvailable) {
             $preparedVideoData = $this->prepareVideoData($material);
             
-            // Log hasil prepare video data
-            Log::info('Prepared Video Data Result - FINAL:', [
+            // Log hasil prepare video data dengan durasi
+            Log::info('Prepared Video Data Result with Duration:', [
                 'material_id' => $material->id,
-                'is_available' => $preparedVideoData['is_available'] ?? false,
-                'player_type' => $preparedVideoData['player_type'] ?? 'unknown',
-                'has_embed_url' => !empty($preparedVideoData['embed_url']),
-                'embed_url_exists' => isset($preparedVideoData['embed_url']),
-                'direct_link_exists' => isset($preparedVideoData['direct_link'])
-            ]);
-        } else {
-            Log::warning('Video not available for material', [
-                'material_id' => $material->id,
-                'title' => $material->title,
-                'video_type' => $videoType,
-                'has_video' => $hasVideo,
-                'video_available' => $videoAvailable,
-                'is_video_available_method' => $material->isVideoAvailable()
+                'duration' => $preparedVideoData['duration'] ?? 0,
+                'duration_formatted' => $preparedVideoData['duration_formatted'] ?? '0:00',
+                'duration_minutes' => $preparedVideoData['duration_minutes'] ?? 0
             ]);
         }
         
@@ -1497,6 +1650,9 @@ private function getMaterialsWithStatus($materials, $user, $kursusId)
             'total_files' => $totalFiles,
             'video_url' => $material->video_url,
             'video_type' => $videoType,
+            'video_duration' => $preparedVideoData['duration'] ?? 0,
+            'video_duration_formatted' => $preparedVideoData['duration_formatted'] ?? '0:00',
+            'video_duration_minutes' => $preparedVideoData['duration_minutes'] ?? 0,
             'video_data' => $preparedVideoData,
             'player_config' => $playerConfig,
             'allow_skip' => $material->allow_skip ?? false,
@@ -2573,7 +2729,6 @@ private function generateVideoToken($materialId, $userId)
 
         return $this->isMaterialCompleted($previousProgress, $previousMaterial);
     }
-<<<<<<< HEAD
     
     /**
      * DEBUGGING METHOD: Get video data for specific material
@@ -2622,7 +2777,7 @@ private function generateVideoToken($materialId, $userId)
             ], 500);
         }
     }
-=======
+
 
             public function daftar($id)
     {
@@ -2654,7 +2809,4 @@ private function generateVideoToken($materialId, $userId)
 
         return back()->with('success', 'Berhasil mendaftar kursus!');
     }
-
-
->>>>>>> aeb232a879ee3019e46bd83769f8370d998319e9
 }

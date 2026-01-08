@@ -587,32 +587,37 @@
                                         <h6 class="card-title"><i class="mdi mdi-file-pdf-box text-danger me-2"></i>Materi File</h6>
                                         <div class="row">
                                             <div class="col-12">
-                                                <div class="mb-3">
-                                                    <label class="form-label">Tambah File Materi</label>
-                                                    <div class="file-input-wrapper">
-                                                        <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('file_input').click()">
-                                                            <i class="mdi mdi-plus me-2"></i> Tambah File
-                                                        </button>
-                                                        <input type="file" id="file_input" 
-                                                               accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png" 
-                                                               style="display: none;" multiple
-                                                               onchange="handleFileSelection(this.files)">
-                                                    </div>
-                                                    <small class="text-muted">
-                                                        Format: PDF, DOC, PPT, atau gambar. Maksimal 10MB per file. 
-                                                        Dapat menambahkan file satu per satu atau multiple.
-                                                        <strong>File akan disimpan di server lokal.</strong>
-                                                    </small>
-                                                    @error('file_path')
-                                                        <div class="invalid-feedback">{{ $message }}</div>
-                                                    @enderror
-                                                </div>
-                                                
-                                                <!-- File Preview Area -->
-                                                <div id="file-preview" class="file-preview mt-3" style="display: none;">
-                                                    <h6 class="mb-3">File yang akan diupload:</h6>
-                                                    <div id="file-list"></div>
-                                                </div>
+                                            <div class="mb-3">
+    <label class="form-label">Tambah File Materi</label>
+    <div class="d-flex gap-2 mb-2">
+        <div class="file-input-wrapper">
+            <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('file_input').click()">
+                <i class="mdi mdi-plus me-2"></i> Tambah File
+            </button>
+            <input type="file" id="file_input" 
+                   accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png" 
+                   style="display: none;" multiple
+                   onchange="handleFileSelection(this.files)">
+        </div>
+        
+        <button type="button" class="btn btn-outline-danger" 
+                onclick="clearAllFiles()" 
+                id="clear-all-btn">
+            <i class="mdi mdi-delete-sweep me-2"></i> Hapus Semua
+        </button>
+    </div>
+    
+    <small class="text-muted">
+        Klik "Tambah File" berkali-kali untuk menambahkan file satu per satu.
+        Format: PDF, DOC, PPT, atau gambar. Maksimal 10MB per file.
+    </small>
+    
+    <!-- File Preview Area -->
+    <div id="file-preview" class="file-preview mt-3" style="display: none;">
+        <h6 class="mb-3">File yang akan diupload:</h6>
+        <div id="file-list"></div>
+    </div>
+</div>
 
                                                 <!-- Hidden input untuk menyimpan file paths -->
                                                 <div id="file-inputs-container">
@@ -643,12 +648,6 @@
                                                     <option value="hosted" {{ old('video_type') == 'hosted' ? 'selected' : '' }}>Google Drive</option>
                                                     <option value="local" {{ old('video_type') == 'local' ? 'selected' : '' }}>Local Storage</option>
                                                 </select>
-                                                <small class="text-muted mt-1">
-                                                    <strong>Pilihan:</strong><br>
-                                                    • YouTube: Masukkan link YouTube<br>
-                                                    • Google Drive: Upload ke cloud storage Google Drive<br>
-                                                    • Local Storage: Simpan di server lokal (akan menggunakan video.js untuk player)
-                                                </small>
                                                 @error('video_type')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
@@ -714,7 +713,6 @@
                                                 <div class="alert alert-info">
                                                     <i class="mdi mdi-server me-2"></i>
                                                     <strong>Simpan di Local Storage</strong>
-                                                    <p class="mb-0 small">Video akan disimpan di server lokal dan diputar menggunakan video.js player.</p>
                                                 </div>
                                                 
                                                 <label for="video_file_local" class="form-label">Upload Video ke Local Storage</label>
@@ -735,12 +733,6 @@
                                                         <i class="mdi mdi-video"></i>
                                                     </div>
                                                     <div id="video-file-info-local" class="file-size-info"></div>
-                                                    
-                                                    <div class="alert alert-success mt-2">
-                                                        <i class="mdi mdi-timer-sand me-2"></i>
-                                                        <strong>Durasi Video:</strong> 
-                                                        <span id="duration-display-local">Akan terdeteksi otomatis setelah upload</span>
-                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -775,85 +767,99 @@
                                             <small class="text-muted d-block mb-3">Kontrol seperti platform Digitalent - video tidak bisa di-skip</small>
                                             
                                             <div class="player-config-grid">
-                                                <!-- Basic Controls -->
-                                                <div class="config-item">
-                                                    <div class="form-check form-switch">
-                                                        <input class="form-check-input" type="checkbox" id="allow_skip" 
-                                                               name="allow_skip" value="1" {{ old('allow_skip') ? 'checked' : '' }}>
-                                                        <label class="form-check-label fw-bold" for="allow_skip">
-                                                            Izinkan Skip
-                                                        </label>
-                                                    </div>
-                                                    <small class="text-muted">Jika nonaktif, peserta tidak bisa melewati video</small>
-                                                </div>
+                                               <!-- Izinkan Skip -->
+<div class="config-item">
+    <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="allow_skip" 
+               name="allow_skip" value="1" {{ old('allow_skip') ? 'checked' : '' }}>
+        <label class="form-check-label fw-bold" for="allow_skip">
+            Izinkan Skip Video
+        </label>
+    </div>
+    <small class="text-muted">
+        Aktifkan jika peserta boleh langsung lanjut tanpa menonton video
+    </small>
+</div>
 
-                                                <div class="config-item">
-                                                    <div class="form-check form-switch">
-                                                        <input class="form-check-input" type="checkbox" id="disable_forward_seek" 
-                                                               name="disable_forward_seek" value="1" {{ old('disable_forward_seek', true) ? 'checked' : '' }}>
-                                                        <label class="form-check-label fw-bold" for="disable_forward_seek">
-                                                            Nonaktifkan Forward Seek
-                                                        </label>
-                                                    </div>
-                                                    <small class="text-muted">Peserta tidak bisa maju ke bagian video yang belum ditonton</small>
-                                                </div>
+<div class="config-item">
+    <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="disable_forward_seek" 
+               name="disable_forward_seek" value="1" {{ old('disable_forward_seek') ? 'checked' : '' }}>
+        <label class="form-check-label fw-bold" for="disable_forward_seek">
+            Kunci Gerak Maju
+        </label>
+    </div>
+    <small class="text-muted">
+        Aktifkan untuk mencegah peserta mempercepat video ke bagian yang belum ditonton
+    </small>
+</div>
 
-                                                <div class="config-item">
-                                                    <div class="form-check form-switch">
-                                                        <input class="form-check-input" type="checkbox" id="disable_backward_seek" 
-                                                               name="disable_backward_seek" value="1" {{ old('disable_backward_seek') ? 'checked' : '' }}>
-                                                        <label class="form-check-label fw-bold" for="disable_backward_seek">
-                                                            Nonaktifkan Backward Seek
-                                                        </label>
-                                                    </div>
-                                                    <small class="text-muted">Peserta tidak bisa mundur ke bagian sebelumnya</small>
-                                                </div>
+<div class="config-item">
+    <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="disable_backward_seek" 
+               name="disable_backward_seek" value="1" {{ old('disable_backward_seek') ? 'checked' : '' }}>
+        <label class="form-check-label fw-bold" for="disable_backward_seek">
+            Kunci Gerak Mundur
+        </label>
+    </div>
+    <small class="text-muted">
+        Aktifkan untuk mencegah peserta mengulang bagian video yang sudah lewat
+    </small>
+</div>
 
-                                                <div class="config-item">
-                                                    <div class="form-check form-switch">
-                                                        <input class="form-check-input" type="checkbox" id="disable_right_click" 
-                                                               name="disable_right_click" value="1" {{ old('disable_right_click', true) ? 'checked' : '' }}>
-                                                        <label class="form-check-label fw-bold" for="disable_right_click">
-                                                            Nonaktifkan Klik Kanan
-                                                        </label>
-                                                    </div>
-                                                    <small class="text-muted">Mencegah download/save video</small>
-                                                </div>
+<div class="config-item">
+    <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="disable_right_click" 
+               name="disable_right_click" value="1" {{ old('disable_right_click') ? 'checked' : '' }}>
+        <label class="form-check-label fw-bold" for="disable_right_click">
+            Larang Klik Kanan
+        </label>
+    </div>
+    <small class="text-muted">
+        Aktifkan untuk melindungi video dari download dengan menonaktifkan klik kanan
+    </small>
+</div>
 
-                                                <!-- Completion Requirements -->
-                                                <div class="config-item">
-                                                    <div class="form-check form-switch">
-                                                        <input class="form-check-input" type="checkbox" id="require_completion" 
-                                                               name="require_completion" value="1" {{ old('require_completion', true) ? 'checked' : '' }}>
-                                                        <label class="form-check-label fw-bold" for="require_completion">
-                                                            Wajib Selesai Menonton
-                                                        </label>
-                                                    </div>
-                                                    <small class="text-muted">Peserta harus menonton video hingga selesai</small>
-                                                </div>
+<!-- Completion Requirements -->
+<div class="config-item">
+    <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="require_completion" 
+               name="require_completion" value="1" {{ old('require_completion') ? 'checked' : '' }}>
+        <label class="form-check-label fw-bold" for="require_completion">
+            Wajib Tuntas Nonton
+        </label>
+    </div>
+    <small class="text-muted">
+        Aktifkan jika peserta harus menyelesaikan video 100% untuk bisa lanjut
+    </small>
+</div>
 
-                                                <!-- Video Questions -->
-                                                <div class="config-item">
-                                                    <div class="form-check form-switch">
-                                                        <input class="form-check-input" type="checkbox" id="auto_pause_on_question" 
-                                                               name="auto_pause_on_question" value="1" {{ old('auto_pause_on_question', true) ? 'checked' : '' }}>
-                                                        <label class="form-check-label fw-bold" for="auto_pause_on_question">
-                                                            Auto Pause saat Pertanyaan
-                                                        </label>
-                                                    </div>
-                                                    <small class="text-muted">Video otomatis pause saat pertanyaan muncul</small>
-                                                </div>
+<!-- Video Questions -->
+<div class="config-item">
+    <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="auto_pause_on_question" 
+               name="auto_pause_on_question" value="1" {{ old('auto_pause_on_question') ? 'checked' : '' }}>
+        <label class="form-check-label fw-bold" for="auto_pause_on_question">
+            Jeda Otomatis
+        </label>
+    </div>
+    <small class="text-muted">
+        Aktifkan agar video berhenti otomatis saat ada pertanyaan
+    </small>
+</div>
 
-                                                <div class="config-item">
-                                                    <div class="form-check form-switch">
-                                                        <input class="form-check-input" type="checkbox" id="require_question_completion" 
-                                                               name="require_question_completion" value="1" {{ old('require_question_completion') ? 'checked' : '' }}>
-                                                        <label class="form-check-label fw-bold" for="require_question_completion">
-                                                            Wajib Jawab Pertanyaan
-                                                        </label>
-                                                    </div>
-                                                    <small class="text-muted">Harus menjawab pertanyaan untuk melanjutkan video</small>
-                                                </div>
+<div class="config-item">
+    <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="require_question_completion" 
+               name="require_question_completion" value="1" {{ old('require_question_completion') ? 'checked' : '' }}>
+        <label class="form-check-label fw-bold" for="require_question_completion">
+            Wajib Jawab Pertanyaan
+        </label>
+    </div>
+    <small class="text-muted">
+        Aktifkan jika peserta harus menjawab pertanyaan untuk lanjut video
+    </small>
+</div>
                                             </div>
                                         </div>
 
@@ -1108,7 +1114,7 @@
                                             <i class="mdi mdi-content-save me-2"></i> Simpan Materi
                                         </button>
                                         <a href="{{ route('admin.kursus.materials.index', $kursus) }}" class="btn btn-secondary">
-                                            <i class="mdi mdi-cancel me-2"></i> Batal
+                                             Batal
                                         </a>
                                     </div>
                                     <div id="form-status"></div>
@@ -2163,22 +2169,30 @@ function reindexVideoQuestions() {
 // FUNGSI FILE HANDLING
 // ============================================
 
-// Handle file selection
 function handleFileSelection(files) {
     if (files.length > 0) {
-        // Clear existing files array
-        selectedFiles = [];
-        
-        // Add all selected files
+        // TAMBAHKAN file ke array, jangan reset!
         Array.from(files).forEach(file => {
-            selectedFiles.push(file);
+            // Cek apakah file sudah ada
+            const isDuplicate = selectedFiles.some(existingFile => 
+                existingFile.name === file.name && existingFile.size === file.size
+            );
+            
+            if (!isDuplicate) {
+                selectedFiles.push(file);
+            } else {
+                alert(`File "${file.name}" sudah dipilih sebelumnya.`);
+            }
         });
         
         // Update preview
         updateFilePreview();
         
-        // Update hidden file inputs untuk form submission
+        // Update hidden file inputs
         updateFileInputs();
+        
+        // Reset input agar bisa pilih file yang sama lagi
+        document.getElementById('file_input').value = '';
     }
 }
 
@@ -2186,6 +2200,7 @@ function handleFileSelection(files) {
 function updateFilePreview() {
     const previewContainer = document.getElementById('file-preview');
     const fileList = document.getElementById('file-list');
+    const clearAllBtn = document.getElementById('clear-all-btn');
     
     if (!previewContainer || !fileList) return;
     
@@ -2197,11 +2212,14 @@ function updateFilePreview() {
             fileItem.className = 'file-item';
             fileItem.innerHTML = `
                 <div class="flex-grow-1">
+                    <span class="badge bg-primary me-2">${index + 1}</span>
                     <i class="mdi mdi-file-document me-2"></i>
                     ${escapeHtml(file.name)} (${(file.size / 1024 / 1024).toFixed(2)} MB)
                 </div>
                 <div class="file-actions">
-                    <button type="button" class="btn btn-sm btn-danger" onclick="removeFile(${index})" title="Hapus File">
+                    <button type="button" class="btn btn-sm btn-danger" 
+                            onclick="removeFile(${index})" 
+                            title="Hapus File">
                         <i class="mdi mdi-delete"></i>
                     </button>
                 </div>
@@ -2209,17 +2227,36 @@ function updateFilePreview() {
             fileList.appendChild(fileItem);
         });
         
+        // Show/Hide clear button
+        if (clearAllBtn) {
+            clearAllBtn.style.display = selectedFiles.length > 0 ? 'inline-block' : 'none';
+        }
+        
         previewContainer.style.display = 'block';
     } else {
         previewContainer.style.display = 'none';
+        if (clearAllBtn) clearAllBtn.style.display = 'none';
     }
 }
 
 // Hapus file dari daftar
 function removeFile(index) {
-    selectedFiles.splice(index, 1);
-    updateFilePreview();
-    updateFileInputs();
+    if (confirm(`Yakin hapus file "${selectedFiles[index].name}"?`)) {
+        selectedFiles.splice(index, 1);
+        updateFilePreview();
+        updateFileInputs();
+    }
+}
+
+// Hapus semua file
+function clearAllFiles() {
+    if (selectedFiles.length === 0) return;
+    
+    if (confirm(`Hapus semua ${selectedFiles.length} file?`)) {
+        selectedFiles = [];
+        updateFilePreview();
+        updateFileInputs();
+    }
 }
 
 // Update hidden file inputs untuk form submission
@@ -2247,6 +2284,14 @@ function updateFileInputs() {
     newInput.files = dataTransfer.files;
     
     container.appendChild(newInput);
+}
+
+// Helper untuk escape HTML
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // ============================================

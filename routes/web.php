@@ -310,14 +310,7 @@ Route::post(
     [LaporanController::class, 'generateLaporanMitra']
 )->name('admin.laporan.mitra.generate');
 
-// Sertifikat Routes
-<<<<<<< HEAD
-Route::middleware(['auth'])->prefix('sertifikat')->name('sertifikat.')->group(function () {
-    Route::get('/', [CertificateController::class, 'index'])->name('index');
-    Route::get('/{certificate}', [CertificateController::class, 'show'])->name('show');
-    Route::get('/{certificate}/unduh', [CertificateController::class, 'download'])->name('download');
-});
-=======
+
 // Route::middleware(['auth'])->prefix('certificates')->group(function () {
 //     Route::get('/', [CertificateController::class, 'index'])->name('index');
 //     Route::get('/{certificate}', [CertificateController::class, 'show'])->name('show');
@@ -358,4 +351,3 @@ Route::get('/sertifikat/{id_kredensial}', [App\Http\Controllers\Mitra\Certificat
 Route::get('/sertifikat/{id_kredensial}/pdf', 
     [App\Http\Controllers\Mitra\CertificateController::class, 'publicPdf']
 )->name('certificates.publicPdf');
->>>>>>> aeb232a879ee3019e46bd83769f8370d998319e9
