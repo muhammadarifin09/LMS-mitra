@@ -392,43 +392,100 @@
             </div>
             <div class="card-body">
                 @if($biodata)
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label text-muted">Nama Lengkap</label>
-                        <p class="fw-semibold">{{ $biodata->nama_lengkap }}</p>
+
+                    <div class="row">
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Nama Lengkap</label>
+                            <p class="fw-semibold">{{ $biodata->nama_lengkap }}</p>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Email</label>
+                            <p class="fw-semibold">{{ $user->username }}</p>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Tempat, Tanggal Lahir (Umur)</label>
+                            <p class="fw-semibold">{{ $biodata->tempat_tanggal_lahir ?? '-' }}</p>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">No. Telepon</label>
+                            <p class="fw-semibold">{{ $biodata->no_telepon }}</p>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Posisi</label>
+                            <p class="fw-semibold">{{ $biodata->posisi ?? '-' }}</p>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Posisi Saat Daftar</label>
+                            <p class="fw-semibold">{{ $biodata->posisi_daftar ?? '-' }}</p>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Jenis Kelamin</label>
+                            <p class="fw-semibold">{{ $biodata->jenis_kelamin ?? '-' }}</p>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Pendidikan</label>
+                            <p class="fw-semibold">{{ $biodata->pendidikan ?? '-' }}</p>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Pekerjaan</label>
+                            <p class="fw-semibold">{{ $biodata->pekerjaan ?? '-' }}</p>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Deskripsi Pekerjaan Lain</label>
+                            <p class="fw-semibold">{{ $biodata->deskripsi_pekerjaan_lain ?? '-' }}</p>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Provinsi</label>
+                            <p class="fw-semibold">{{ $biodata->alamat_prov ?? '-' }}</p>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Kabupaten / Kota</label>
+                            <p class="fw-semibold">{{ $biodata->alamat_kab ?? '-' }}</p>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Kecamatan</label>
+                            <p class="fw-semibold">{{ $biodata->kecamatan }}</p>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Desa/Kelurahan</label>
+                            <p class="fw-semibold">{{ $biodata->desa }}</p>
+                        </div>
+
+                        <div class="col-12 mb-3">
+                            <label class="form-label text-muted">Alamat</label>
+                            <p class="fw-semibold">{{ $biodata->alamat }}</p>
+                        </div>
+
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label text-muted">Email</label>
-                        <p class="fw-semibold">{{ $user->username }}</p>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label text-muted">Kecamatan</label>
-                        <p class="fw-semibold">{{ $biodata->kecamatan }}</p>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label text-muted">Desa/Kelurahan</label>
-                        <p class="fw-semibold">{{ $biodata->desa }}</p>
-                    </div>
-                    <div class="col-12 mb-3">
-                        <label class="form-label text-muted">Alamat</label>
-                        <p class="fw-semibold">{{ $biodata->alamat }}</p>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label text-muted">No. Telepon</label>
-                        <p class="fw-semibold">{{ $biodata->no_telepon }}</p>
-                    </div>
-                </div>
+
                 @else
-                <div class="text-center py-4">
-                    <i class="fas fa-user-circle fa-4x text-muted mb-3"></i>
-                    <h5 class="text-muted">Profil Belum Lengkap</h5>
-                    <p class="text-muted">Lengkapi profil Anda untuk pengalaman yang lebih baik</p>
-                    <a href="{{ route('profil.edit') }}" class="btn btn-primary">
-                        <i class="fas fa-plus me-2"></i>Lengkapi Profil
-                    </a>
-                </div>
+
+                    <div class="text-center py-4">
+                        <i class="fas fa-user-circle fa-4x text-muted mb-3"></i>
+                        <h5 class="text-muted">Profil Belum Lengkap</h5>
+                        <p class="text-muted">Lengkapi profil Anda untuk pengalaman yang lebih baik</p>
+                        <a href="{{ route('profil.edit') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Lengkapi Profil
+                        </a>
+                    </div>
+
                 @endif
             </div>
+
         </div>
 
         <!-- Informasi Akun -->

@@ -54,12 +54,24 @@ class ProfilController extends Controller
     
     $request->validate([
         'nama_lengkap' => 'required|string|max:255',
+        'username_sobat' => 'required|string|max:255',
         'kecamatan' => 'required|string|max:255',
         'desa' => 'required|string|max:255',
         'alamat' => 'required|string',
         'no_telepon' => 'required|string|max:15',
+
+        // ===== KOLOM BARU =====
+        'posisi' => 'nullable|string|max:100',
+        'posisi_daftar' => 'nullable|string|max:100',
+        'alamat_prov' => 'nullable|string|max:100',
+        'alamat_kab' => 'nullable|string|max:100',
+        'tempat_tanggal_lahir' => 'nullable|string|max:150',
+        'jenis_kelamin' => 'nullable|string|max:20',
+        'pendidikan' => 'nullable|string|max:100',
+        'pekerjaan' => 'nullable|string|max:100',
+        'deskripsi_pekerjaan_lain' => 'nullable|string',
+
         'foto_profil' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        'username_sobat' => 'required|string|max:255',
     ]);
 
     $biodata = Biodata::where('user_id', $user->id)->first();
@@ -70,13 +82,23 @@ class ProfilController extends Controller
         $biodata->id_sobat = 'SOBAT-' . time() . '-' . rand(1000, 9999);
     }
 
-    // Update data
+    // ===== Data utama =====
     $biodata->nama_lengkap = $request->nama_lengkap;
+    $biodata->username_sobat = $request->username_sobat;
     $biodata->kecamatan = $request->kecamatan;
     $biodata->desa = $request->desa;
     $biodata->alamat = $request->alamat;
     $biodata->no_telepon = $request->no_telepon;
-    $biodata->username_sobat = $request->username_sobat;
+
+    // ===== Data tambahan =====
+    $biodata->posisi = $request->posisi;
+    $biodata->alamat_prov = $request->alamat_prov;
+    $biodata->alamat_kab = $request->alamat_kab;
+    $biodata->tempat_tanggal_lahir = $request->tempat_tanggal_lahir;
+    $biodata->jenis_kelamin = $request->jenis_kelamin;
+    $biodata->pendidikan = $request->pendidikan;
+    $biodata->pekerjaan = $request->pekerjaan;
+    $biodata->deskripsi_pekerjaan_lain = $request->deskripsi_pekerjaan_lain;
     
     // Handle upload foto profil
     if ($request->hasFile('foto_profil')) {

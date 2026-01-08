@@ -298,15 +298,64 @@
                             <small class="text-muted">Email tidak dapat diubah</small>
                         </div>
 
-                        <!-- Tambahkan field untuk username_sobat jika ingin bisa diubah -->
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Username Sobat <span class="text-danger">*</span></label>
-                            <input type="text" name="username_sobat" class="form-control" 
-                                   value="{{ old('username_sobat', $biodata->username_sobat ?? $user->username ?? '') }}" 
-                                   placeholder="Masukkan username" required>
-                            @error('username_sobat')
+                            <label class="form-label">Tempat & Tanggal Lahir</label>
+                            <input type="text" name="tempat_tanggal_lahir" class="form-control"
+                                value="{{ old('tempat_tanggal_lahir', $biodata->tempat_tanggal_lahir ?? '') }}">
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">No. Telepon <span class="text-danger">*</span></label>
+                            <input type="text" name="no_telepon" class="form-control" 
+                                   value="{{ old('no_telepon', $biodata->no_telepon ?? '') }}" 
+                                   placeholder="Contoh: +6281234567890" required>
+                            @error('no_telepon')
                                 <div class="text-danger small mt-1">{{ $message }}</div>
                             @enderror
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Jenis Kelamin</label>
+                            <select name="jenis_kelamin" class="form-control">
+                                <option value="">-- Pilih --</option>
+                                <option value="Laki-laki" {{ old('jenis_kelamin', $biodata->jenis_kelamin ?? '')=='Laki-laki'?'selected':'' }}>Laki-laki</option>
+                                <option value="Perempuan" {{ old('jenis_kelamin', $biodata->jenis_kelamin ?? '')=='Perempuan'?'selected':'' }}>Perempuan</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Pendidikan</label>
+                            <input type="text" name="pendidikan" class="form-control"
+                                value="{{ old('pendidikan', $biodata->pendidikan ?? '') }}">
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Posisi</label>
+                            <input type="text" name="posisi" class="form-control"
+                                value="{{ old('posisi', $biodata->posisi ?? '') }}">
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Pekerjaan</label>
+                            <input type="text" name="pekerjaan" class="form-control"
+                                value="{{ old('pekerjaan', $biodata->pekerjaan ?? '') }}">
+                        </div>
+
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Deskripsi Pekerjaan Lain</label>
+                            <textarea name="deskripsi_pekerjaan_lain" class="form-control" rows="3">{{ old('deskripsi_pekerjaan_lain', $biodata->deskripsi_pekerjaan_lain ?? '') }}</textarea>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Provinsi</label>
+                            <input type="text" name="alamat_prov" class="form-control"
+                                value="{{ old('alamat_prov', $biodata->alamat_prov ?? '') }}">
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Kabupaten / Kota</label>
+                            <input type="text" name="alamat_kab" class="form-control"
+                                value="{{ old('alamat_kab', $biodata->alamat_kab ?? '') }}">
                         </div>
 
                         <div class="col-md-6 mb-3">
@@ -325,16 +374,6 @@
                                    value="{{ old('desa', $biodata->desa ?? '') }}" 
                                    placeholder="Masukkan desa/kelurahan" required>
                             @error('desa')
-                                <div class="text-danger small mt-1">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">No. Telepon <span class="text-danger">*</span></label>
-                            <input type="text" name="no_telepon" class="form-control" 
-                                   value="{{ old('no_telepon', $biodata->no_telepon ?? '') }}" 
-                                   placeholder="Contoh: 081234567890" required>
-                            @error('no_telepon')
                                 <div class="text-danger small mt-1">{{ $message }}</div>
                             @enderror
                         </div>

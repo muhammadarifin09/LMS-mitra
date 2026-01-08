@@ -27,6 +27,15 @@ class Biodata extends Model
         'alamat',
         'no_telepon',
         'foto_profil',
+        'posisi',
+        'posisi_daftar',
+        'alamat_prov',
+        'alamat_kab',
+        'tempat_tanggal_lahir',
+        'jenis_kelamin',
+        'pendidikan',
+        'pekerjaan',
+        'deskripsi_pekerjaan_lain',
     ];
 
     public function user()

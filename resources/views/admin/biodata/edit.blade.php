@@ -328,18 +328,23 @@
                     <h3 class="section-title">
                         <i class="fas fa-user-lock me-2"></i>Data Login Mitra
                     </h3>
-                    
-                    <div class="form-group">
-                        <label class="form-label">ID Sobat</label>
-                        <input type="text" name="id_sobat" class="form-control" value="{{ old('id_sobat', $biodata->id_sobat) }}" readonly>
-                        <div class="form-help">ID Sobat tidak dapat diubah</div>
-                    </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Email/Username</label>
-                        <input type="email" name="username_sobat" class="form-control" value="{{ old('username_sobat', $biodata->username_sobat) }}" readonly>
-                        <div class="form-help">Email/Username tidak dapat diubah</div>
-                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">ID Sobat</label>
+                                <input type="text" name="id_sobat" class="form-control" value="{{ old('id_sobat', $biodata->id_sobat) }}" readonly>
+                                <div class="form-help">ID Sobat tidak dapat diubah</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Email/Username</label>
+                                <input type="email" name="username_sobat" class="form-control" value="{{ old('username_sobat', $biodata->username_sobat) }}" readonly>
+                                <div class="form-help">Email/Username tidak dapat diubah</div>
+                            </div>
+                        </div>
+                    </div>  
                 </div>
 
                 <!-- Data Biodata Sesuai Tabel -->
@@ -348,57 +353,122 @@
                         <i class="fas fa-user me-2"></i>Data Pribadi
                     </h3>
 
-                    <div class="form-group">
-                        <label class="form-label">Nama Lengkap *</label>
-                        <input type="text" name="nama_lengkap" class="form-control" placeholder="Nama Lengkap Mitra" value="{{ old('nama_lengkap', $biodata->nama_lengkap) }}" required>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Nama Lengkap *</label>
+                                <input type="text" name="nama_lengkap" class="form-control"
+                                    value="{{ old('nama_lengkap', $biodata->nama_lengkap) }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Tempat, Tanggal Lahir</label>
+                                <input type="text" name="tempat_tanggal_lahir" class="form-control"
+                                    value="{{ old('tempat_tanggal_lahir', $biodata->tempat_tanggal_lahir) }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">No Telepon *</label>
+                                <input type="text" name="no_telepon" class="form-control"
+                                    value="{{ old('no_telepon', $biodata->no_telepon) }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Jenis Kelamin</label>
+                                <select name="jenis_kelamin" class="form-select">
+                                    <option value="">-- Pilih --</option>
+                                    <option value="Laki-laki" {{ old('jenis_kelamin', $biodata->jenis_kelamin)=='Laki-laki'?'selected':'' }}>Laki-laki</option>
+                                    <option value="Perempuan" {{ old('jenis_kelamin', $biodata->jenis_kelamin)=='Perempuan'?'selected':'' }}>Perempuan</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Provinsi</label>
+                                <input type="text" name="alamat_prov" class="form-control"
+                                    value="{{ old('alamat_prov', $biodata->alamat_prov) }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Kabupaten/Kota</label>
+                                <input type="text" name="alamat_kab" class="form-control"
+                                    value="{{ old('alamat_kab', $biodata->alamat_kab) }}">
+                            </div>
+                        </div>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="form-label">Kecamatan *</label>
-                                <input type="text" name="kecamatan" class="form-control" placeholder="Kecamatan" value="{{ old('kecamatan', $biodata->kecamatan) }}" required>
+                                <input type="text" name="kecamatan" class="form-control"
+                                    value="{{ old('kecamatan', $biodata->kecamatan) }}" required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">Desa/Kelurahan *</label>
-                                <input type="text" name="desa" class="form-control" placeholder="Desa" value="{{ old('desa', $biodata->desa) }}" required>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label">No Telepon/HP *</label>
-                                <input type="text" name="no_telepon" class="form-control" placeholder="Contoh: 081234567890" value="{{ old('no_telepon', $biodata->no_telepon) }}" required>
+                                <label class="form-label">Desa *</label>
+                                <input type="text" name="desa" class="form-control"
+                                    value="{{ old('desa', $biodata->desa) }}" required>
                             </div>
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">Alamat Lengkap *</label>
-                        <textarea name="alamat" class="form-textarea" placeholder="Alamat lengkap tempat tinggal" required>{{ old('alamat', $biodata->alamat) }}</textarea>
+                        <textarea name="alamat" class="form-textarea" required>{{ old('alamat', $biodata->alamat) }}</textarea>
                     </div>
 
-                    <!-- Foto Profil Section -->
-                    <div class="form-group form-group-with-image">
-                        <label for="foto_profil" class="form-label">Foto Profil</label>
-                        <input type="file" class="form-control" id="foto_profil" name="foto_profil" 
-                            accept="image/*" onchange="previewImage(this)">
-                        <div class="form-text">Klik choose file untuk mengubah foto. Format: JPG, PNG, GIF. Maksimal 2MB</div>
-                        <div class="image-preview-container">
-                            <div class="image-preview" id="imagePreview">
-                                <img src="{{ $biodata->foto_profil ? asset('storage/' . $biodata->foto_profil) : asset('img/default-avatar.png') }}" 
-                                    alt="Preview Foto Profil" style="max-height: 150px;">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Pendidikan</label>
+                                <select name="pendidikan" class="form-control">
+                                    @foreach(['Tamat SD/Sederajat','Tamat SMP/Sederajat','Tamat SMA/Sederajat','Tamat D1/D2/D3','Tamat D4/S1','Tamat S2/S3'] as $p)
+                                        <option value="{{ $p }}" {{ old('pendidikan', $biodata->pendidikan)==$p?'selected':'' }}>{{ $p }}</option>
+                                    @endforeach
+                                </select>
                             </div>
                         </div>
-                        @error('foto_profil')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>  
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Pekerjaan</label>
+                                <select name="pekerjaan" class="form-select">
+                                    @foreach(['Pelajar / Mahasiswa','Wiraswasta','Aparat Desa / Kelurahan','Pegawai / Guru Honorer','Kader PKK / Karang Taruna / Kader Lainnya','Mengurus Rumah Tangga','Lainnya'] as $p)
+                                        <option value="{{ $p }}" {{ old('pekerjaan', $biodata->pekerjaan)==$p?'selected':'' }}>{{ $p }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Deskripsi Pekerjaan Lain</label>
+                        <textarea name="deskripsi_pekerjaan_lain" class="form-textarea">{{ old('deskripsi_pekerjaan_lain', $biodata->deskripsi_pekerjaan_lain) }}</textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">Posisi</label>
+                            <input type="text" name="posisi" class="form-control" value="{{ old('posisi', $biodata->posisi) }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Posisi Daftar</label>
+                            <input type="text" name="posisi_daftar" class="form-control" value="{{ old('posisi_daftar', $biodata->posisi_daftar) }}">
+                        </div>
+                    </div>
                 </div>
+
 
                 <!-- Submit Button -->
                 <div class="d-flex justify-content-between align-items-center mt-4">

@@ -299,16 +299,21 @@
                     <i class="fas fa-user-lock me-2"></i>Data Login Mitra
                 </h3>
                 
-                <div class="form-group">
-                    <label class="form-label">ID Sobat *</label>
-                    <input type="text" name="id_sobat" class="form-control" placeholder="Contoh: 630122090056" value="{{ old('id_sobat') }}" required>
-                    <div class="form-help">ID Sobat akan menjadi password default untuk login mitra</div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Email/Username *</label>
-                    <input type="email" name="username_sobat" class="form-control" placeholder="Contoh: mitra@example.com" value="{{ old('username_sobat') }}" required>
-                    <div class="form-help">Email akan menjadi username untuk login mitra</div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">ID Sobat *</label>
+                            <input type="text" name="id_sobat" class="form-control" placeholder="Contoh: 630122090056" value="{{ old('id_sobat') }}" required>
+                            <div class="form-help">ID Sobat akan menjadi password default untuk login mitra</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Email/Username *</label>
+                            <input type="email" name="username_sobat" class="form-control" placeholder="Contoh: mitra@example.com" value="{{ old('username_sobat') }}" required>
+                            <div class="form-help">Email akan menjadi username untuk login mitra</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -318,31 +323,66 @@
                     <i class="fas fa-user me-2"></i>Data Pribadi
                 </h3>
 
-                <div class="form-group">
-                    <label class="form-label">Nama Lengkap *</label>
-                    <input type="text" name="nama_lengkap" class="form-control" placeholder="Nama Lengkap Mitra" value="{{ old('nama_lengkap') }}" required>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Nama Lengkap *</label>
+                            <input type="text" name="nama_lengkap" class="form-control" placeholder="Nama Lengkap Mitra" value="{{ old('nama_lengkap') }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Tempat, Tanggal Lahir (Umur)</label>
+                            <input type="text" name="tempat_tanggal_lahir" class="form-control" placeholder="Contoh: TANAH LAUT, 04 Juli 2002 (24)" value="{{ old('tempat_tanggal_lahir') }}">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">No Telepon/HP *</label>
+                            <input type="text" name="no_telepon" class="form-control" placeholder="Contoh: +6281234567890" value="{{ old('no_telepon') }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Jenis Kelamin</label>
+                            <select name="jenis_kelamin" class="form-select">
+                                <option value="">-- Pilih --</option>
+                                <option value="Laki-laki">Laki-laki</option>
+                                <option value="Perempuan">Perempuan</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Provinsi</label>
+                            <input type="text" name="alamat_prov" class="form-control" placeholder="Masukkan Kode Kecamatan" value="{{ old('alamat_prov') }}">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Kabupaten/Kota</label>
+                            <input type="text" name="alamat_kab" class="form-control" placeholder="Masukkan Kode Kabupaten/Kota" value="{{ old('alamat_kab') }}">
+                        </div>
+                    </div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
                             <label class="form-label">Kecamatan *</label>
-                            <input type="text" name="kecamatan" class="form-control" placeholder="Kecamatan" value="{{ old('kecamatan') }}" required>
+                            <input type="text" name="kecamatan" class="form-control" placeholder="Masukkan Kode Kecamatan" value="{{ old('kecamatan') }}" required>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
                             <label class="form-label">Desa/Kelurahan *</label>
-                            <input type="text" name="desa" class="form-control" placeholder="Desa" value="{{ old('desa') }}" required>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="form-label">No Telepon/HP *</label>
-                            <input type="text" name="no_telepon" class="form-control" placeholder="Contoh: 081234567890" value="{{ old('no_telepon') }}" required>
+                            <input type="text" name="desa" class="form-control" placeholder="Masukkan Kode Desa/Kelurahan" value="{{ old('desa') }}" required>
                         </div>
                     </div>
                 </div>
@@ -351,6 +391,73 @@
                     <label class="form-label">Alamat Lengkap *</label>
                     <textarea name="alamat" class="form-textarea" placeholder="Alamat lengkap tempat tinggal" required>{{ old('alamat') }}</textarea>
                 </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Pendidikan Terakhir</label>
+                            <select name="pendidikan" class="form-control">
+                                <option value="">-- Pilih Pendidikan --</option>
+                                <option value="Tamat SD/Sederajat" {{ old('pendidikan')=='Tamat SD/Sederajat' ? 'selected' : '' }}>
+                                    Tamat SD / Sederajat
+                                </option>
+                                <option value="Tamat SMP/Sederajat" {{ old('pendidikan')=='Tamat SMP/Sederajat' ? 'selected' : '' }}>
+                                    Tamat SMP / Sederajat
+                                </option>
+                                <option value="Tamat SMA/Sederajat" {{ old('pendidikan')=='Tamat SMA/Sederajat' ? 'selected' : '' }}>
+                                    Tamat SMA / Sederajat
+                                </option>
+                                <option value="Tamat D1/D2/D3" {{ old('pendidikan')=='Tamat D1/D2/D3' ? 'selected' : '' }}>
+                                    Tamat D1 / D2 / D3
+                                </option>
+                                <option value="Tamat D4/S1" {{ old('pendidikan')=='Tamat D4/S1' ? 'selected' : '' }}>
+                                    Tamat D4 / S1
+                                </option>
+                                <option value="Tamat S2/S3" {{ old('pendidikan')=='Tamat S2/S3' ? 'selected' : '' }}>
+                                    Tamat S2 / S3
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Pekerjaan</label>
+                            <select name="pekerjaan" class="form-select">
+                                <option value="">-- Pilih Pekerjaan --</option>
+                                <option value="Pelajar / Mahasiswa" {{ old('pekerjaan') == 'Pelajar / Mahasiswa' ? 'selected' : '' }}>Pelajar / Mahasiswa</option>
+                                <option value="Wiraswasta" {{ old('pekerjaan') == 'Wiraswasta' ? 'selected' : '' }}>Wiraswasta</option>
+                                <option value="Aparat Desa / Kelurahan" {{ old('pekerjaan') == 'Aparat Desa / Kelurahan' ? 'selected' : '' }}>Aparat Desa / Kelurahan</option>
+                                <option value="Pegawai / Guru Honorer" {{ old('pekerjaan') == 'Pegawai / Guru Honorer' ? 'selected' : '' }}>Pegawai / Guru Honorer</option>
+                                <option value="Kader PKK / Karang Taruna / Kader Lainnya" {{ old('pekerjaan') == 'Kader PKK / Karang Taruna / Kader Lainnya' ? 'selected' : '' }}>
+                                    Kader PKK / Karang Taruna / Kader Lainnya
+                                </option>
+                                <option value="Mengurus Rumah Tangga" {{ old('pekerjaan') == 'Mengurus Rumah Tangga' ? 'selected' : '' }}>Mengurus Rumah Tangga</option>
+                                <option value="Lainnya" {{ old('pekerjaan') == 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Deskripsi Pekerjaan Lainnya</label>
+                    <textarea name="deskripsi_pekerjaan_lain" class="form-textarea">{{ old('deskripsi_pekerjaan_lain') }}</textarea>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Posisi</label>
+                            <input type="text" name="posisi" class="form-control" value="{{ old('posisi') }}">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Posisi Daftar</label>
+                            <input type="text" name="posisi_daftar" class="form-control" value="{{ old('posisi_daftar') }}">
+                        </div>
+                    </div>
+                </div>
+
 
                 <!-- Foto Profil Section -->
                 <div class="form-group form-group-with-image">

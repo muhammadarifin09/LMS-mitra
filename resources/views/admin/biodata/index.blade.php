@@ -276,7 +276,7 @@
                     <th>Nama</th>
                     <th>Kecamatan</th>
                     <th>Desa/Kelurahan</th>
-                    <th>Alamat</th>
+                    <th>Posisi</th>
                     <th>Aksi</th>
                 </tr>
             </thead>
@@ -289,7 +289,7 @@
                         <td>{{ $item->nama_lengkap }}</td>
                         <td>{{ $item->kecamatan }}</td>
                         <td>{{ $item->desa }}</td>
-                        <td>{{ \Illuminate\Support\Str::limit($item->alamat, 50) }}</td>
+                        <td>{{ \Illuminate\Support\Str::limit($item->posisi, 50) }}</td>
                         <td>
                             <div class="action-buttons">
                                 <a href="{{ route('admin.biodata.edit', $item->id_sobat) }}" class="btn-action btn-edit" title="Edit">

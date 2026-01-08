@@ -44,6 +44,17 @@ class BiodataController extends Controller
         'no_telepon' => 'required',
         'username_sobat' => 'required|email|unique:users,username',
         'foto_profil' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+
+        // kolom Excel baru
+        'posisi' => 'nullable|string|max:100',
+        'posisi_daftar' => 'nullable|string|max:100',
+        'alamat_prov' => 'nullable|string|max:100',
+        'alamat_kab' => 'nullable|string|max:100',
+        'tempat_tanggal_lahir' => 'nullable|string|max:150',
+        'jenis_kelamin' => 'nullable|string|max:20',
+        'pendidikan' => 'nullable|string|max:100',
+        'pekerjaan' => 'nullable|string|max:100',
+        'deskripsi_pekerjaan_lain' => 'nullable|string',
     ]);
 
     try {
@@ -65,6 +76,17 @@ class BiodataController extends Controller
             'alamat' => $request->alamat,
             'no_telepon' => $request->no_telepon,
             'username_sobat' => $request->username_sobat,
+
+            // kolom baru Excel
+            'posisi' => $request->posisi,
+            'posisi_daftar' => $request->posisi_daftar,
+            'alamat_prov' => $request->alamat_prov,
+            'alamat_kab' => $request->alamat_kab,
+            'tempat_tanggal_lahir' => $request->tempat_tanggal_lahir,
+            'jenis_kelamin' => $request->jenis_kelamin,
+            'pendidikan' => $request->pendidikan,
+            'pekerjaan' => $request->pekerjaan,
+            'deskripsi_pekerjaan_lain' => $request->deskripsi_pekerjaan_lain,
         ];
 
         // Handle upload foto profil - KONSISTEN DENGAN UPDATE
@@ -113,6 +135,17 @@ class BiodataController extends Controller
             'desa' => $request->desa,
             'alamat' => $request->alamat,
             'no_telepon' => $request->no_telepon,
+
+            // kolom Excel
+            'posisi' => $request->posisi,
+            'posisi_daftar' => $request->posisi_daftar,
+            'alamat_prov' => $request->alamat_prov,
+            'alamat_kab' => $request->alamat_kab,
+            'tempat_tanggal_lahir' => $request->tempat_tanggal_lahir,
+            'jenis_kelamin' => $request->jenis_kelamin,
+            'pendidikan' => $request->pendidikan,
+            'pekerjaan' => $request->pekerjaan,
+            'deskripsi_pekerjaan_lain' => $request->deskripsi_pekerjaan_lain,
         ];
 
         // Handle upload foto profil jika ada - KONSISTEN DENGAN STORE()
