@@ -2809,4 +2809,5 @@ private function generateVideoToken($materialId, $userId)
 
         return back()->with('success', 'Berhasil mendaftar kursus!');
     }
+
 }

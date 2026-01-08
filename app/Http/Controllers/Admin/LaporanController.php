@@ -131,7 +131,7 @@ public function exportKursusDetailCsv(Kursus $kursus)
     {
         $kursus = Kursus::withCount('enrollments')
             ->orderBy('judul_kursus')
-            ->get();
+            ->paginate(10); // 10 data per halaman
 
         return view('laporan.admin.kursus.index', compact('kursus'));
     }

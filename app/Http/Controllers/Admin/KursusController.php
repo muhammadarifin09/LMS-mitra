@@ -13,12 +13,43 @@ class KursusController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
-    {
-        $kursus = Kursus::latest()->get();
-        
-        return view('admin.kursus.index', compact('kursus'));
+   public function index(Request $request)
+{
+    // Ambil nilai per_page dari request, default 10
+    $perPage = $request->get('per_page', 10);
+    
+    // Query dasar
+    $query = Kursus::query();
+    
+    // Fitur PENCARIAN (Search)
+    if ($request->has('search') && !empty($request->search)) {
+        $search = $request->search;
+        $query->where(function($q) use ($search) {
+            $q->where('judul_kursus', 'like', '%' . $search . '%')
+              ->orWhere('pelaksana', 'like', '%' . $search . '%')
+              ->orWhere('deskripsi_kursus', 'like', '%' . $search . '%')
+              ->orWhere('kategori', 'like', '%' . $search . '%');
+        });
     }
+    
+    // Urutkan dari yang terbaru
+    $query->orderBy('created_at', 'desc');
+    
+    // PAGINATION dengan jumlah per halaman yang bisa diatur
+    $kursus = $query->paginate($perPage);
+    
+    // Menambahkan parameter ke links pagination agar tetap ada di URL
+    if ($request->has('search')) {
+        $kursus->appends(['search' => $request->search]);
+    }
+    
+    // Menambahkan parameter per_page ke links pagination
+    if ($request->has('per_page') || $perPage != 10) {
+        $kursus->appends(['per_page' => $perPage]);
+    }
+    
+    return view('admin.kursus.index', compact('kursus'));
+}
 
     /**
      * Show the form for creating a new resource.
