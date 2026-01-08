@@ -12,10 +12,8 @@ function shortenText($text, $length = 50) {
     return substr($text, 0, $length) . '...';
 }
 
-// Validasi data video
+// Data dari controller sudah lengkap
 $videoData = $videoData ?? [];
-
-// Tentukan tipe video dan data yang tersedia
 $videoType = $videoData['type'] ?? 'unknown';
 $isAvailable = $videoData['is_available'] ?? false;
 $embedUrl = $videoData['embed_url'] ?? '';
@@ -26,12 +24,39 @@ $isLocalVideo = $videoType === 'local';
 $isYouTube = $videoType === 'youtube';
 $isHosted = $videoType === 'hosted';
 
-// Untuk video lokal
-$localVideoToken = $videoData['video_token'] ?? '';
-$localVideoPath = $videoData['path'] ?? '';
+// Player config dari controller (sudah diproses)
+$playerConfig = $playerConfig ?? $videoData['player_config'] ?? [];
+$disableForwardSeek = $playerConfig['disable_forward_seek'] ?? false;
+$disableBackwardSeek = $playerConfig['disable_backward_seek'] ?? false;
+$disableRightClick = $playerConfig['disable_right_click'] ?? false;
+$allowSkip = $playerConfig['allow_skip'] ?? ($material->allow_skip ?? false);
+$requireCompletion = $playerConfig['require_completion'] ?? ($material->require_video_completion ?? true);
+$autoPauseOnQuestion = $playerConfig['auto_pause_on_question'] ?? true;
+$hasSeekRestriction = $disableForwardSeek || $disableBackwardSeek;
 
-// Tentukan min watch percentage
-$minWatchPercentage = $videoData['player_config']['min_watch_percentage'] ?? 90;
+// ==============================================
+// DATA SOAL VIDEO DARI CONTROLLER
+// ==============================================
+$videoQuestionsData = $videoQuestions ?? [];
+$hasVideoQuestions = !empty($videoQuestionsData) && count($videoQuestionsData) > 0;
+
+// Konversi ke JSON untuk JavaScript
+$videoQuestionTimings = $hasVideoQuestions ? json_encode(
+    array_map(function($q) {
+        return [
+            'question_id' => $q['question_id'] ?? ($q['id'] ?? uniqid()),
+            'time_in_seconds' => $q['time_in_seconds'] ?? ($q['time_in_seconds'] ?? 0),
+            'question' => $q['question'] ?? ($q['question'] ?? ''),
+            'options' => is_array($q['options'] ?? []) 
+                ? ($q['options'] ?? []) 
+                : [],
+            'correct_option' => $q['correct_option'] ?? ($q['correct_option'] ?? 0),
+            'points' => $q['points'] ?? ($q['points'] ?? 1),
+            'explanation' => $q['explanation'] ?? ($q['explanation'] ?? ''),
+            'required_to_continue' => $q['required_to_continue'] ?? ($q['required_to_continue'] ?? true)
+        ];
+    }, $videoQuestionsData)
+) : '[]';
 
 // ==============================================
 // FIX UTAMA: PERBAIKI URL VIDEO LOKAL
@@ -46,7 +71,7 @@ if ($isLocalVideo && !empty($directLink)) {
     
     // Fix 2: Jika URL dimulai dengan /storage/, tambahkan base URL
     elseif (strpos($directLink, '/storage/') === 0) {
-        $directLink = 'http://localhost:8000' . $directLink;
+        $directLink = url($directLink);
         $videoUrl = $directLink;
     }
 }
@@ -65,12 +90,24 @@ if ($isLocalVideo && empty($directLink)) {
         }
     }
 }
+
+// Ambil materi berikutnya (jika ada)
+$nextMaterial = null;
+$allMaterials = $kursus->materials->sortBy('order');
+$currentIndex = $allMaterials->search(function($item) use ($material) {
+    return $item->id == $material->id;
+});
+
+if ($currentIndex !== false && $currentIndex + 1 < count($allMaterials)) {
+    $nextMaterial = $allMaterials[$currentIndex + 1];
+}
 @endphp
 
 <style>
     :root {
         --video-height: 70vh;
         --controls-height: 60px;
+        --question-overlay-bg: rgba(0, 0, 0, 0.85);
     }
     
     .video-loading-overlay {
@@ -84,8 +121,9 @@ if ($isLocalVideo && empty($directLink)) {
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        z-index: 10;
+        z-index: 1000;
         transition: opacity 0.5s ease;
+        border-radius: 12px;
     }
     
     .video-container-wrapper {
@@ -99,6 +137,7 @@ if ($isLocalVideo && empty($directLink)) {
         box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         cursor: pointer;
         user-select: none;
+        min-height: 400px;
     }
     
     .video-container {
@@ -109,7 +148,6 @@ if ($isLocalVideo && empty($directLink)) {
         background: #000;
     }
     
-    /* Container khusus untuk video lokal */
     .local-video-wrapper {
         width: 100%;
         height: 100%;
@@ -117,25 +155,24 @@ if ($isLocalVideo && empty($directLink)) {
         justify-content: center;
         align-items: center;
         position: relative;
+        background: #000;
     }
     
-    /* Style untuk video element */
     #main-video-player {
+        width: 100%;
+        height: 100%;
         max-width: 100%;
         max-height: 100%;
-        width: auto;
-        height: auto;
         object-fit: contain;
         background: #000;
         display: block;
-        margin: 0 auto;
     }
     
-    /* Untuk video dengan aspect ratio 16:9 */
     .aspect-ratio-16-9 {
         position: relative;
         width: 100%;
-        padding-top: 56.25%; /* 16:9 Aspect Ratio */
+        padding-top: 56.25%;
+        background: #000;
     }
     
     .aspect-ratio-16-9 .video-content {
@@ -147,9 +184,10 @@ if ($isLocalVideo && empty($directLink)) {
         display: flex;
         justify-content: center;
         align-items: center;
+        background: #000;
     }
     
-    /* Center Play/Pause Button */
+    /* FIXED CENTER PLAY BUTTON */
     .center-play-button {
         position: absolute;
         top: 50%;
@@ -160,7 +198,7 @@ if ($isLocalVideo && empty($directLink)) {
         border-radius: 50%;
         background: rgba(0, 0, 0, 0.7);
         border: 4px solid rgba(255, 255, 255, 0.9);
-        display: flex;
+        display: none; /* AWALNYA DISEMBUNYIKAN */
         align-items: center;
         justify-content: center;
         cursor: pointer;
@@ -168,6 +206,11 @@ if ($isLocalVideo && empty($directLink)) {
         opacity: 0;
         transition: opacity 0.3s, transform 0.2s;
         backdrop-filter: blur(5px);
+    }
+    
+    .center-play-button.show {
+        display: flex;
+        opacity: 1;
     }
     
     .center-play-button:hover {
@@ -179,18 +222,17 @@ if ($isLocalVideo && empty($directLink)) {
     .center-play-button i {
         font-size: 40px;
         color: white;
-        margin-left: 5px; /* Untuk centering icon play */
+        margin-left: 5px;
     }
     
     .center-play-button.playing i {
         margin-left: 0;
     }
     
-    .video-container-wrapper:hover .center-play-button {
+    .video-container-wrapper:hover .center-play-button.show {
         opacity: 1;
     }
     
-    /* Video Controls */
     .video-controls-container {
         position: absolute;
         bottom: 0;
@@ -224,7 +266,13 @@ if ($isLocalVideo && empty($directLink)) {
         border-radius: 3px;
         cursor: pointer;
         position: relative;
-        overflow: hidden;
+        overflow: visible;
+    }
+    
+    .progress-container.disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+        pointer-events: none;
     }
     
     .progress-bar {
@@ -233,6 +281,7 @@ if ($isLocalVideo && empty($directLink)) {
         border-radius: 3px;
         width: 0%;
         position: relative;
+        transition: width 0.1s linear;
     }
     
     .progress-bar::after {
@@ -277,12 +326,18 @@ if ($isLocalVideo && empty($directLink)) {
         transition: background 0.2s, transform 0.2s;
     }
     
-    .control-button:hover {
+    .control-button.disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+    
+    .control-button:hover:not(.disabled) {
         background: rgba(255, 255, 255, 0.1);
         transform: scale(1.1);
     }
     
-    .control-button:active {
+    .control-button:active:not(.disabled) {
         transform: scale(0.95);
     }
     
@@ -292,9 +347,25 @@ if ($isLocalVideo && empty($directLink)) {
         font-family: monospace;
         min-width: 100px;
         text-align: center;
+        transition: opacity 0.3s;
     }
     
-    /* Volume Control */
+    .time-display.loading {
+        opacity: 0.5;
+    }
+    
+    .time-display.loading::after {
+        content: '...';
+        margin-left: 5px;
+        animation: dots 1.5s infinite;
+    }
+    
+    @keyframes dots {
+        0%, 20% { content: '.'; }
+        40% { content: '..'; }
+        60%, 100% { content: '...'; }
+    }
+    
     .volume-control {
         display: flex;
         align-items: center;
@@ -311,7 +382,7 @@ if ($isLocalVideo && empty($directLink)) {
         opacity: 0;
         transition: opacity 0.3s;
     }
-    
+
     .volume-control:hover .volume-slider {
         opacity: 1;
     }
@@ -324,7 +395,6 @@ if ($isLocalVideo && empty($directLink)) {
         width: 100%;
     }
     
-    /* Playback Rate Menu */
     .playback-rate-menu {
         position: absolute;
         bottom: 50px;
@@ -362,7 +432,6 @@ if ($isLocalVideo && empty($directLink)) {
         color: white;
     }
     
-    /* Settings Menu */
     .settings-menu {
         position: absolute;
         bottom: 50px;
@@ -401,7 +470,484 @@ if ($isLocalVideo && empty($directLink)) {
         text-align: center;
     }
     
-    /* Responsive */
+    /* CSS untuk Video Questions - STYLE BARU TERINTEGRASI */
+    .video-question-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.92);
+        backdrop-filter: blur(10px);
+        z-index: 1000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        animation: questionSlideIn 0.4s ease-out;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    @keyframes questionSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .video-question-container {
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        border-radius: 12px;
+        width: 90%;
+        max-width: 700px;
+        max-height: 85vh;
+        overflow: hidden;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+        animation: containerScale 0.5s ease-out;
+    }
+
+    @keyframes containerScale {
+        from {
+            transform: scale(0.95);
+        }
+        to {
+            transform: scale(1);
+        }
+    }
+
+    .question-header {
+        background: linear-gradient(135deg, #2196F3, #0D47A1);
+        padding: 20px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .question-header h4 {
+        margin: 0;
+        color: white;
+        font-size: 1.3rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .question-time-indicator {
+        background: rgba(255, 255, 255, 0.15);
+        padding: 6px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        color: white;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .question-content {
+        padding: 30px;
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    .question-text {
+        font-size: 1.2rem;
+        line-height: 1.6;
+        margin-bottom: 30px;
+        color: #e0e0e0;
+        text-align: center;
+        padding: 0 20px;
+    }
+
+    .options-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    @media (max-width: 768px) {
+        .options-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .option-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .option-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .option-card:hover::before {
+        left: 100%;
+    }
+
+    .option-card:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(33, 150, 243, 0.5);
+        transform: translateY(-3px);
+    }
+
+    .option-card.selected {
+        background: rgba(33, 150, 243, 0.15);
+        border-color: #2196F3;
+        box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+    }
+
+    .option-card.correct {
+        background: rgba(76, 175, 80, 0.15);
+        border-color: #4CAF50;
+        box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+    }
+
+    .option-card.incorrect {
+        background: rgba(244, 67, 54, 0.15);
+        border-color: #F44336;
+        box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
+    }
+
+    .option-card.disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    .option-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.1rem;
+        color: #e0e0e0;
+        transition: all 0.3s ease;
+    }
+
+    .option-card.selected .option-icon {
+        background: #2196F3;
+        color: white;
+    }
+
+    .option-card.correct .option-icon {
+        background: #4CAF50;
+        color: white;
+    }
+
+    .option-card.incorrect .option-icon {
+        background: #F44336;
+        color: white;
+    }
+
+    .option-text {
+        flex: 1;
+        color: #e0e0e0;
+        font-size: 1rem;
+        line-height: 1.5;
+    }
+
+    .question-footer {
+        padding: 20px 30px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(0, 0, 0, 0.3);
+    }
+
+    .question-stats {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .points-badge {
+        background: linear-gradient(135deg, #FF9800, #F57C00);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .question-counter {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .question-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .explanation-panel {
+        margin-top: 25px;
+        padding: 20px;
+        background: rgba(33, 150, 243, 0.1);
+        border-radius: 10px;
+        border-left: 4px solid #2196F3;
+        animation: fadeIn 0.5s ease;
+    }
+
+    .explanation-panel h6 {
+        color: #90CAF9;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .explanation-text {
+        color: #e0e0e0;
+        line-height: 1.6;
+        margin: 0;
+    }
+
+    .video-completed-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.95);
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+        animation: fadeIn 0.5s ease;
+        border-radius: 12px;
+    }
+
+    .completion-content {
+        background: linear-gradient(135deg, #1a237e, #0d47a1);
+        padding: 40px;
+        border-radius: 15px;
+        text-align: center;
+        max-width: 500px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .completion-icon {
+        font-size: 4rem;
+        color: #4CAF50;
+        margin-bottom: 20px;
+        animation: bounce 1s ease infinite alternate;
+    }
+
+    @keyframes bounce {
+        from { transform: translateY(0); }
+        to { transform: translateY(-10px); }
+    }
+
+    .completion-content h3 {
+        color: white;
+        margin-bottom: 15px;
+    }
+
+    .completion-content p {
+        color: rgba(255, 255, 255, 0.8);
+        margin-bottom: 25px;
+    }
+
+    .completion-stats {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 25px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .stat-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: white;
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .completion-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .video-question-indicator {
+        position: absolute;
+        top: 50px;
+        right: 15px;
+        background: rgba(33, 150, 243, 0.9);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        z-index: 40;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        backdrop-filter: blur(5px);
+        box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+    }
+    
+    .seek-warning {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: #ff9800;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        z-index: 100;
+        animation: fadeInOut 2s ease;
+        display: none;
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 152, 0, 0.3);
+    }
+    
+    @keyframes fadeInOut {
+        0%, 100% { opacity: 0; }
+        20%, 80% { opacity: 1; }
+    }
+    
+    .video-fallback {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background: #000;
+        color: white;
+        padding: 20px;
+        text-align: center;
+        z-index: 5;
+    }
+    
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        border-width: 0.25em;
+    }
+    
+    /* Question Marker Styles */
+    .question-marker {
+        position: absolute;
+        transform: translateX(-50%);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 5;
+        top: -2px;
+        width: 8px;
+        height: 14px;
+        border-radius: 4px;
+        background: #FF9800;
+    }
+    
+    .question-marker:hover {
+        transform: translateX(-50%) scale(1.5);
+        box-shadow: 0 0 8px rgba(255, 152, 0, 0.8);
+    }
+    
+    .question-marker.answered {
+        background: #4CAF50 !important;
+    }
+    
+    .question-marker.unanswered {
+        background: #FF9800 !important;
+    }
+    
+    /* Notification Styles */
+    .video-notification {
+        position: fixed;
+        bottom: 100px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10000;
+        padding: 12px 24px;
+        border-radius: 8px;
+        color: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        max-width: 80%;
+        text-align: center;
+        font-weight: 500;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        animation: notificationSlide 2s ease;
+    }
+    
+    @keyframes notificationSlide {
+        0% {
+            transform: translateX(-50%) translateY(20px);
+            opacity: 0;
+        }
+        10% {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        90% {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        100% {
+            transform: translateX(-50%) translateY(-20px);
+            opacity: 0;
+        }
+    }
+    
     @media (max-width: 768px) {
         .video-container {
             height: 50vh;
@@ -429,9 +975,38 @@ if ($isLocalVideo && empty($directLink)) {
         .volume-slider {
             display: none;
         }
+        
+        .video-question-container {
+            width: 95%;
+            margin: 10px;
+        }
+        
+        .question-content {
+            padding: 15px;
+        }
+        
+        .option-card {
+            padding: 15px;
+        }
+        
+        .video-question-indicator {
+            top: 10px;
+            right: 10px;
+            font-size: 0.7rem;
+            padding: 5px 10px;
+        }
+        
+        .completion-content {
+            padding: 20px;
+            margin: 10px;
+        }
+        
+        .completion-actions {
+            flex-direction: column;
+            align-items: center;
+        }
     }
     
-    /* Animations */
     .video-container-wrapper {
         transition: transform 0.3s;
     }
@@ -440,7 +1015,6 @@ if ($isLocalVideo && empty($directLink)) {
         transform: scale(0.98);
     }
     
-    /* Hide cursor and controls after inactivity */
     .video-container-wrapper.inactive {
         cursor: none;
     }
@@ -451,7 +1025,6 @@ if ($isLocalVideo && empty($directLink)) {
         pointer-events: none;
     }
     
-    /* Loading animation */
     @keyframes pulse {
         0%, 100% { opacity: 1; }
         50% { opacity: 0.5; }
@@ -461,7 +1034,6 @@ if ($isLocalVideo && empty($directLink)) {
         animation: pulse 1.5s infinite;
     }
     
-    /* Video Source Badge */
     .video-source-badge {
         position: absolute;
         top: 15px;
@@ -475,52 +1047,74 @@ if ($isLocalVideo && empty($directLink)) {
         backdrop-filter: blur(5px);
     }
     
-    .video-fallback {
+    .restriction-indicator {
         position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        background: #000;
+        top: 15px;
+        left: 15px;
+        background: rgba(255, 87, 34, 0.9);
         color: white;
-        padding: 20px;
-        text-align: center;
-        z-index: 5;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 11px;
+        z-index: 25;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        backdrop-filter: blur(5px);
     }
     
-    .spinner-border {
-        width: 3rem;
-        height: 3rem;
-        border-width: 0.25em;
+    .completion-status {
+        position: absolute;
+        top: 15px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(76, 175, 80, 0.9);
+        color: white;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 12px;
+        z-index: 25;
+        backdrop-filter: blur(5px);
+        display: none;
+    }
+    
+    .action-button {
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+    
+    .btn-primary-gradient {
+        background: linear-gradient(135deg, #2196F3, #0D47A1);
+        color: white;
+        border: none;
+    }
+    
+    .btn-primary-gradient:hover {
+        background: linear-gradient(135deg, #1976D2, #0D47A1);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(33, 150, 243, 0.3);
+    }
+    
+    .btn-secondary-gradient {
+        background: linear-gradient(135deg, #757575, #424242);
+        color: white;
+        border: none;
+    }
+    
+    .btn-secondary-gradient:hover {
+        background: linear-gradient(135deg, #616161, #424242);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(117, 117, 117, 0.3);
     }
 </style>
-
-<script>
-console.log('=== VIDEO VIEW DEBUG ===');
-console.log('videoType:', '{{ $videoType }}');
-console.log('isLocalVideo:', {{ $isLocalVideo ? 'true' : 'false' }});
-console.log('isAvailable:', {{ $isAvailable ? 'true' : 'false' }});
-console.log('directLink:', '{{ $directLink }}');
-console.log('videoUrl:', '{{ $videoUrl }}');
-
-function fixVideoUrl(url) {
-    if (!url) return '';
-    
-    if (url.includes('http://localhost/storage/') && !url.includes(':8000')) {
-        return url.replace('http://localhost/storage/', 'http://localhost:8000/storage/');
-    }
-    
-    if (url.startsWith('/storage/')) {
-        return 'http://localhost:8000' + url;
-    }
-    
-    return url;
-}
-</script>
 
 <div class="container-fluid py-3">
     <div class="row">
@@ -548,6 +1142,12 @@ function fixVideoUrl(url) {
                                 <i class="fas fa-clock me-1"></i>
                                 {{ $material->duration ? ceil($material->duration / 60) . ' menit' : 'Video' }}
                             </span>
+                            @if($hasVideoQuestions)
+                            <span class="badge bg-warning text-dark ms-2">
+                                <i class="fas fa-question-circle me-1"></i>
+                                {{ count($videoQuestionsData) }} Pertanyaan
+                            </span>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -577,9 +1177,74 @@ function fixVideoUrl(url) {
                             @endif
                         </div>
                         
-                        <!-- Center Play/Pause Button -->
+                        <!-- Restriction Indicator -->
+                        <div class="restriction-indicator" id="restriction-indicator" style="display: none;">
+                            <i class="fas fa-lock"></i>
+                            <span id="restriction-text"></span>
+                        </div>
+                        
+                        <!-- Completion Status -->
+                        <div class="completion-status" id="completion-status">
+                            <i class="fas fa-check-circle me-1"></i>
+                            <span>Video Selesai</span>
+                        </div>
+                        
+                        @if($hasVideoQuestions)
+                        <!-- Video Question Indicator -->
+                        <div class="video-question-indicator" id="video-question-indicator">
+                            <i class="fas fa-question-circle"></i>
+                            <span id="question-count">0/{{ count($videoQuestionsData) }}</span>
+                            <span id="question-points">0 poin</span>
+                        </div>
+                        @endif
+                        
+                        <!-- Center Play/Pause Button - AWALNYA TIDAK DITAMPILKAN -->
                         <div class="center-play-button" id="center-play-button">
                             <i class="fas fa-play"></i>
+                        </div>
+                        
+                        <!-- Seek Warning -->
+                        <div class="seek-warning" id="seek-warning"></div>
+
+                        <!-- Video Completed Overlay -->
+                        <div class="video-completed-overlay" id="video-completed-overlay">
+                            <div class="completion-content">
+                                <div class="completion-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <h3>Video Selesai!</h3>
+                                <p>Selamat! Anda telah menyelesaikan video materi ini.</p>
+                                
+                                @if($hasVideoQuestions)
+                                <div class="completion-stats">
+                                    <div class="stat-item">
+                                        <span class="stat-value" id="completed-questions">0</span>
+                                        <span class="stat-label">Pertanyaan Dijawab</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-value" id="earned-points">0</span>
+                                        <span class="stat-label">Poin Diperoleh</span>
+                                    </div>
+                                </div>
+                                @endif
+                                
+                                <div class="completion-actions">
+                                    <button class="action-button btn-secondary-gradient" id="replay-video-btn">
+                                        <i class="fas fa-redo me-1"></i> Tonton Ulang
+                                    </button>
+                                    @if($nextMaterial)
+                                    <a href="{{ route('mitra.kursus.show', ['kursus' => $kursus, 'material' => $nextMaterial]) }}" 
+                                       class="action-button btn-primary-gradient">
+                                        <i class="fas fa-forward me-1"></i> Materi Berikutnya
+                                    </a>
+                                    @else
+                                    <a href="{{ route('mitra.kursus.show', $kursus) }}" 
+                                       class="action-button btn-primary-gradient">
+                                        <i class="fas fa-check-circle me-1"></i> Selesai Belajar
+                                    </a>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Video Container -->
@@ -609,12 +1274,12 @@ function fixVideoUrl(url) {
                                         id="main-video-player"
                                         preload="metadata"
                                         playsinline
+                                        webkit-playsinline
                                         poster="{{ asset('img/video-poster.jpg') }}"
-                                        onloadedmetadata="handleVideoMetadataLoaded(event)"
-                                        onloadeddata="handleVideoLoadedSuccess()"
-                                        onerror="handleVideoPlayerError(event)"
-                                        style="max-width: 100%; max-height: 100%;">
+                                        style="width: 100%; height: 100%; object-fit: contain;">
                                         <source src="{{ $videoSrc }}" type="video/mp4">
+                                        <source src="{{ $videoSrc }}" type="video/webm">
+                                        <source src="{{ $videoSrc }}" type="video/ogg">
                                         <p class="text-white p-3">
                                             Browser Anda tidak mendukung pemutaran video HTML5.<br>
                                             <a href="{{ $videoSrc }}" class="text-primary" download>Download video</a>
@@ -684,7 +1349,7 @@ function fixVideoUrl(url) {
                                     </div>
                                     
                                     <!-- Time Display -->
-                                    <div class="time-display" id="time-display">
+                                    <div class="time-display loading" id="time-display">
                                         <span id="current-time">0:00</span> / 
                                         <span id="duration-time">0:00</span>
                                     </div>
@@ -736,6 +1401,9 @@ function fixVideoUrl(url) {
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Question Overlay Container -->
+                    <div id="question-overlay-container"></div>
                 </div>
                 
                 <div class="card-footer bg-light">
@@ -744,18 +1412,28 @@ function fixVideoUrl(url) {
                             <i class="fas fa-arrow-left me-1"></i> Kembali ke Materi
                         </a>
                         
-                        <small class="text-muted">
-                            <i class="fas fa-info-circle me-1"></i>
-                            @if($isHosted)
-                                Video dari Google Drive
-                            @elseif($isYouTube)
-                                Video dari YouTube
-                            @elseif($isLocalVideo)
-                                Video Lokal
-                            @else
-                                Video
+                        <div class="text-end">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                @if($isHosted)
+                                    Video dari Google Drive
+                                @elseif($isYouTube)
+                                    Video dari YouTube
+                                @elseif($isLocalVideo)
+                                    Video Lokal
+                                @else
+                                    Video
+                                @endif
+                            </small>
+                            @if($hasVideoQuestions)
+                            <div class="mt-1">
+                                <small class="text-primary">
+                                    <i class="fas fa-question-circle me-1"></i>
+                                    Video berisi {{ count($videoQuestionsData) }} pertanyaan interaktif
+                                </small>
+                            </div>
                             @endif
-                        </small>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -763,10 +1441,14 @@ function fixVideoUrl(url) {
     </div>
 </div>
 
-<!-- JavaScript untuk Video Player dengan Fitur Lengkap -->
 <script>
+// Global variables untuk akses dari inline event handlers
+window.videoPlayer = null;
+window.isQuestionActive = false;
+window.isVideoCompleted = false;
+
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Video Player Initialized');
+    console.log('🚀 Video Player Initialized - WITH FIXED DURATION');
     
     // ============================
     // ELEMENTS
@@ -777,6 +1459,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const videoLoading = document.getElementById('video-loading');
     const centerPlayButton = document.getElementById('center-play-button');
     const videoControls = document.getElementById('video-controls');
+    const videoCompletedOverlay = document.getElementById('video-completed-overlay');
+    const replayVideoBtn = document.getElementById('replay-video-btn');
     
     // Control Buttons
     const playPauseBtn = document.getElementById('play-pause-btn');
@@ -798,11 +1482,50 @@ document.addEventListener('DOMContentLoaded', function() {
     const durationTimeEl = document.getElementById('duration-time');
     const timeDisplay = document.getElementById('time-display');
     
+    // Restriction Elements
+    const restrictionIndicator = document.getElementById('restriction-indicator');
+    const restrictionText = document.getElementById('restriction-text');
+    const seekWarning = document.getElementById('seek-warning');
+    
+    // Question Elements
+    const videoQuestions = {!! $videoQuestionTimings !!};
+    const hasVideoQuestions = {!! $hasVideoQuestions ? 'true' : 'false' !!};
+    const autoPauseOnQuestion = {!! $autoPauseOnQuestion ? 'true' : 'false' !!};
+    const questionIndicator = document.getElementById('video-question-indicator');
+    const questionCountEl = document.getElementById('question-count');
+    const questionPointsEl = document.getElementById('question-points');
+    
+    // Completion Elements
+    const completedQuestionsEl = document.getElementById('completed-questions');
+    const earnedPointsEl = document.getElementById('earned-points');
+    
+    // ============================
+    // CONFIG FROM CONTROLLER (via Blade)
+    // ============================
+    const disableForwardSeek = {{ $disableForwardSeek ? 'true' : 'false' }};
+    const disableBackwardSeek = {{ $disableBackwardSeek ? 'true' : 'false' }};
+    const disableRightClick = {{ $disableRightClick ? 'true' : 'false' }};
+    const allowSkip = {{ $allowSkip ? 'true' : 'false' }};
+    const requireCompletion = {{ $requireCompletion ? 'true' : 'false' }};
+    
+    console.log('🎮 Player Configuration:', {
+        disableForwardSeek: disableForwardSeek,
+        disableBackwardSeek: disableBackwardSeek,
+        disableRightClick: disableRightClick,
+        allowSkip: allowSkip,
+        requireCompletion: requireCompletion,
+        autoPauseOnQuestion: autoPauseOnQuestion,
+        hasVideoQuestions: hasVideoQuestions,
+        questionCount: videoQuestions.length,
+        questions: videoQuestions.map(q => ({ time: q.time_in_seconds, id: q.question_id }))
+    });
+    
     // ============================
     // STATE VARIABLES
     // ============================
     let isPlaying = false;
     let isFullscreen = false;
+    let videoDurationSet = false;
     let isMuted = false;
     let currentVolume = 1;
     let playbackRate = 1;
@@ -811,14 +1534,36 @@ document.addEventListener('DOMContentLoaded', function() {
     let controlsVisible = false;
     let isDraggingProgress = false;
     let isDraggingVolume = false;
+    let previousTime = 0;
+    let isSeekingRestricted = false;
+    
+    // Video Question State Variables
+    let answeredQuestions = new Set();
+    let currentQuestion = null;
+    window.isQuestionActive = false;
+    window.isVideoCompleted = false;
+    let totalPointsEarned = 0;
+    let questionLastTriggerTime = 0;
+    let questionCheckCooldown = false;
+    let videoDurationRetrieved = false;
     
     // ============================
-    // INITIALIZATION
+    // INITIALIZATION - DIPERBAIKI
     // ============================
-    initVideoPlayer();
-    
     function initVideoPlayer() {
         console.log('🎬 Initializing video player...');
+        
+        // Reset state
+        videoDurationSet = false;
+        videoDurationRetrieved = false;
+        
+        // Set initial time display dengan loading state
+        currentTimeEl.textContent = '0:00';
+        durationTimeEl.textContent = '0:00';
+        timeDisplay.classList.add('loading');
+        
+        // Hide center play button initially
+        centerPlayButton.style.display = 'none';
         
         if (videoPlayer && videoPlayer.tagName === 'VIDEO') {
             setupLocalVideoPlayer();
@@ -827,51 +1572,208 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             console.error('❌ No video player element found!');
             hideLoading();
+            timeDisplay.classList.remove('loading');
         }
         
-        // Hide loading after timeout
-        setTimeout(hideLoading, 5000);
+        // Update restriction indicator
+        updateRestrictionIndicator();
+        
+        // Initialize question tracking
+        if (hasVideoQuestions) {
+            initializeQuestionTracking();
+        }
         
         // Initialize volume slider
         updateVolumeSlider();
+        
+        // Setup replay button
+        if (replayVideoBtn) {
+            replayVideoBtn.addEventListener('click', replayVideo);
+        }
+        
+        // Force duration check setelah beberapa saat
+        setTimeout(() => {
+            if (!videoDurationSet && videoPlayer && videoPlayer.readyState >= 1) {
+                console.log('🔄 Forcing duration check...');
+                handleDurationChange();
+            }
+        }, 2000);
     }
     
-    function setupLocalVideoPlayer() {
+    // ============================
+    // FUNGSI UNTUK MENDAPATKAN DURASI VIDEO YANG AKURAT
+    // ============================
+    function getVideoDuration() {
+        return new Promise((resolve) => {
+            console.log('🔍 Getting video duration...');
+            
+            // Coba ambil dari video element langsung
+            if (videoPlayer.duration && !isNaN(videoPlayer.duration) && videoPlayer.duration > 0 && videoPlayer.duration !== Infinity) {
+                console.log('✅ Duration from video element:', videoPlayer.duration);
+                resolve(videoPlayer.duration);
+                return;
+            }
+            
+            // Jika tidak ada, coba dari event loadedmetadata
+            const onMetadataLoaded = () => {
+                setTimeout(() => {
+                    if (videoPlayer.duration && videoPlayer.duration > 0 && videoPlayer.duration !== Infinity) {
+                        console.log('✅ Duration from loadedmetadata:', videoPlayer.duration);
+                        videoPlayer.removeEventListener('loadedmetadata', onMetadataLoaded);
+                        resolve(videoPlayer.duration);
+                    }
+                }, 300);
+            };
+            
+            // Cek apakah sudah ada event listener
+            if (videoPlayer.readyState >= 1) {
+                onMetadataLoaded();
+            } else {
+                videoPlayer.addEventListener('loadedmetadata', onMetadataLoaded, { once: true });
+            }
+            
+            // Fallback timeout jika tidak dapat durasi
+            setTimeout(() => {
+                if (!videoDurationRetrieved) {
+                    console.warn('⚠️ Could not get duration, using estimation');
+                    
+                    // Coba estimasi dari material duration
+                    const materialDuration = {{ $material->duration ?: 600 }};
+                    console.log('📊 Using material duration:', materialDuration, 'seconds');
+                    
+                    videoPlayer.removeEventListener('loadedmetadata', onMetadataLoaded);
+                    resolve(materialDuration);
+                }
+            }, 5000);
+        });
+    }
+    
+    // ============================
+    // SETUP VIDEO PLAYER
+    // ============================
+    async function setupLocalVideoPlayer() {
         console.log('🔧 Setting up local video player...');
         
         // Set initial volume
         videoPlayer.volume = currentVolume;
         videoPlayer.playbackRate = playbackRate;
         
-        // Event Listeners
+        // ============================
+        // APPLY PLAYER CONFIG FROM ADMIN
+        // ============================
+        if (disableRightClick) {
+            console.log('🛡️ Disabling right click');
+            videoWrapper.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                showSeekWarning('Klik kanan dinonaktifkan');
+                return false;
+            });
+        }
+        
+        // Hide skip buttons if restricted
+        if (disableForwardSeek) {
+            skipForwardBtn.classList.add('disabled');
+            skipForwardBtn.title = 'Maju cepat tidak diizinkan';
+        }
+        
+        if (disableBackwardSeek) {
+            skipBackwardBtn.classList.add('disabled');
+            skipBackwardBtn.title = 'Mundur tidak diizinkan';
+        }
+        
+        // Disable progress bar if both restrictions
+        if (disableForwardSeek && disableBackwardSeek) {
+            console.log('🚫 Disabling progress bar interaction');
+            progressContainer.classList.add('disabled');
+            progressContainer.title = 'Navigasi video dinonaktifkan';
+        }
+        
+        // ============================
+        // VIDEO EVENT LISTENERS - DIPERBAIKI
+        // ============================
         videoPlayer.addEventListener('loadedmetadata', handleVideoMetadata);
-        videoPlayer.addEventListener('timeupdate', handleTimeUpdate);
+        videoPlayer.addEventListener('loadeddata', handleVideoLoaded);
+        videoPlayer.addEventListener('canplay', handleCanPlay);
         videoPlayer.addEventListener('play', handlePlay);
         videoPlayer.addEventListener('pause', handlePause);
-        videoPlayer.addEventListener('ended', handleEnded);
+        videoPlayer.addEventListener('timeupdate', handleTimeUpdate);
+        videoPlayer.addEventListener('ended', handleVideoEnded);
         videoPlayer.addEventListener('volumechange', handleVolumeChange);
         videoPlayer.addEventListener('ratechange', handleRateChange);
+        videoPlayer.addEventListener('error', handleVideoError);
+        videoPlayer.addEventListener('seeking', handleSeeking);
+        videoPlayer.addEventListener('seeked', handleSeeked);
         
-        // Control Button Events
+        // EVENT BARU: untuk mendeteksi perubahan durasi
+        videoPlayer.addEventListener('durationchange', handleDurationChange);
+        
+        // ============================
+        // DAPATKAN DURASI VIDEO YANG AKURAT
+        // ============================
+        try {
+            const videoDuration = await getVideoDuration();
+            console.log('🎯 Final video duration:', videoDuration, 'seconds');
+            
+            // Tampilkan durasi yang akurat
+            durationTimeEl.textContent = formatTime(videoDuration);
+            videoDurationSet = true;
+            videoDurationRetrieved = true;
+            
+            // Update question markers jika ada
+            if (hasVideoQuestions) {
+                setTimeout(() => {
+                    addQuestionMarkersToTimeline();
+                }, 500);
+            }
+            
+            // Hapus loading state
+            timeDisplay.classList.remove('loading');
+            
+        } catch (error) {
+            console.error('❌ Error getting video duration:', error);
+            timeDisplay.classList.remove('loading');
+        }
+        
+        // ============================
+        // CONTROL BUTTON EVENTS - DIPERBAIKI
+        // ============================
         centerPlayButton.addEventListener('click', togglePlayPause);
         playPauseBtn.addEventListener('click', togglePlayPause);
-        skipBackwardBtn.addEventListener('click', skipBackward);
-        skipForwardBtn.addEventListener('click', skipForward);
+        
+        skipBackwardBtn.addEventListener('click', function() {
+            if (disableBackwardSeek) {
+                showSeekWarning('Mundur tidak diizinkan');
+                return;
+            }
+            skipBackward();
+        });
+        
+        skipForwardBtn.addEventListener('click', function() {
+            if (disableForwardSeek) {
+                showSeekWarning('Maju cepat tidak diizinkan');
+                return;
+            }
+            skipForward();
+        });
         
         // Progress Bar Events
-        progressContainer.addEventListener('click', seekToPosition);
-        progressContainer.addEventListener('mousedown', startDraggingProgress);
-        document.addEventListener('mousemove', handleProgressDrag);
-        document.addEventListener('mouseup', stopDraggingProgress);
-        
-        // Touch events for mobile
-        progressContainer.addEventListener('touchstart', startDraggingProgress);
-        document.addEventListener('touchmove', handleProgressDrag);
-        document.addEventListener('touchend', stopDraggingProgress);
+        if (!disableForwardSeek && !disableBackwardSeek) {
+            progressContainer.addEventListener('click', handleProgressClick);
+            progressContainer.addEventListener('mousedown', startDraggingProgress);
+            document.addEventListener('mousemove', handleProgressDrag);
+            document.addEventListener('mouseup', stopDraggingProgress);
+            
+            // Touch events for mobile
+            progressContainer.addEventListener('touchstart', startDraggingProgressTouch);
+            document.addEventListener('touchmove', handleProgressDragTouch);
+            document.addEventListener('touchend', stopDraggingProgressTouch);
+        } else {
+            progressContainer.classList.add('disabled');
+        }
         
         // Volume Control Events
         volumeBtn.addEventListener('click', toggleMute);
-        volumeSlider.addEventListener('click', setVolume);
+        volumeSlider.addEventListener('click', handleVolumeClick);
         volumeSlider.addEventListener('mousedown', startDraggingVolume);
         document.addEventListener('mousemove', handleVolumeDrag);
         document.addEventListener('mouseup', stopDraggingVolume);
@@ -907,7 +1809,9 @@ document.addEventListener('DOMContentLoaded', function() {
         videoWrapper.addEventListener('click', function(e) {
             if (e.target !== centerPlayButton && 
                 e.target !== playPauseBtn && 
-                !e.target.closest('.video-controls-container')) {
+                !e.target.closest('.video-controls-container') &&
+                !e.target.closest('.video-question-overlay') &&
+                !e.target.closest('.video-completed-overlay')) {
                 togglePlayPause();
             }
         });
@@ -928,21 +1832,137 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Just handle loading state
         hideLoading();
+        timeDisplay.classList.remove('loading');
     }
     
     // ============================
-    // VIDEO EVENT HANDLERS
+    // VIDEO EVENT HANDLERS - DIPERBAIKI
     // ============================
     function handleVideoMetadata() {
-        console.log('📊 Video metadata loaded');
-        updateDurationDisplay();
+        console.log('📊 Video metadata loaded - Duration:', videoPlayer.duration);
+        
+        // Check if duration is valid
+        if (videoPlayer.duration && !isNaN(videoPlayer.duration) && videoPlayer.duration > 0 && videoPlayer.duration !== Infinity) {
+            // Delay sedikit untuk memastikan duration benar-benar ready
+            setTimeout(() => {
+                const actualDuration = videoPlayer.duration;
+                console.log('🎯 Actual video duration from metadata:', actualDuration, 'seconds');
+                
+                // Format dan tampilkan duration
+                const totalDuration = formatTime(actualDuration);
+                durationTimeEl.textContent = totalDuration;
+                videoDurationSet = true;
+                videoDurationRetrieved = true;
+                
+                // Hapus loading state
+                timeDisplay.classList.remove('loading');
+                
+                // Update progress bar markers jika ada pertanyaan
+                if (hasVideoQuestions) {
+                    addQuestionMarkersToTimeline();
+                }
+                
+                // Update waktu saat ini
+                currentTimeEl.textContent = formatTime(videoPlayer.currentTime);
+                
+                console.log('✅ Duration displayed:', totalDuration);
+            }, 300);
+        } else {
+            // Jika duration masih 0, coba lagi nanti
+            console.warn('⚠️ Duration not ready yet from metadata, retrying...');
+            setTimeout(handleVideoMetadata, 500);
+        }
+    }
+    
+    function handleDurationChange() {
+        console.log('⏱️ Duration changed event:', videoPlayer.duration);
+        
+        if (videoPlayer.duration && !isNaN(videoPlayer.duration) && videoPlayer.duration > 0 && videoPlayer.duration !== Infinity) {
+            const actualDuration = formatTime(videoPlayer.duration);
+            durationTimeEl.textContent = actualDuration;
+            videoDurationSet = true;
+            videoDurationRetrieved = true;
+            
+            // Hapus loading state
+            timeDisplay.classList.remove('loading');
+            
+            console.log('✅ Duration updated to:', actualDuration);
+            
+            // Update progress jika sudah ada
+            if (!isDraggingProgress) {
+                updateProgressBar();
+            }
+            
+            // Update question markers
+            if (hasVideoQuestions) {
+                addQuestionMarkersToTimeline();
+            }
+        }
+    }
+    
+    function handleVideoLoaded() {
+        console.log('✅ Video data loaded');
+        // Video sudah siap untuk diputar
+    }
+    
+    function handleCanPlay() {
+        console.log('▶️ Video can play');
         hideLoading();
+        
+        // Show center play button only when video is ready
+        centerPlayButton.style.display = 'flex';
+        setTimeout(() => {
+            centerPlayButton.classList.add('show');
+        }, 100);
     }
     
     function handleTimeUpdate() {
+        // Periksa apakah durasi sudah siap
+        if (!videoDurationSet && videoPlayer.readyState >= 2) {
+            handleDurationChange();
+            return;
+        }
+        
+        if (!videoPlayer.duration || videoPlayer.duration <= 0) {
+            return;
+        }
+        
+        const currentTime = videoPlayer.currentTime;
+        previousTime = currentTime;
+        
         if (!isDraggingProgress) {
             updateProgressBar();
-            updateCurrentTimeDisplay();
+            currentTimeEl.textContent = formatTime(currentTime);
+        }
+        
+        // Cek pertanyaan
+        if (hasVideoQuestions && !window.isQuestionActive && !isDraggingProgress && !videoPlayer.seeking) {
+            checkForVideoQuestionsPrecise();
+        }
+    }
+    
+    function handleSeeking() {
+        console.log('⏩ Seeking to:', videoPlayer.currentTime);
+    }
+    
+    function handleSeeked() {
+        console.log('✅ Seeked to:', videoPlayer.currentTime);
+        
+        // PERBAIKAN: Cek restrictions setelah seek
+        if (disableForwardSeek || disableBackwardSeek) {
+            const seekDirection = videoPlayer.currentTime > previousTime ? 'forward' : 'backward';
+            
+            if (seekDirection === 'forward' && disableForwardSeek) {
+                showSeekWarning('Maju cepat tidak diizinkan');
+                videoPlayer.currentTime = previousTime;
+                return;
+            }
+            
+            if (seekDirection === 'backward' && disableBackwardSeek) {
+                showSeekWarning('Mundur tidak diizinkan');
+                videoPlayer.currentTime = previousTime;
+                return;
+            }
         }
     }
     
@@ -961,14 +1981,31 @@ document.addEventListener('DOMContentLoaded', function() {
         centerPlayButton.querySelector('i').className = 'fas fa-play';
     }
     
-    function handleEnded() {
+    function handleVideoEnded() {
+        console.log('🎬 Video ended');
         isPlaying = false;
         updatePlayPauseButton();
         centerPlayButton.classList.remove('playing');
         centerPlayButton.querySelector('i').className = 'fas fa-replay';
         
-        // Show replay message
-        showNotification('Video selesai. Klik untuk memutar ulang', 'info', 2000);
+        // Show completion overlay
+        showVideoCompletionOverlay();
+        
+        // If video completion required, mark as completed
+        if (requireCompletion) {
+            markVideoAsCompleted();
+        }
+    }
+    
+    function handleVideoError(e) {
+        console.error('❌ Video error:', e, videoPlayer.error);
+        hideLoading();
+        showNotification('Error memutar video', 'error');
+        
+        // Reset duration display
+        durationTimeEl.textContent = '0:00';
+        videoDurationSet = false;
+        timeDisplay.classList.remove('loading');
     }
     
     function handleVolumeChange() {
@@ -984,11 +2021,247 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // ============================
-    // PLAYBACK CONTROLS
+    // VIDEO QUESTION FUNCTIONS - DIPERBAIKI
+    // ============================
+    function initializeQuestionTracking() {
+        console.log('📝 Initializing video questions:', videoQuestions.length);
+        
+        // Sort questions by time
+        videoQuestions.sort((a, b) => a.time_in_seconds - b.time_in_seconds);
+        
+        // Update question indicator
+        updateQuestionIndicator();
+        
+        // Add question markers to timeline setelah durasi siap
+        if (videoDurationSet) {
+            addQuestionMarkersToTimeline();
+        }
+    }
+    
+    function checkForVideoQuestionsPrecise() {
+        if (!videoPlayer || !videoDurationSet || window.isQuestionActive || answeredQuestions.size >= videoQuestions.length) return;
+        
+        const currentTime = Math.floor(videoPlayer.currentTime);
+        
+        // Skip jika cooldown aktif
+        if (questionCheckCooldown) return;
+        
+        // Set cooldown untuk mencegah multiple checks
+        questionCheckCooldown = true;
+        setTimeout(() => { questionCheckCooldown = false; }, 500);
+        
+        // Cek semua pertanyaan
+        for (const question of videoQuestions) {
+            if (answeredQuestions.has(question.question_id)) continue;
+            
+            const questionTime = Math.floor(question.time_in_seconds);
+            
+            // Periksa apakah waktu pertanyaan dalam rentang video
+            if (questionTime > videoPlayer.duration) {
+                console.warn(`⚠️ Question at ${questionTime}s exceeds video duration, skipping`);
+                answeredQuestions.add(question.question_id);
+                continue;
+            }
+            
+            if (currentTime === questionTime || 
+                (currentTime > questionTime && currentTime < questionTime + 2)) {
+                
+                console.log(`🎯 Triggering question at ${questionTime}s (current: ${currentTime}s, video duration: ${videoPlayer.duration}s)`);
+                
+                // Cek apakah pertanyaan sudah pernah muncul di detik ini
+                if (questionLastTriggerTime === currentTime) {
+                    console.log('⚠️ Question already triggered this second, skipping');
+                    continue;
+                }
+                
+                // Tandai waktu trigger
+                questionLastTriggerTime = currentTime;
+                
+                // Tampilkan pertanyaan
+                showVideoQuestion(question);
+                break;
+            }
+        }
+    }
+    
+    function showVideoQuestion(question) {
+        console.log('🎯 Question triggered at:', question.time_in_seconds, 'seconds');
+        
+        currentQuestion = question;
+        window.isQuestionActive = true;
+        
+        // Auto pause video jika configured
+        if (autoPauseOnQuestion && videoPlayer && !videoPlayer.paused) {
+            videoPlayer.pause();
+        }
+        
+        // PERBAIKAN: Create question overlay
+        const questionHtml = `
+            <div class="video-question-overlay" id="question-${question.question_id}">
+                <div class="video-question-container">
+                    <div class="question-header">
+                        <h4>
+                            <i class="fas fa-question-circle"></i>
+                            Pertanyaan Interaktif
+                        </h4>
+                        <div class="question-time-indicator">
+                            <i class="fas fa-clock"></i>
+                            Detik ${formatTime(question.time_in_seconds)}
+                        </div>
+                    </div>
+                    
+                    <div class="question-content">
+                        <div class="question-text">
+                            ${question.question}
+                        </div>
+                        
+                        <div class="options-grid" id="options-${question.question_id}">
+                            ${question.options.map((option, index) => `
+                                <div class="option-card" 
+                                     data-index="${index}" 
+                                     onclick="window.handleQuestionAnswer(${question.question_id}, ${index})">
+                                    <div class="option-icon">
+                                        ${String.fromCharCode(65 + index)}
+                                    </div>
+                                    <div class="option-text">
+                                        ${option}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <div id="explanation-${question.question_id}" class="explanation-panel" style="display: none;">
+                            <h6><i class="fas fa-lightbulb"></i> Pembahasan:</h6>
+                            <p class="explanation-text">${question.explanation || 'Tidak ada penjelasan tambahan.'}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="question-footer">
+                        <div class="question-stats">
+                            <div class="points-badge">
+                                <i class="fas fa-star"></i>
+                                ${question.points} poin
+                            </div>
+                            <div class="question-counter">
+                                <i class="fas fa-list-ol"></i>
+                                ${answeredQuestions.size + 1}/${videoQuestions.length}
+                            </div>
+                        </div>
+                        <div class="question-actions">
+                            ${!question.required_to_continue ? 
+                                `<button class="btn btn-outline-secondary btn-sm" onclick="window.skipQuestion(${question.question_id})">
+                                    <i class="fas fa-forward me-1"></i> Lewati
+                                </button>` : ''
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('question-overlay-container').innerHTML = questionHtml;
+    }
+    
+    // PERBAIKAN: Fungsi handle jawaban yang terintegrasi
+    window.handleQuestionAnswer = async function(questionId, optionIndex) {
+        const question = videoQuestions.find(q => q.question_id === questionId);
+        if (!question) return;
+        
+        const isCorrect = optionIndex === question.correct_option;
+        
+        // Tampilkan visual feedback langsung
+        const optionsContainer = document.getElementById(`options-${questionId}`);
+        const cards = optionsContainer.querySelectorAll('.option-card');
+        
+        // Nonaktifkan semua kartu
+        cards.forEach(card => {
+            card.classList.add('disabled');
+            card.style.pointerEvents = 'none';
+        });
+        
+        // Tandai jawaban yang dipilih
+        cards[optionIndex].classList.add('selected');
+        
+        // Tampilkan jawaban yang benar
+        if (!isCorrect) {
+            cards[question.correct_option].classList.add('correct');
+            cards[optionIndex].classList.add('incorrect');
+        } else {
+            cards[optionIndex].classList.add('correct');
+        }
+        
+        // Tampilkan penjelasan
+        const explanationElement = document.getElementById(`explanation-${questionId}`);
+        if (explanationElement) {
+            explanationElement.style.display = 'block';
+        }
+        
+        // Mark as answered
+        answeredQuestions.add(questionId);
+        
+        // Tambah poin jika benar
+        if (isCorrect) {
+            totalPointsEarned += question.points;
+            showNotification(`Jawaban Benar! +${question.points} poin`, 'success', 1500);
+        } else {
+            showNotification('Jawaban Salah', 'error', 1500);
+        }
+        
+        // Update indicator
+        updateQuestionIndicator();
+        
+        // Kirim jawaban ke server
+        await saveQuestionAnswer(questionId, optionIndex, isCorrect, isCorrect ? question.points : 0);
+        
+        // Auto close setelah 3 detik dan lanjutkan video
+        setTimeout(() => {
+            closeQuestionModalAndContinue(questionId);
+        }, 3000);
+    };
+    
+    function closeQuestionModalAndContinue(questionId) {
+        const overlay = document.getElementById(`question-${questionId}`);
+        if (overlay) {
+            overlay.style.animation = 'questionSlideIn 0.4s ease-out reverse';
+            setTimeout(() => {
+                if (overlay.parentNode) {
+                    overlay.remove();
+                }
+            }, 400);
+        }
+        
+        window.isQuestionActive = false;
+        currentQuestion = null;
+        
+        // Lanjutkan video (jika tidak semua pertanyaan selesai)
+        if (videoPlayer && videoPlayer.paused && !window.isVideoCompleted) {
+            videoPlayer.play();
+        }
+        
+        // Cek jika semua pertanyaan telah dijawab
+        if (answeredQuestions.size === videoQuestions.length) {
+            showNotification('Semua pertanyaan telah dijawab!', 'success', 3000);
+        }
+    }
+    
+    window.skipQuestion = function(questionId) {
+        answeredQuestions.add(questionId);
+        closeQuestionModalAndContinue(questionId);
+        showNotification('Pertanyaan dilewati', 'warning', 1500);
+        updateQuestionIndicator();
+    };
+    
+    // ============================
+    // PLAYBACK CONTROLS - DIPERBAIKI TOTAL
     // ============================
     function togglePlayPause() {
+        if (window.isQuestionActive || window.isVideoCompleted) return;
+        
         if (videoPlayer.paused) {
-            videoPlayer.play();
+            videoPlayer.play().catch(error => {
+                console.error('Error playing video:', error);
+                showNotification('Gagal memutar video', 'error');
+            });
         } else {
             videoPlayer.pause();
         }
@@ -996,98 +2269,171 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function skipBackward() {
-        if (videoPlayer.currentTime > 10) {
-            videoPlayer.currentTime -= 10;
-        } else {
-            videoPlayer.currentTime = 0;
+        if (disableBackwardSeek) {
+            showSeekWarning('Mundur tidak diizinkan');
+            return;
         }
+        
+        const newTime = Math.max(0, videoPlayer.currentTime - 10);
+        videoPlayer.currentTime = newTime;
         showControls();
         showNotification('Mundur 10 detik', 'info', 1000);
     }
     
     function skipForward() {
-        videoPlayer.currentTime += 10;
+        if (disableForwardSeek) {
+            showSeekWarning('Maju cepat tidak diizinkan');
+            return;
+        }
+        
+        const newTime = Math.min(videoPlayer.duration, videoPlayer.currentTime + 10);
+        videoPlayer.currentTime = newTime;
         showControls();
         showNotification('Maju 10 detik', 'info', 1000);
     }
     
-    function setPlaybackRate(rate) {
-        videoPlayer.playbackRate = rate;
-        playbackRate = rate;
-        
-        // Update menu selection
-        playbackRateMenu.querySelectorAll('.playback-rate-item').forEach(item => {
-            if (parseFloat(item.dataset.rate) === rate) {
-                item.classList.add('active');
-            } else {
-                item.classList.remove('active');
-            }
-        });
-        
-        showNotification('Kecepatan: ' + rate + 'x', 'info', 1000);
-    }
-    
     // ============================
-    // PROGRESS BAR
+    // PROGRESS BAR - DIPERBAIKI TOTAL
     // ============================
-    function updateProgressBar() {
-        if (!videoPlayer.duration) return;
-        
-        const percent = (videoPlayer.currentTime / videoPlayer.duration) * 100;
-        progressBar.style.width = percent + '%';
-    }
-    
-    function seekToPosition(e) {
-        if (!videoPlayer.duration) return;
+    function handleProgressClick(e) {
+        if (!videoDurationSet || disableForwardSeek || disableBackwardSeek) return;
+        if (window.isQuestionActive || window.isVideoCompleted) return;
         
         const rect = progressContainer.getBoundingClientRect();
         const pos = (e.clientX - rect.left) / rect.width;
-        videoPlayer.currentTime = pos * videoPlayer.duration;
+        const newTime = pos * videoPlayer.duration;
+        
+        // Check restrictions
+        if (newTime > videoPlayer.currentTime && disableForwardSeek) {
+            showSeekWarning('Maju cepat tidak diizinkan');
+            return;
+        }
+        
+        if (newTime < videoPlayer.currentTime && disableBackwardSeek) {
+            showSeekWarning('Mundur tidak diizinkan');
+            return;
+        }
+        
+        videoPlayer.currentTime = newTime;
         showControls();
     }
     
     function startDraggingProgress(e) {
+        if (disableForwardSeek && disableBackwardSeek) return;
+        if (window.isQuestionActive || window.isVideoCompleted) return;
+        
+        e.preventDefault();
+        isDraggingProgress = true;
+        videoWrapper.classList.add('scaled');
+        showControls();
+    }
+    
+    function startDraggingProgressTouch(e) {
+        if (disableForwardSeek && disableBackwardSeek) return;
+        if (window.isQuestionActive || window.isVideoCompleted) return;
+        
+        e.preventDefault();
         isDraggingProgress = true;
         videoWrapper.classList.add('scaled');
         showControls();
     }
     
     function handleProgressDrag(e) {
-        if (!isDraggingProgress) return;
+        if (!isDraggingProgress || !videoDurationSet) return;
         
         e.preventDefault();
-        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-        if (!clientX) return;
-        
         const rect = progressContainer.getBoundingClientRect();
-        const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        const newTime = pos * videoPlayer.duration;
+        
+        // Update progress bar visual
         progressBar.style.width = (pos * 100) + '%';
         
         // Update time display while dragging
-        if (videoPlayer.duration) {
-            const newTime = pos * videoPlayer.duration;
-            updateTimeDisplay(newTime, videoPlayer.duration);
-        }
+        updateTimeDisplay(newTime, videoPlayer.duration);
+    }
+    
+    function handleProgressDragTouch(e) {
+        if (!isDraggingProgress || !videoDurationSet) return;
+        
+        e.preventDefault();
+        const rect = progressContainer.getBoundingClientRect();
+        const touch = e.touches[0];
+        const pos = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
+        const newTime = pos * videoPlayer.duration;
+        
+        // Update progress bar visual
+        progressBar.style.width = (pos * 100) + '%';
+        
+        // Update time display while dragging
+        updateTimeDisplay(newTime, videoPlayer.duration);
     }
     
     function stopDraggingProgress(e) {
-        if (!isDraggingProgress) return;
+        if (!isDraggingProgress || !videoDurationSet) return;
         
         isDraggingProgress = false;
         videoWrapper.classList.remove('scaled');
         
-        if (videoPlayer.duration) {
+        if (!disableForwardSeek && !disableBackwardSeek) {
             const rect = progressContainer.getBoundingClientRect();
-            const clientX = e.clientX || (e.changedTouches && e.changedTouches[0].clientX);
-            if (clientX) {
-                const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-                videoPlayer.currentTime = pos * videoPlayer.duration;
+            const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+            const newTime = pos * videoPlayer.duration;
+            
+            // Check restrictions
+            if (newTime > videoPlayer.currentTime && disableForwardSeek) {
+                showSeekWarning('Maju cepat tidak diizinkan');
+                updateProgressBar(); // Reset progress bar
+                return;
             }
+            
+            if (newTime < videoPlayer.currentTime && disableBackwardSeek) {
+                showSeekWarning('Mundur tidak diizinkan');
+                updateProgressBar(); // Reset progress bar
+                return;
+            }
+            
+            videoPlayer.currentTime = newTime;
         }
     }
     
+    function stopDraggingProgressTouch(e) {
+        if (!isDraggingProgress || !videoDurationSet) return;
+        
+        isDraggingProgress = false;
+        videoWrapper.classList.remove('scaled');
+        
+        if (!disableForwardSeek && !disableBackwardSeek) {
+            const rect = progressContainer.getBoundingClientRect();
+            const touch = e.changedTouches[0];
+            const pos = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
+            const newTime = pos * videoPlayer.duration;
+            
+            // Check restrictions
+            if (newTime > videoPlayer.currentTime && disableForwardSeek) {
+                showSeekWarning('Maju cepat tidak diizinkan');
+                updateProgressBar(); // Reset progress bar
+                return;
+            }
+            
+            if (newTime < videoPlayer.currentTime && disableBackwardSeek) {
+                showSeekWarning('Mundur tidak diizinkan');
+                updateProgressBar(); // Reset progress bar
+                return;
+            }
+            
+            videoPlayer.currentTime = newTime;
+        }
+    }
+    
+    function updateProgressBar() {
+        if (!videoDurationSet) return;
+        const percent = (videoPlayer.currentTime / videoPlayer.duration) * 100;
+        progressBar.style.width = percent + '%';
+    }
+    
     // ============================
-    // VOLUME CONTROLS
+    // VOLUME CONTROLS - DIPERBAIKI
     // ============================
     function toggleMute() {
         videoPlayer.muted = !videoPlayer.muted;
@@ -1100,7 +2446,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    function setVolume(e) {
+    function handleVolumeClick(e) {
         const rect = volumeSlider.getBoundingClientRect();
         const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
         currentVolume = pos;
@@ -1119,11 +2465,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!isDraggingVolume) return;
         
         e.preventDefault();
-        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-        if (!clientX) return;
-        
         const rect = volumeSlider.getBoundingClientRect();
-        const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
         currentVolume = pos;
         videoPlayer.volume = currentVolume;
         videoPlayer.muted = currentVolume === 0;
@@ -1140,25 +2483,22 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // ============================
-    // TIME DISPLAY
+    // TIME DISPLAY FUNCTIONS - DIPERBAIKI
     // ============================
-    function updateCurrentTimeDisplay() {
-        if (!videoPlayer.duration) return;
-        updateTimeDisplay(videoPlayer.currentTime, videoPlayer.duration);
-    }
-    
-    function updateDurationDisplay() {
-        if (!videoPlayer.duration) return;
-        updateTimeDisplay(videoPlayer.currentTime, videoPlayer.duration);
-    }
-    
     function updateTimeDisplay(current, duration) {
         currentTimeEl.textContent = formatTime(current);
-        durationTimeEl.textContent = formatTime(duration);
+        
+        // Hanya update duration jika sudah ada nilai yang valid
+        if (duration && duration > 0 && !isNaN(duration) && duration !== Infinity) {
+            durationTimeEl.textContent = formatTime(duration);
+        }
     }
     
     function formatTime(seconds) {
-        if (isNaN(seconds)) return '0:00';
+        // Handle invalid values
+        if (!seconds || isNaN(seconds) || !isFinite(seconds) || seconds <= 0) {
+            return '0:00';
+        }
         
         const hours = Math.floor(seconds / 3600);
         const minutes = Math.floor((seconds % 3600) / 60);
@@ -1178,9 +2518,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (videoPlayer.paused) {
             playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
             playPauseBtn.title = 'Play (Space)';
+            centerPlayButton.querySelector('i').className = 'fas fa-play';
         } else {
             playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
             playPauseBtn.title = 'Pause (Space)';
+            centerPlayButton.querySelector('i').className = 'fas fa-pause';
         }
     }
     
@@ -1201,19 +2543,226 @@ document.addEventListener('DOMContentLoaded', function() {
         playbackRateBtn.title = 'Kecepatan: ' + playbackRate + 'x';
     }
     
-    function updateFullscreenButton() {
-        if (isFullscreen) {
-            fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
-            fullscreenBtn.title = 'Keluar Fullscreen (F)';
-        } else {
-            fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
-            fullscreenBtn.title = 'Fullscreen (F)';
+    // ============================
+    // VIDEO COMPLETION FUNCTIONS
+    // ============================
+    function showVideoCompletionOverlay() {
+        window.isVideoCompleted = true;
+        videoCompletedOverlay.style.display = 'flex';
+        
+        // Update stats
+        if (completedQuestionsEl && earnedPointsEl) {
+            completedQuestionsEl.textContent = answeredQuestions.size;
+            earnedPointsEl.textContent = totalPointsEarned;
         }
+        
+        // Hide controls
+        hideControls();
+        centerPlayButton.style.display = 'none';
+    }
+    
+    function hideVideoCompletionOverlay() {
+        window.isVideoCompleted = false;
+        videoCompletedOverlay.style.display = 'none';
+        centerPlayButton.style.display = 'flex';
+    }
+    
+    function replayVideo() {
+        hideVideoCompletionOverlay();
+        videoPlayer.currentTime = 0;
+        videoPlayer.play();
+        showControls();
+    }
+    
+    // ============================
+    // HELPER FUNCTIONS
+    // ============================
+    function hideLoading() {
+        if (videoLoading) {
+            videoLoading.style.display = 'none';
+        }
+    }
+    
+    function showSeekWarning(message) {
+        seekWarning.textContent = message;
+        seekWarning.style.display = 'block';
+        
+        // Reset animation
+        seekWarning.style.animation = 'none';
+        setTimeout(() => {
+            seekWarning.style.animation = 'fadeInOut 2s ease';
+        }, 10);
+        
+        // Hide after animation
+        setTimeout(() => {
+            seekWarning.style.display = 'none';
+        }, 2000);
+    }
+    
+    function updateRestrictionIndicator() {
+        const restrictions = [];
+        
+        if (disableForwardSeek) restrictions.push('Tidak bisa maju');
+        if (disableBackwardSeek) restrictions.push('Tidak bisa mundur');
+        
+        if (restrictions.length > 0) {
+            restrictionIndicator.style.display = 'flex';
+            restrictionText.textContent = restrictions.join(', ');
+        } else {
+            restrictionIndicator.style.display = 'none';
+        }
+    }
+    
+    function updateQuestionIndicator() {
+        if (!questionIndicator) return;
+        
+        const answeredCount = answeredQuestions.size;
+        const totalQuestions = videoQuestions.length;
+        
+        questionCountEl.textContent = `${answeredCount}/${totalQuestions}`;
+        questionPointsEl.textContent = `${totalPointsEarned} poin`;
+        
+        // Update completion stats jika overlay ada
+        if (completedQuestionsEl && earnedPointsEl) {
+            completedQuestionsEl.textContent = answeredCount;
+            earnedPointsEl.textContent = totalPointsEarned;
+        }
+        
+        // Update visual marker di progress bar jika ada
+        updateQuestionMarkers();
+    }
+    
+    function addQuestionMarkersToTimeline() {
+        if (!videoPlayer || !videoDurationSet || !hasVideoQuestions) return;
+        
+        const duration = videoPlayer.duration;
+        if (!duration || duration <= 0 || duration === Infinity) {
+            console.warn('⚠️ Cannot add markers: invalid duration');
+            return;
+        }
+        
+        console.log(`🎯 Adding question markers for duration: ${duration}s`);
+        
+        // Remove existing markers
+        const existingMarkers = document.querySelectorAll('.question-marker');
+        existingMarkers.forEach(marker => marker.remove());
+        
+        // Add new markers
+        videoQuestions.forEach(question => {
+            const markerTime = question.time_in_seconds;
+            
+            // Pastikan marker time tidak melebihi durasi video
+            if (markerTime > duration) {
+                console.warn(`⚠️ Question at ${markerTime}s exceeds video duration (${duration}s), adjusting to ${duration}s`);
+                return;
+            }
+            
+            const markerPosition = (markerTime / duration) * 100;
+            
+            const marker = document.createElement('div');
+            marker.className = `question-marker ${answeredQuestions.has(question.question_id) ? 'answered' : 'unanswered'}`;
+            marker.style.cssText = `
+                position: absolute;
+                left: ${markerPosition}%;
+                top: -2px;
+                width: 8px;
+                height: 14px;
+                background: ${answeredQuestions.has(question.question_id) ? '#4CAF50' : '#FF9800'};
+                border-radius: 4px;
+                z-index: 5;
+                cursor: ${answeredQuestions.has(question.question_id) ? 'default' : 'pointer'};
+                transition: all 0.3s ease;
+                transform: translateX(-50%);
+            `;
+            
+            marker.title = `Pertanyaan di ${formatTime(markerTime)} - ${answeredQuestions.has(question.question_id) ? 'Sudah dijawab' : 'Belum dijawab'}`;
+            
+            if (!answeredQuestions.has(question.question_id)) {
+                marker.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    videoPlayer.currentTime = markerTime;
+                    showControls();
+                });
+            }
+            
+            progressContainer.appendChild(marker);
+        });
+        
+        console.log(`✅ Added ${videoQuestions.length} question markers`);
+    }
+    
+    function updateQuestionMarkers() {
+        const markers = document.querySelectorAll('.question-marker');
+        markers.forEach((marker, index) => {
+            if (index < videoQuestions.length) {
+                const question = videoQuestions[index];
+                marker.style.background = answeredQuestions.has(question.question_id) ? '#4CAF50' : '#FF9800';
+                marker.className = `question-marker ${answeredQuestions.has(question.question_id) ? 'answered' : 'unanswered'}`;
+                marker.title = `Pertanyaan di ${formatTime(question.time_in_seconds)} - ${answeredQuestions.has(question.question_id) ? 'Sudah dijawab' : 'Belum dijawab'}`;
+            }
+        });
+    }
+    
+    // ============================
+    // CONTROLS VISIBILITY
+    // ============================
+    function showControls() {
+        if (window.isQuestionActive || window.isVideoCompleted) return;
+        
+        controlsVisible = true;
+        videoWrapper.classList.add('controls-visible');
+        videoWrapper.classList.remove('inactive');
+        
+        // Show center play button only when paused
+        if (videoPlayer.paused) {
+            centerPlayButton.style.opacity = '1';
+        }
+        
+        clearTimeout(inactivityTimer);
+        startInactivityTimer();
+    }
+    
+    function startInactivityTimer() {
+        clearTimeout(inactivityTimer);
+        inactivityTimer = setTimeout(() => {
+            if (!videoPlayer.paused && !window.isQuestionActive && !window.isVideoCompleted) {
+                hideControls();
+            }
+        }, 3000);
+    }
+    
+    function hideControls() {
+        controlsVisible = false;
+        videoWrapper.classList.remove('controls-visible');
+        videoWrapper.classList.add('inactive');
+        
+        // Always hide center button when inactive
+        centerPlayButton.style.opacity = '0';
+        
+        // Hide menus
+        playbackRateMenu.classList.remove('show');
+        settingsMenu.classList.remove('show');
     }
     
     // ============================
     // MENUS
     // ============================
+    function setPlaybackRate(rate) {
+        videoPlayer.playbackRate = rate;
+        playbackRate = rate;
+        
+        // Update menu selection
+        playbackRateMenu.querySelectorAll('.playback-rate-item').forEach(item => {
+            if (parseFloat(item.dataset.rate) === rate) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
+        
+        showNotification('Kecepatan: ' + rate + 'x', 'info', 1000);
+    }
+    
     function togglePlaybackRateMenu() {
         playbackRateMenu.classList.toggle('show');
         settingsMenu.classList.remove('show');
@@ -1225,17 +2774,6 @@ document.addEventListener('DOMContentLoaded', function() {
         playbackRateMenu.classList.remove('show');
         showControls();
     }
-    
-    // Close menus when clicking outside
-    document.addEventListener('click', function(e) {
-        if (!playbackRateBtn.contains(e.target) && !playbackRateMenu.contains(e.target)) {
-            playbackRateMenu.classList.remove('show');
-        }
-        
-        if (!settingsBtn.contains(e.target) && !settingsMenu.contains(e.target)) {
-            settingsMenu.classList.remove('show');
-        }
-    });
     
     // ============================
     // FULLSCREEN
@@ -1280,52 +2818,16 @@ document.addEventListener('DOMContentLoaded', function() {
                          document.webkitFullscreenElement ||
                          document.mozFullScreenElement ||
                          document.msFullscreenElement);
-        updateFullscreenButton();
         
         if (isFullscreen) {
+            fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
+            fullscreenBtn.title = 'Keluar Fullscreen (F)';
             videoWrapper.classList.add('fullscreen');
         } else {
+            fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
+            fullscreenBtn.title = 'Fullscreen (F)';
             videoWrapper.classList.remove('fullscreen');
         }
-    }
-    
-    // ============================
-    // CONTROLS VISIBILITY
-    // ============================
-    function showControls() {
-        controlsVisible = true;
-        videoWrapper.classList.add('controls-visible');
-        videoWrapper.classList.remove('inactive');
-        
-        // Show center play button only when paused
-        if (videoPlayer.paused) {
-            centerPlayButton.style.opacity = '1';
-        }
-        
-        clearTimeout(inactivityTimer);
-        startInactivityTimer();
-    }
-    
-    function startInactivityTimer() {
-        clearTimeout(inactivityTimer);
-        inactivityTimer = setTimeout(() => {
-            if (!videoPlayer.paused) {
-                hideControls();
-            }
-        }, 3000);
-    }
-    
-    function hideControls() {
-        controlsVisible = false;
-        videoWrapper.classList.remove('controls-visible');
-        videoWrapper.classList.add('inactive');
-        
-        // Always hide center button when inactive
-        centerPlayButton.style.opacity = '0';
-        
-        // Hide menus
-        playbackRateMenu.classList.remove('show');
-        settingsMenu.classList.remove('show');
     }
     
     // ============================
@@ -1334,6 +2836,20 @@ document.addEventListener('DOMContentLoaded', function() {
     function handleKeyboardShortcuts(e) {
         // Ignore if user is typing in input
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        
+        // Handle question shortcuts first
+        if (window.isQuestionActive && currentQuestion) {
+            handleQuestionShortcuts(e);
+            return;
+        }
+        
+        // Handle video completion overlay
+        if (window.isVideoCompleted) {
+            if (e.key === 'Escape') {
+                hideVideoCompletionOverlay();
+            }
+            return;
+        }
         
         switch(e.key.toLowerCase()) {
             case ' ':
@@ -1376,42 +2892,29 @@ document.addEventListener('DOMContentLoaded', function() {
                     setPlaybackRate(videoPlayer.playbackRate - 0.25);
                 }
                 break;
-                
-            case '0':
-            case 'home':
-                e.preventDefault();
-                videoPlayer.currentTime = 0;
-                showControls();
-                break;
-                
-            case 'end':
-                e.preventDefault();
-                videoPlayer.currentTime = videoPlayer.duration;
-                showControls();
-                break;
-                
-            case 'l':
-                e.preventDefault();
-                skipForward();
-                break;
-                
-            case 'j':
-                e.preventDefault();
-                skipBackward();
-                break;
         }
     }
     
-    // ============================
-    // HELPER FUNCTIONS
-    // ============================
-    function hideLoading() {
-        if (videoLoading) {
-            videoLoading.style.display = 'none';
+    function handleQuestionShortcuts(e) {
+        if (!currentQuestion) return;
+        
+        const key = e.key.toUpperCase();
+        
+        // A, B, C, D untuk memilih jawaban
+        if (['A', 'B', 'C', 'D'].includes(key)) {
+            const optionIndex = key.charCodeAt(0) - 65;
+            if (optionIndex < currentQuestion.options.length) {
+                window.handleQuestionAnswer(currentQuestion.question_id, optionIndex);
+            }
+        }
+        
+        // Escape untuk skip (jika diizinkan)
+        if (e.key === 'Escape' && !currentQuestion.required_to_continue) {
+            window.skipQuestion(currentQuestion.question_id);
         }
     }
     
-    function showNotification(message, type = 'info', duration = 2000) {
+    window.showNotification = function(message, type = 'info', duration = 2000) {
         // Remove existing notification
         const existingNotif = document.querySelector('.video-notification');
         if (existingNotif) {
@@ -1420,29 +2923,33 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Create new notification
         const notif = document.createElement('div');
-        notif.className = `video-notification alert alert-${type}`;
+        notif.className = `video-notification`;
         notif.innerHTML = `
             <div class="d-flex align-items-center">
-                <i class="fas fa-info-circle me-2"></i>
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} me-2"></i>
                 <span>${message}</span>
             </div>
         `;
         
         // Style notification
+        const bgColor = type === 'info' ? '#2196F3' : type === 'success' ? '#4CAF50' : '#FF9800';
         notif.style.cssText = `
             position: fixed;
             bottom: 100px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 10000;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border-radius: 8px;
-            background: ${type === 'info' ? '#2196F3' : type === 'success' ? '#4CAF50' : '#FF9800'};
+            background: ${bgColor};
             color: white;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            animation: slideUp 0.3s ease;
+            animation: notificationSlide ${duration}ms ease;
             max-width: 80%;
             text-align: center;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         `;
         
         document.body.appendChild(notif);
@@ -1450,49 +2957,96 @@ document.addEventListener('DOMContentLoaded', function() {
         // Remove after duration
         setTimeout(() => {
             if (notif.parentNode) {
-                notif.style.opacity = '0';
-                notif.style.transform = 'translateX(-50%) translateY(-20px)';
-                notif.style.transition = 'all 0.3s ease';
-                
-                setTimeout(() => {
-                    if (notif.parentNode) {
-                        notif.parentNode.removeChild(notif);
-                    }
-                }, 300);
+                notif.remove();
             }
         }, duration);
+    };
+    
+    async function saveQuestionAnswer(questionId, answer, isCorrect, points) {
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            
+            const response = await fetch(`/mitra/kursus/{{ $kursus->id }}/material/{{ $material->id }}/video-question`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    question_id: questionId,
+                    answer: answer,
+                    is_correct: isCorrect,
+                    points: isCorrect ? points : 0,
+                    time_answered: new Date().toISOString()
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                console.log('✅ Answer saved:', data);
+            } else {
+                console.error('❌ Failed to save answer:', data);
+            }
+        } catch (error) {
+            console.error('❌ Error saving answer:', error);
+        }
     }
     
-    // ============================
-    // GLOBAL FUNCTIONS (untuk inline event handlers)
-    // ============================
-    window.handleVideoLoadedSuccess = function() {
-        console.log('✅ Video loaded successfully!');
-        hideLoading();
-        showControls();
-    };
-    
-    window.handleVideoPlayerError = function(event) {
-        console.error('❌ Video error:', event);
-        hideLoading();
-        showNotification('Gagal memuat video', 'error');
-    };
-    
-    // Add CSS for notification animation
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateX(-50%) translateY(20px);
+    async function markVideoAsCompleted() {
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            
+            const response = await fetch(`/mitra/kursus/{{ $kursus->id }}/material/{{ $material->id }}/complete-video`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    questions_answered: Array.from(answeredQuestions),
+                    total_points: totalPointsEarned,
+                    completed_at: new Date().toISOString()
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                console.log('✅ Video marked as completed');
+                if (!window.isVideoCompleted) {
+                    showNotification('Video berhasil diselesaikan!', 'success', 3000);
+                }
             }
-            to {
-                opacity: 1;
-                transform: translateX(-50%) translateY(0);
-            }
+        } catch (error) {
+            console.error('❌ Error marking video as completed:', error);
         }
-    `;
-    document.head.appendChild(style);
+    }
+    
+    // Initialize the player
+    initVideoPlayer();
+    
+    // Log final setup
+    setTimeout(() => {
+        console.log('🎬 Player Setup Complete!', {
+            materialId: {{ $material->id }},
+            durationSet: videoDurationSet,
+            restrictions: {
+                forward: disableForwardSeek,
+                backward: disableBackwardSeek,
+                rightClick: disableRightClick
+            },
+            allowSkip: allowSkip,
+            requireCompletion: requireCompletion,
+            videoQuestions: {
+                count: videoQuestions.length,
+                times: videoQuestions.map(q => q.time_in_seconds),
+                autoPause: autoPauseOnQuestion
+            }
+        });
+    }, 1000);
 });
 </script>
 

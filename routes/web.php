@@ -360,8 +360,6 @@ Route::get('/sertifikat/{id_kredensial}/pdf',
     [App\Http\Controllers\Mitra\CertificateController::class, 'publicPdf']
 )->name('certificates.publicPdf');
 
-
-
 Route::middleware(['auth', 'role:mitra'])
     ->prefix('mitra')
     ->name('mitra.')

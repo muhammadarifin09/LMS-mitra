@@ -157,48 +157,6 @@ class Materials extends Model
     }
 
     /**
-     * Mutator untuk player_config dengan validasi JSON
-     */
-    protected function playerConfig(): Attribute
-    {
-        return Attribute::make(
-            get: function ($value) {
-                if (empty($value) || $value === 'null') {
-                    return [];
-                }
-                
-                if (is_array($value)) {
-                    return $value;
-                }
-                
-                if (is_string($value)) {
-                    $decoded = json_decode($value, true);
-                    if (json_last_error() === JSON_ERROR_NONE) {
-                        return $decoded ?: [];
-                    }
-                }
-                
-                return [];
-            },
-            set: function ($value) {
-                if (empty($value)) {
-                    return null;
-                }
-                
-                if (is_array($value)) {
-                    return json_encode($value);
-                }
-                
-                if (is_string($value) && $this->isValidJson($value)) {
-                    return $value;
-                }
-                
-                return null;
-            }
-        );
-    }
-
-    /**
      * Check if string is valid JSON
      */
     private function isValidJson($string): bool
@@ -272,6 +230,11 @@ class Materials extends Model
             ->select(['id', 'material_id', 'question', 'order', 'time_in_seconds'])
             ->orderBy('order');
     }
+
+    public function hasVideoQuestions()
+{
+    return $this->videoQuestions()->exists();
+}
 
     // Helper methods sederhana
     public function getFileCount(): int
@@ -379,6 +342,51 @@ class Materials extends Model
         }
         
         return false;
+    }
+
+    public function getFilesWithUrls()
+    {
+        $files = [];
+        
+        if ($this->file_path) {
+            $fileData = is_string($this->file_path) ? json_decode($this->file_path, true) : $this->file_path;
+            
+            if (is_array($fileData)) {
+                foreach ($fileData as $path) {
+                    $files[] = [
+                        'path' => $path,
+                        'name' => basename($path),
+                        'url' => Storage::url($path)
+                    ];
+                }
+            } elseif (is_string($this->file_path)) {
+                $files[] = [
+                    'path' => $this->file_path,
+                    'name' => basename($this->file_path),
+                    'url' => Storage::url($this->file_path)
+                ];
+            }
+        }
+        
+        return $files;
+    }
+    
+    /**
+     * Get video data with URL
+     */
+    public function getVideoDataWithUrl()
+    {
+        if (!$this->video_file) {
+            return null;
+        }
+        
+        $videoData = is_string($this->video_file) ? json_decode($this->video_file, true) : $this->video_file;
+        
+        if ($videoData && isset($videoData['path'])) {
+            $videoData['url'] = Storage::url($videoData['path']);
+        }
+        
+        return $videoData;
     }
     
     /**
