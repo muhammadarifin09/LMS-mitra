@@ -347,23 +347,6 @@ if ($currentIndex !== false && $currentIndex + 1 < count($allMaterials)) {
         font-family: monospace;
         min-width: 100px;
         text-align: center;
-        transition: opacity 0.3s;
-    }
-    
-    .time-display.loading {
-        opacity: 0.5;
-    }
-    
-    .time-display.loading::after {
-        content: '...';
-        margin-left: 5px;
-        animation: dots 1.5s infinite;
-    }
-    
-    @keyframes dots {
-        0%, 20% { content: '.'; }
-        40% { content: '..'; }
-        60%, 100% { content: '...'; }
     }
     
     .volume-control {
@@ -1349,7 +1332,7 @@ if ($currentIndex !== false && $currentIndex + 1 < count($allMaterials)) {
                                     </div>
                                     
                                     <!-- Time Display -->
-                                    <div class="time-display loading" id="time-display">
+                                    <div class="time-display" id="time-display">
                                         <span id="current-time">0:00</span> / 
                                         <span id="duration-time">0:00</span>
                                     </div>
@@ -1448,7 +1431,7 @@ window.isQuestionActive = false;
 window.isVideoCompleted = false;
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Video Player Initialized - WITH FIXED DURATION');
+    console.log('🚀 Video Player Initialized - WITH FIXED CONTROLS');
     
     // ============================
     // ELEMENTS
@@ -1545,22 +1528,12 @@ document.addEventListener('DOMContentLoaded', function() {
     let totalPointsEarned = 0;
     let questionLastTriggerTime = 0;
     let questionCheckCooldown = false;
-    let videoDurationRetrieved = false;
     
     // ============================
     // INITIALIZATION - DIPERBAIKI
     // ============================
     function initVideoPlayer() {
         console.log('🎬 Initializing video player...');
-        
-        // Reset state
-        videoDurationSet = false;
-        videoDurationRetrieved = false;
-        
-        // Set initial time display dengan loading state
-        currentTimeEl.textContent = '0:00';
-        durationTimeEl.textContent = '0:00';
-        timeDisplay.classList.add('loading');
         
         // Hide center play button initially
         centerPlayButton.style.display = 'none';
@@ -1572,7 +1545,6 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             console.error('❌ No video player element found!');
             hideLoading();
-            timeDisplay.classList.remove('loading');
         }
         
         // Update restriction indicator
@@ -1590,68 +1562,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (replayVideoBtn) {
             replayVideoBtn.addEventListener('click', replayVideo);
         }
-        
-        // Force duration check setelah beberapa saat
-        setTimeout(() => {
-            if (!videoDurationSet && videoPlayer && videoPlayer.readyState >= 1) {
-                console.log('🔄 Forcing duration check...');
-                handleDurationChange();
-            }
-        }, 2000);
     }
     
-    // ============================
-    // FUNGSI UNTUK MENDAPATKAN DURASI VIDEO YANG AKURAT
-    // ============================
-    function getVideoDuration() {
-        return new Promise((resolve) => {
-            console.log('🔍 Getting video duration...');
-            
-            // Coba ambil dari video element langsung
-            if (videoPlayer.duration && !isNaN(videoPlayer.duration) && videoPlayer.duration > 0 && videoPlayer.duration !== Infinity) {
-                console.log('✅ Duration from video element:', videoPlayer.duration);
-                resolve(videoPlayer.duration);
-                return;
-            }
-            
-            // Jika tidak ada, coba dari event loadedmetadata
-            const onMetadataLoaded = () => {
-                setTimeout(() => {
-                    if (videoPlayer.duration && videoPlayer.duration > 0 && videoPlayer.duration !== Infinity) {
-                        console.log('✅ Duration from loadedmetadata:', videoPlayer.duration);
-                        videoPlayer.removeEventListener('loadedmetadata', onMetadataLoaded);
-                        resolve(videoPlayer.duration);
-                    }
-                }, 300);
-            };
-            
-            // Cek apakah sudah ada event listener
-            if (videoPlayer.readyState >= 1) {
-                onMetadataLoaded();
-            } else {
-                videoPlayer.addEventListener('loadedmetadata', onMetadataLoaded, { once: true });
-            }
-            
-            // Fallback timeout jika tidak dapat durasi
-            setTimeout(() => {
-                if (!videoDurationRetrieved) {
-                    console.warn('⚠️ Could not get duration, using estimation');
-                    
-                    // Coba estimasi dari material duration
-                    const materialDuration = {{ $material->duration ?: 600 }};
-                    console.log('📊 Using material duration:', materialDuration, 'seconds');
-                    
-                    videoPlayer.removeEventListener('loadedmetadata', onMetadataLoaded);
-                    resolve(materialDuration);
-                }
-            }, 5000);
-        });
-    }
-    
-    // ============================
-    // SETUP VIDEO PLAYER
-    // ============================
-    async function setupLocalVideoPlayer() {
+    function setupLocalVideoPlayer() {
         console.log('🔧 Setting up local video player...');
         
         // Set initial volume
@@ -1703,36 +1616,6 @@ document.addEventListener('DOMContentLoaded', function() {
         videoPlayer.addEventListener('error', handleVideoError);
         videoPlayer.addEventListener('seeking', handleSeeking);
         videoPlayer.addEventListener('seeked', handleSeeked);
-        
-        // EVENT BARU: untuk mendeteksi perubahan durasi
-        videoPlayer.addEventListener('durationchange', handleDurationChange);
-        
-        // ============================
-        // DAPATKAN DURASI VIDEO YANG AKURAT
-        // ============================
-        try {
-            const videoDuration = await getVideoDuration();
-            console.log('🎯 Final video duration:', videoDuration, 'seconds');
-            
-            // Tampilkan durasi yang akurat
-            durationTimeEl.textContent = formatTime(videoDuration);
-            videoDurationSet = true;
-            videoDurationRetrieved = true;
-            
-            // Update question markers jika ada
-            if (hasVideoQuestions) {
-                setTimeout(() => {
-                    addQuestionMarkersToTimeline();
-                }, 500);
-            }
-            
-            // Hapus loading state
-            timeDisplay.classList.remove('loading');
-            
-        } catch (error) {
-            console.error('❌ Error getting video duration:', error);
-            timeDisplay.classList.remove('loading');
-        }
         
         // ============================
         // CONTROL BUTTON EVENTS - DIPERBAIKI
@@ -1832,73 +1715,34 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Just handle loading state
         hideLoading();
-        timeDisplay.classList.remove('loading');
     }
     
     // ============================
     // VIDEO EVENT HANDLERS - DIPERBAIKI
     // ============================
     function handleVideoMetadata() {
-        console.log('📊 Video metadata loaded - Duration:', videoPlayer.duration);
+    console.log('📊 Video metadata loaded');
+    
+    // SET DURASI TOTAL SEKALI SAJA
+    if (videoPlayer.duration && !videoDurationSet) {
+        const totalDuration = formatTime(videoPlayer.duration);
+        durationTimeEl.textContent = totalDuration;
+        videoDurationSet = true;
         
-        // Check if duration is valid
-        if (videoPlayer.duration && !isNaN(videoPlayer.duration) && videoPlayer.duration > 0 && videoPlayer.duration !== Infinity) {
-            // Delay sedikit untuk memastikan duration benar-benar ready
-            setTimeout(() => {
-                const actualDuration = videoPlayer.duration;
-                console.log('🎯 Actual video duration from metadata:', actualDuration, 'seconds');
-                
-                // Format dan tampilkan duration
-                const totalDuration = formatTime(actualDuration);
-                durationTimeEl.textContent = totalDuration;
-                videoDurationSet = true;
-                videoDurationRetrieved = true;
-                
-                // Hapus loading state
-                timeDisplay.classList.remove('loading');
-                
-                // Update progress bar markers jika ada pertanyaan
-                if (hasVideoQuestions) {
-                    addQuestionMarkersToTimeline();
-                }
-                
-                // Update waktu saat ini
-                currentTimeEl.textContent = formatTime(videoPlayer.currentTime);
-                
-                console.log('✅ Duration displayed:', totalDuration);
-            }, 300);
-        } else {
-            // Jika duration masih 0, coba lagi nanti
-            console.warn('⚠️ Duration not ready yet from metadata, retrying...');
-            setTimeout(handleVideoMetadata, 500);
-        }
+        console.log('🎯 Duration initialized:', {
+            seconds: videoPlayer.duration,
+            formatted: totalDuration
+        });
     }
     
-    function handleDurationChange() {
-        console.log('⏱️ Duration changed event:', videoPlayer.duration);
-        
-        if (videoPlayer.duration && !isNaN(videoPlayer.duration) && videoPlayer.duration > 0 && videoPlayer.duration !== Infinity) {
-            const actualDuration = formatTime(videoPlayer.duration);
-            durationTimeEl.textContent = actualDuration;
-            videoDurationSet = true;
-            videoDurationRetrieved = true;
-            
-            // Hapus loading state
-            timeDisplay.classList.remove('loading');
-            
-            console.log('✅ Duration updated to:', actualDuration);
-            
-            // Update progress jika sudah ada
-            if (!isDraggingProgress) {
-                updateProgressBar();
-            }
-            
-            // Update question markers
-            if (hasVideoQuestions) {
-                addQuestionMarkersToTimeline();
-            }
-        }
+    // Update waktu saat ini
+    currentTimeEl.textContent = formatTime(videoPlayer.currentTime);
+    
+    // Add question markers jika ada
+    if (hasVideoQuestions && videoPlayer.duration) {
+        addQuestionMarkersToTimeline();
     }
+}
     
     function handleVideoLoaded() {
         console.log('✅ Video data loaded');
@@ -1917,29 +1761,22 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function handleTimeUpdate() {
-        // Periksa apakah durasi sudah siap
-        if (!videoDurationSet && videoPlayer.readyState >= 2) {
-            handleDurationChange();
-            return;
-        }
-        
-        if (!videoPlayer.duration || videoPlayer.duration <= 0) {
-            return;
-        }
-        
-        const currentTime = videoPlayer.currentTime;
-        previousTime = currentTime;
-        
-        if (!isDraggingProgress) {
-            updateProgressBar();
-            currentTimeEl.textContent = formatTime(currentTime);
-        }
-        
-        // Cek pertanyaan
-        if (hasVideoQuestions && !window.isQuestionActive && !isDraggingProgress && !videoPlayer.seeking) {
-            checkForVideoQuestionsPrecise();
-        }
+    if (!videoPlayer.duration) return;
+    
+    const currentTime = videoPlayer.currentTime;
+    previousTime = currentTime;
+    
+    if (!isDraggingProgress) {
+        updateProgressBar();
+        // HANYA update current time
+        currentTimeEl.textContent = formatTime(currentTime);
     }
+    
+    // Cek pertanyaan
+    if (hasVideoQuestions && !window.isQuestionActive && !isDraggingProgress && !videoPlayer.seeking) {
+        checkForVideoQuestionsPrecise();
+    }
+}
     
     function handleSeeking() {
         console.log('⏩ Seeking to:', videoPlayer.currentTime);
@@ -1998,14 +1835,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function handleVideoError(e) {
-        console.error('❌ Video error:', e, videoPlayer.error);
+        console.error('❌ Video error:', e);
         hideLoading();
         showNotification('Error memutar video', 'error');
-        
-        // Reset duration display
-        durationTimeEl.textContent = '0:00';
-        videoDurationSet = false;
-        timeDisplay.classList.remove('loading');
     }
     
     function handleVolumeChange() {
@@ -2032,14 +1864,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update question indicator
         updateQuestionIndicator();
         
-        // Add question markers to timeline setelah durasi siap
-        if (videoDurationSet) {
-            addQuestionMarkersToTimeline();
+        // Add question markers to timeline
+        if (videoPlayer && videoPlayer.duration) {
+            setTimeout(addQuestionMarkersToTimeline, 1000);
         }
     }
     
     function checkForVideoQuestionsPrecise() {
-        if (!videoPlayer || !videoDurationSet || window.isQuestionActive || answeredQuestions.size >= videoQuestions.length) return;
+        if (!videoPlayer || window.isQuestionActive || answeredQuestions.size >= videoQuestions.length) return;
         
         const currentTime = Math.floor(videoPlayer.currentTime);
         
@@ -2056,17 +1888,10 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const questionTime = Math.floor(question.time_in_seconds);
             
-            // Periksa apakah waktu pertanyaan dalam rentang video
-            if (questionTime > videoPlayer.duration) {
-                console.warn(`⚠️ Question at ${questionTime}s exceeds video duration, skipping`);
-                answeredQuestions.add(question.question_id);
-                continue;
-            }
-            
             if (currentTime === questionTime || 
                 (currentTime > questionTime && currentTime < questionTime + 2)) {
                 
-                console.log(`🎯 Triggering question at ${questionTime}s (current: ${currentTime}s, video duration: ${videoPlayer.duration}s)`);
+                console.log(`🎯 Triggering question at ${questionTime}s (current: ${currentTime}s)`);
                 
                 // Cek apakah pertanyaan sudah pernah muncul di detik ini
                 if (questionLastTriggerTime === currentTime) {
@@ -2296,7 +2121,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // PROGRESS BAR - DIPERBAIKI TOTAL
     // ============================
     function handleProgressClick(e) {
-        if (!videoDurationSet || disableForwardSeek || disableBackwardSeek) return;
+        if (!videoPlayer.duration || disableForwardSeek || disableBackwardSeek) return;
         if (window.isQuestionActive || window.isVideoCompleted) return;
         
         const rect = progressContainer.getBoundingClientRect();
@@ -2339,7 +2164,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function handleProgressDrag(e) {
-        if (!isDraggingProgress || !videoDurationSet) return;
+        if (!isDraggingProgress) return;
         
         e.preventDefault();
         const rect = progressContainer.getBoundingClientRect();
@@ -2354,7 +2179,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function handleProgressDragTouch(e) {
-        if (!isDraggingProgress || !videoDurationSet) return;
+        if (!isDraggingProgress) return;
         
         e.preventDefault();
         const rect = progressContainer.getBoundingClientRect();
@@ -2370,12 +2195,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function stopDraggingProgress(e) {
-        if (!isDraggingProgress || !videoDurationSet) return;
+        if (!isDraggingProgress) return;
         
         isDraggingProgress = false;
         videoWrapper.classList.remove('scaled');
         
-        if (!disableForwardSeek && !disableBackwardSeek) {
+        if (videoPlayer.duration && !disableForwardSeek && !disableBackwardSeek) {
             const rect = progressContainer.getBoundingClientRect();
             const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
             const newTime = pos * videoPlayer.duration;
@@ -2398,12 +2223,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function stopDraggingProgressTouch(e) {
-        if (!isDraggingProgress || !videoDurationSet) return;
+        if (!isDraggingProgress) return;
         
         isDraggingProgress = false;
         videoWrapper.classList.remove('scaled');
         
-        if (!disableForwardSeek && !disableBackwardSeek) {
+        if (videoPlayer.duration && !disableForwardSeek && !disableBackwardSeek) {
             const rect = progressContainer.getBoundingClientRect();
             const touch = e.changedTouches[0];
             const pos = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
@@ -2427,10 +2252,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function updateProgressBar() {
-        if (!videoDurationSet) return;
-        const percent = (videoPlayer.currentTime / videoPlayer.duration) * 100;
-        progressBar.style.width = percent + '%';
-    }
+    if (!videoPlayer.duration) return;
+    const percent = (videoPlayer.currentTime / videoPlayer.duration) * 100;
+    progressBar.style.width = percent + '%';
+}
     
     // ============================
     // VOLUME CONTROLS - DIPERBAIKI
@@ -2483,33 +2308,36 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // ============================
-    // TIME DISPLAY FUNCTIONS - DIPERBAIKI
+    // TIME DISPLAY FUNCTIONS
     // ============================
+    function updateCurrentTimeDisplay() {
+        if (!videoPlayer.duration) return;
+        updateTimeDisplay(videoPlayer.currentTime, videoPlayer.duration);
+    }
+    
+    function updateDurationDisplay() {
+        if (!videoPlayer.duration) return;
+        updateTimeDisplay(videoPlayer.currentTime, videoPlayer.duration);
+    }
+    
     function updateTimeDisplay(current, duration) {
         currentTimeEl.textContent = formatTime(current);
-        
-        // Hanya update duration jika sudah ada nilai yang valid
-        if (duration && duration > 0 && !isNaN(duration) && duration !== Infinity) {
-            durationTimeEl.textContent = formatTime(duration);
-        }
+        durationTimeEl.textContent = formatTime(duration);
     }
     
     function formatTime(seconds) {
-        // Handle invalid values
-        if (!seconds || isNaN(seconds) || !isFinite(seconds) || seconds <= 0) {
-            return '0:00';
-        }
-        
-        const hours = Math.floor(seconds / 3600);
-        const minutes = Math.floor((seconds % 3600) / 60);
-        const secs = Math.floor(seconds % 60);
-        
-        if (hours > 0) {
-            return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-        } else {
-            return `${minutes}:${secs.toString().padStart(2, '0')}`;
-        }
+    if (isNaN(seconds)) return '0:00';
+    
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    
+    if (hours > 0) {
+        return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    } else {
+        return `${minutes}:${secs.toString().padStart(2, '0')}`;
     }
+}
     
     // ============================
     // UI UPDATES
@@ -2633,15 +2461,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function addQuestionMarkersToTimeline() {
-        if (!videoPlayer || !videoDurationSet || !hasVideoQuestions) return;
-        
-        const duration = videoPlayer.duration;
-        if (!duration || duration <= 0 || duration === Infinity) {
-            console.warn('⚠️ Cannot add markers: invalid duration');
-            return;
-        }
-        
-        console.log(`🎯 Adding question markers for duration: ${duration}s`);
+        if (!videoPlayer || !videoPlayer.duration || !hasVideoQuestions) return;
         
         // Remove existing markers
         const existingMarkers = document.querySelectorAll('.question-marker');
@@ -2650,14 +2470,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add new markers
         videoQuestions.forEach(question => {
             const markerTime = question.time_in_seconds;
-            
-            // Pastikan marker time tidak melebihi durasi video
-            if (markerTime > duration) {
-                console.warn(`⚠️ Question at ${markerTime}s exceeds video duration (${duration}s), adjusting to ${duration}s`);
-                return;
-            }
-            
-            const markerPosition = (markerTime / duration) * 100;
+            const markerPosition = (markerTime / videoPlayer.duration) * 100;
             
             const marker = document.createElement('div');
             marker.className = `question-marker ${answeredQuestions.has(question.question_id) ? 'answered' : 'unanswered'}`;
@@ -2670,25 +2483,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 background: ${answeredQuestions.has(question.question_id) ? '#4CAF50' : '#FF9800'};
                 border-radius: 4px;
                 z-index: 5;
-                cursor: ${answeredQuestions.has(question.question_id) ? 'default' : 'pointer'};
+                cursor: pointer;
                 transition: all 0.3s ease;
                 transform: translateX(-50%);
             `;
-            
             marker.title = `Pertanyaan di ${formatTime(markerTime)} - ${answeredQuestions.has(question.question_id) ? 'Sudah dijawab' : 'Belum dijawab'}`;
-            
-            if (!answeredQuestions.has(question.question_id)) {
-                marker.addEventListener('click', (e) => {
-                    e.stopPropagation();
+            marker.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // Hanya bisa klik jika belum dijawab
+                if (!answeredQuestions.has(question.question_id)) {
                     videoPlayer.currentTime = markerTime;
                     showControls();
-                });
-            }
+                }
+            });
             
             progressContainer.appendChild(marker);
         });
-        
-        console.log(`✅ Added ${videoQuestions.length} question markers`);
     }
     
     function updateQuestionMarkers() {
@@ -3032,7 +2842,6 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         console.log('🎬 Player Setup Complete!', {
             materialId: {{ $material->id }},
-            durationSet: videoDurationSet,
             restrictions: {
                 forward: disableForwardSeek,
                 backward: disableBackwardSeek,
