@@ -467,6 +467,33 @@
                             <input type="text" name="posisi_daftar" class="form-control" value="{{ old('posisi_daftar', $biodata->posisi_daftar) }}">
                         </div>
                     </div>
+
+                    <!-- Foto Profil Section -->
+                    <div class="form-group form-group-with-image">
+                        <label for="foto_profil" class="form-label">Foto Profil</label>
+
+                        <input type="file" class="form-control" id="foto_profil" name="foto_profil" 
+                            accept="image/*" onchange="previewImage(this)">
+
+                        <div class="form-text">
+                            Klik choose file untuk mengubah foto. Format: JPG, PNG, GIF. Maksimal 2MB
+                        </div>
+
+                        <div class="image-preview-container">
+                            <div class="image-preview" id="imagePreview">
+                                <img 
+                                    src="{{ $biodata->foto_profil ? asset('storage/' . $biodata->foto_profil) : asset('img/default-avatar.png') }}" 
+                                    alt="Preview Foto Profil"
+                                    style="max-height: 150px;"
+                                >
+                            </div>
+                        </div>
+
+                        @error('foto_profil')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+
                 </div>
 
 

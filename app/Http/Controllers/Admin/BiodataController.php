@@ -162,6 +162,13 @@ class BiodataController extends Controller
 
         $biodata->update($updateData);
 
+        // Sinkronkan nama ke tabel users
+        M_User::where('id', $biodata->user_id)
+            ->update([
+                'nama' => $request->nama_lengkap
+            ]);
+
+
         return redirect()->route('admin.biodata.index')->with('success', 'Biodata berhasil diperbarui!');
     }
 
