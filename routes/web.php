@@ -315,7 +315,6 @@ Route::post(
 
 Route::middleware(['auth'])->prefix('sertifikat')->name('sertifikat.')->group(function () {
     Route::get('/', [CertificateController::class, 'index'])->name('index');
-    Route::get('/{certificate}', [CertificateController::class, 'show'])->name('show');
     Route::get('/{certificate}/unduh', [CertificateController::class, 'download'])->name('download');
 });
 
@@ -329,7 +328,6 @@ Route::middleware(['auth'])->prefix('sertifikat')->name('sertifikat.')->group(fu
 
 Route::middleware(['auth'])->prefix('dashboard/sertifikat')->name('sertifikat.')->group(function () {
     Route::get('/', [CertificateController::class, 'index'])->name('index');
-    Route::get('/{certificate}', [CertificateController::class, 'show'])->name('show');
     Route::get('/{certificate}/unduh', [CertificateController::class, 'download'])->name('download');
 });
 
