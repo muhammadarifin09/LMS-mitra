@@ -368,57 +368,57 @@ public function exportKursusPdfRingkas(Kursus $kursus)
     return $pdf->download($fileName);
 }
 
-     public function exportKursusPdfDetail(Kursus $kursus)
-{
-    $kursus->load(['enrollments.user', 'materials']);
+    public function exportKursusPdfDetail(Kursus $kursus)
+    {
+        $kursus->load(['enrollments.user', 'materials']);
 
-    $pesertaData = [];
-    foreach ($kursus->enrollments as $enrollment) {
-        $user = $enrollment->user;
+        $pesertaData = [];
+        foreach ($kursus->enrollments as $enrollment) {
+            $user = $enrollment->user;
 
-        $totalMaterials = $kursus->materials->where('is_active', true)->count();
-        $completedMaterials = $this->hitungMateriSelesai($user->id, $kursus);
+            $totalMaterials = $kursus->materials->where('is_active', true)->count();
+            $completedMaterials = $this->hitungMateriSelesai($user->id, $kursus);
 
-        $progressPercentage = $totalMaterials > 0
-            ? round(($completedMaterials / $totalMaterials) * 100)
-            : 0;
+            $progressPercentage = $totalMaterials > 0
+                ? round(($completedMaterials / $totalMaterials) * 100)
+                : 0;
 
-        $pesertaData[] = [
-            'user' => $user,
-            'enrollment' => $enrollment,
-            'progress_percentage' => $progressPercentage,
-            'completed_materials' => $completedMaterials,
-            'total_materials' => $totalMaterials,
-            'nilai' => $this->hitungNilai($user->id, $kursus),
-        ];
+            $pesertaData[] = [
+                'user' => $user,
+                'enrollment' => $enrollment,
+                'progress_percentage' => $progressPercentage,
+                'completed_materials' => $completedMaterials,
+                'total_materials' => $totalMaterials,
+                'nilai' => $this->hitungNilai($user->id, $kursus),
+            ];
+        }
+
+        $totalProgress = collect($pesertaData)->avg('progress_percentage');
+        $totalNilai = collect($pesertaData)->avg('nilai');
+        $pesertaSelesai = collect($pesertaData)
+            ->where('progress_percentage', 100)
+            ->count();
+
+        $fileName = 'detail-kursus-' . Str::slug($kursus->judul_kursus) . '-' . date('Y-m-d') . '.pdf';
+
+        $pdf = Pdf::loadView(
+            'laporan.admin.kursus.pdf-detail',
+            compact(
+                'kursus',
+                'pesertaData',
+                'totalProgress',
+                'totalNilai',
+                'pesertaSelesai'
+            )
+        )->setPaper('A4', 'portrait')
+        ->setOptions([
+            'defaultFont' => 'DejaVu Sans',
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => true,
+        ]);
+
+        return $pdf->download($fileName);
     }
-
-    $totalProgress = collect($pesertaData)->avg('progress_percentage');
-    $totalNilai = collect($pesertaData)->avg('nilai');
-    $pesertaSelesai = collect($pesertaData)
-        ->where('progress_percentage', 100)
-        ->count();
-
-    $fileName = 'detail-kursus-' . Str::slug($kursus->judul_kursus) . '-' . date('Y-m-d') . '.pdf';
-
-    $pdf = Pdf::loadView(
-        'laporan.admin.kursus.pdf-detail',
-        compact(
-            'kursus',
-            'pesertaData',
-            'totalProgress',
-            'totalNilai',
-            'pesertaSelesai'
-        )
-    )->setPaper('A4', 'portrait')
-     ->setOptions([
-         'defaultFont' => 'DejaVu Sans',
-         'isHtml5ParserEnabled' => true,
-         'isRemoteEnabled' => true,
-     ]);
-
-    return $pdf->download($fileName);
-}
 
 
     public function generateLaporanKursus(Kursus $kursus)
@@ -693,6 +693,8 @@ public function exportKursusPdfRingkas(Kursus $kursus)
         $nilaiData = collect($kursusData)->where('nilai', '!=', null)->pluck('nilai');
         $rataNilai = $nilaiData->count() > 0 ? $nilaiData->avg() : null;
 
+        $fileName = 'laporan-mitra-' . Str::slug($mitra->nama) . '-' . date('Y-m-d') . '.pdf';
+
         $pdf = Pdf::loadView(
             'laporan.admin.mitra.pdf-detail',
             compact(
@@ -703,17 +705,13 @@ public function exportKursusPdfRingkas(Kursus $kursus)
                 'rataProgress',
                 'rataNilai'
             )
-        );
-        
-        $pdf->setPaper('A4', 'portrait');
-        $pdf->setOption('margin-top', 15);
-        $pdf->setOption('margin-right', 15);
-        $pdf->setOption('margin-bottom', 15);
-        $pdf->setOption('margin-left', 15);
-        $pdf->setOption('default-font', 'arial');
-        
-        $fileName = 'laporan-mitra-' . Str::slug($mitra->nama) . '-' . date('Y-m-d') . '.pdf';
-        
+        )->setPaper('A4', 'portrait')
+        ->setOptions([
+            'defaultFont' => 'DejaVu Sans',
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => true,
+        ]);
+
         return $pdf->download($fileName);
     }
 

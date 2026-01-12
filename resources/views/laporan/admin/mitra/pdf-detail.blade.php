@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <title>Laporan Mitra: {{ $mitra->nama }}</title>
     <style>        
         /* 1. PERBAIKAN UTAMA: Gunakan selector 'body' (bukan .body) */
         body {
-            font-family: "Arial", "Helvetica", sans-serif !important;
+            font-family: 'DejaVu Sans', sans-serif;
             font-size: 10pt;
             line-height: 1.2;
             color: #333;
@@ -16,7 +16,7 @@
 
         /* 2. Pastikan Tabel mewarisi font (DomPDF terkadang mereset font di dalam tabel) */
         table, tr, td, th, tbody, thead, tfoot {
-            font-family: "Arial", "Helvetica", sans-serif !important;
+            font-family: 'DejaVu Sans', sans-serif;
         }
         
         /* HEADER */
@@ -170,10 +170,10 @@
     <div class="header">
         <h1>LAPORAN BELAJAR MITRA</h1>
         <h2>{{ $mitra->nama }}</h2>
-        <?php
-            date_default_timezone_set('Asia/Jakarta');
-        ?>
-        <p>ID Sobat: {{ $mitra->biodata->id_sobat ?? '-' }} | Dicetak: {{ date('d F Y H:i') }} WIB</p>
+        <p>
+            ID Sobat: {{ $mitra->biodata->id_sobat ?? '-' }} |
+            Dicetak: {{ now('Asia/Jakarta')->format('d F Y H:i') }} WIB
+        </p>
     </div>
     
     <div class="info-section">
